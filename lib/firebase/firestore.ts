@@ -346,3 +346,11 @@ export const getGroupInvites = async (groupId: string): Promise<Invite[]> => {
 export const deleteInvite = async (groupId: string, code: string) => {
   await deleteDoc(doc(db, "groups", groupId, "invites", code));
 };
+
+export const updateCurrency = async (userId: string, currency: string) => {
+  await updateDoc(doc(db, "groups", userId, "groups"), { currency });
+};
+
+export const updateGroupCurrency = async (groupId: string, currency: string) => {
+  await updateDoc(doc(db, "groups", groupId), { currency });
+};
