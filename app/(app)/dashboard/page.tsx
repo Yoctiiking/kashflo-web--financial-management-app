@@ -119,7 +119,7 @@ export default function DashboardPage() {
 
                 {/* Budgets */}
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-4">Budgets du mois</h3>
+                    <h3 className="text-white font-semibold mb-4">Budgets</h3>
                     {budgets.length === 0 ? (
                         <p className="text-gray-500 text-sm">Aucun budget défini</p>
                     ) : (
@@ -156,7 +156,12 @@ export default function DashboardPage() {
                                 return (
                                     <div key={budget.id}>
                                         <div className="flex justify-between text-sm mb-1.5">
-                                            <span className="text-gray-300">{budget.category}</span>
+                                            <div>
+                                                <span className="text-gray-300">{budget.category}</span>
+                                                <span className="text-gray-600 text-xs ml-2">
+                                                    {budget.period === "daily" ? "/ jour" : budget.period === "weekly" ? "/ semaine" : "/ mois"}
+                                                </span>
+                                            </div>
                                             <span className={isOver ? "text-red-400" : "text-gray-400"}>
                                                 {formatCurrency(spent)} / {formatCurrency(budget.limit)}
                                             </span>
