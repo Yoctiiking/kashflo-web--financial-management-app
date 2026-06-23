@@ -183,3 +183,25 @@ export const updateRecurrenceNextOccurrence = async (
     nextOccurrence: Timestamp.fromDate(nextOccurrence)
   });
 };
+
+export const getLastMonthsTransactions = async (
+  groupId: string,
+  months: number = 6
+): Promise<Transaction[]> => {
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
+
+  const q = query(
+    collection(db, "groups", groupId, "transactions"),
+    where("date", ">=", Timestamp.fromDate(startDate)),
+    orderBy("date", "desc")
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    date: (doc.data().date as Timestamp).toDate(),
+    createdAt: (doc.data().createdAt as Timestamp).toDate()
+  })) as Transaction[];
+};
