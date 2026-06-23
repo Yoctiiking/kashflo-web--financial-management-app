@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loginUser } from "@/lib/firebase/auth";
 import Link from "next/link";
 
@@ -12,6 +12,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/dashboard";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -19,7 +22,7 @@ export default function LoginPage() {
 
     try {
       await loginUser(email, password);
-      router.push("/dashboard");
+      router.push(redirect);
     } catch (err: any) {
       setError(getErrorMessage(err.code));
     } finally {
