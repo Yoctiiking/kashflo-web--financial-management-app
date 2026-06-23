@@ -6,13 +6,14 @@ import {
   limit,
   getDocs,
   addDoc,
+  deleteDoc,
   serverTimestamp,
   doc,
   getDoc,
   Timestamp
 } from "firebase/firestore";
 import { db } from "./config";
-import { Transaction, Budget, UserProfile, TransactionType } from "@/types";
+import { Transaction, Budget, UserProfile, TransactionType, BudgetPeriod } from "@/types";
 
 // Récupérer le profil utilisateur et son groupId
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -100,4 +101,24 @@ export const addTransaction = async (
     recurrenceId: null,
     createdAt: serverTimestamp()
   });
+};
+
+export const addBudget = async (
+  groupId: string,
+  data: {
+    category: string;
+    limit: number;
+    period: BudgetPeriod;
+  }
+) => {
+  const ref = collection(db, "groups", groupId, "budgets");
+  await addDoc(ref, {
+    ...data,
+    createdAt: serverTimestamp()
+  });
+};
+
+export const deleteBudget = async (groupId: string, budgetId: string) => {
+  const ref = doc(db, "groups", groupId, "budgets", budgetId);
+  await deleteDoc(ref);
 };
