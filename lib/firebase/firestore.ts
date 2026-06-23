@@ -10,10 +10,11 @@ import {
   serverTimestamp,
   doc,
   getDoc,
-  Timestamp
+  Timestamp,
+  updateDoc
 } from "firebase/firestore";
 import { db } from "./config";
-import { Transaction, Budget, UserProfile, TransactionType, BudgetPeriod } from "@/types";
+import { Transaction, Budget, UserProfile, TransactionType, BudgetPeriod, Recurrence, RecurrenceFrequency } from "@/types";
 
 // Récupérer le profil utilisateur et son groupId
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -92,6 +93,7 @@ export const addTransaction = async (
     label: string;
     date: Date;
     addedBy: string;
+    recurrenceId?: string;  // ← optionnel avec le ?
   }
 ) => {
   const ref = collection(db, "groups", groupId, "transactions");
@@ -121,4 +123,63 @@ export const addBudget = async (
 export const deleteBudget = async (groupId: string, budgetId: string) => {
   const ref = doc(db, "groups", groupId, "budgets", budgetId);
   await deleteDoc(ref);
+};
+
+export const getRecurrences = async (groupId: string): Promise<Recurrence[]> => {
+  const q = query(
+    collection(db, "groups", groupId, "recurrences"),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    nextOccurrence: (doc.data().nextOccurrence as Timestamp).toDate(),
+    createdAt: (doc.data().createdAt as Timestamp).toDate()
+  })) as Recurrence[];
+};
+
+export const addRecurrence = async (
+  groupId: string,
+  data: {
+    amount: number;
+    type: TransactionType;
+    category: string;
+    label: string;
+    frequency: RecurrenceFrequency;
+    nextOccurrence: Date;
+  }
+) => {
+  const ref = collection(db, "groups", groupId, "recurrences");
+  await addDoc(ref, {
+    ...data,
+    nextOccurrence: Timestamp.fromDate(data.nextOccurrence),
+    isActive: true,
+    createdAt: serverTimestamp()
+  });
+};
+
+export const deleteRecurrence = async (groupId: string, recurrenceId: string) => {
+  const ref = doc(db, "groups", groupId, "recurrences", recurrenceId);
+  await deleteDoc(ref);
+};
+
+export const toggleRecurrence = async (
+  groupId: string,
+  recurrenceId: string,
+  isActive: boolean
+) => {
+  const ref = doc(db, "groups", groupId, "recurrences", recurrenceId);
+  await updateDoc(ref, { isActive });
+};
+
+export const updateRecurrenceNextOccurrence = async (
+  groupId: string,
+  recurrenceId: string,
+  nextOccurrence: Date
+) => {
+  const ref = doc(db, "groups", groupId, "recurrences", recurrenceId);
+  await updateDoc(ref, {
+    nextOccurrence: Timestamp.fromDate(nextOccurrence)
+  });
 };
