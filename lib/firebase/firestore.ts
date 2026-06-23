@@ -12,7 +12,7 @@ import {
   Timestamp
 } from "firebase/firestore";
 import { db } from "./config";
-import { Transaction, Budget, UserProfile } from "@/types";
+import { Transaction, Budget, UserProfile, TransactionType } from "@/types";
 
 // Récupérer le profil utilisateur et son groupId
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -80,4 +80,24 @@ export const getBudgets = async (groupId: string): Promise<Budget[]> => {
     ...doc.data(),
     createdAt: (doc.data().createdAt as Timestamp).toDate()
   })) as Budget[];
+};
+
+export const addTransaction = async (
+  groupId: string,
+  data: {
+    amount: number;
+    type: TransactionType;
+    category: string;
+    label: string;
+    date: Date;
+    addedBy: string;
+  }
+) => {
+  const ref = collection(db, "groups", groupId, "transactions");
+  await addDoc(ref, {
+    ...data,
+    date: Timestamp.fromDate(data.date),
+    recurrenceId: null,
+    createdAt: serverTimestamp()
+  });
 };
