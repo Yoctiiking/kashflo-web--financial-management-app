@@ -15,7 +15,8 @@ import {
   increment,
   setDoc,
   arrayRemove,
-  arrayUnion
+  arrayUnion,
+  writeBatch
 } from "firebase/firestore";
 import { db } from "./config";
 import { nanoid } from "nanoid";
@@ -76,18 +77,27 @@ export const addMemberToGroup = async (groupId: string, userId: string) => {
 };
 
 export const removeMemberFromGroup = async (groupId: string, userId: string) => {
-  await updateDoc(doc(db, "groups", groupId), {
+  const batch = writeBatch(db);
+
+  // 1. Retirer le membre du groupe
+  batch.update(doc(db, "groups", groupId), {
     members: arrayRemove(userId)
   });
+
+  // 2. Créer le groupe solo
   const newGroupId = `group_${userId}`;
-  await setDoc(doc(db, "groups", newGroupId), {
+  batch.set(doc(db, "groups", newGroupId), {
     name: "Mes finances",
     members: [userId],
     createdBy: userId,
     currency: "CAD",
     createdAt: serverTimestamp()
   });
-  await updateDoc(doc(db, "users", userId), { groupId: newGroupId });
+
+  // 3. Mettre à jour le groupId du membre
+  batch.update(doc(db, "users", userId), { groupId: newGroupId });
+
+  await batch.commit();
 };
 
 export const updateGroupName = async (groupId: string, name: string) => {

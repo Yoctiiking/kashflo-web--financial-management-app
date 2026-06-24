@@ -35,6 +35,7 @@ export default function GroupPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [groupId, setGroupId] = useState<string | null>(null);
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -52,10 +53,13 @@ export default function GroupPage() {
     if (!user) return;
     try {
       const userProfile = await getUserProfile(user.uid);
+      console.log("1. Profile:", userProfile);
       if (!userProfile) return;
+      setGroupId(userProfile.groupId);
       setProfile(userProfile);
 
       const groupData = await getGroup(userProfile.groupId);
+      console.log("2. Group:", groupData);
       if (!groupData) return;
       setGroup(groupData);
       setGroupName(groupData.name);
@@ -63,6 +67,7 @@ export default function GroupPage() {
       const memberInfos = await Promise.all(
         groupData.members.map(async (uid: string) => {
           const memberProfile = await getUserProfile(uid);
+          console.log("3. Member:", uid, memberProfile);
           return memberProfile
             ? { uid, displayName: memberProfile.displayName, email: memberProfile.email }
             : null;
@@ -71,13 +76,12 @@ export default function GroupPage() {
       setMembers(memberInfos.filter(Boolean) as MemberInfo[]);
 
       const groupInvites = await getGroupInvites(userProfile.groupId);
+      console.log("4. Invites:", groupInvites);
       setInvites(groupInvites);
     } catch (err: any) {
+      console.error("❌ Erreur:", err);
       if (err?.code === "permission-denied") {
-        // L'utilisateur a été retiré du groupe — recharger depuis le début
-        router.refresh();
-      } else {
-        console.error(err);
+        // Rediriger vers la page d'accueil si l'utilisateur n'a pas accès au groupe
       }
     } finally {
       setLoading(false);
@@ -236,8 +240,8 @@ export default function GroupPage() {
                     key={option.minutes}
                     onClick={() => setExpiryMinutes(option.minutes)}
                     className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${expiryMinutes === option.minutes
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                        : "bg-gray-800 text-gray-400 hover:text-white border border-transparent"
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                      : "bg-gray-800 text-gray-400 hover:text-white border border-transparent"
                       }`}
                   >
                     {option.label}
@@ -253,8 +257,8 @@ export default function GroupPage() {
                 <button
                   onClick={() => setMultipleUse(false)}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${!multipleUse
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "text-gray-400 hover:text-white"
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "text-gray-400 hover:text-white"
                     }`}
                 >
                   🔒 Usage unique
@@ -262,8 +266,8 @@ export default function GroupPage() {
                 <button
                   onClick={() => setMultipleUse(true)}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${multipleUse
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "text-gray-400 hover:text-white"
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "text-gray-400 hover:text-white"
                     }`}
                 >
                   ♾️ Usages multiples
@@ -302,8 +306,8 @@ export default function GroupPage() {
                 <div
                   key={invite.code}
                   className={`flex items-center justify-between p-3 rounded-xl border ${inactive
-                      ? "border-gray-800 bg-gray-800/30"
-                      : "border-gray-700 bg-gray-800/50"
+                    ? "border-gray-800 bg-gray-800/30"
+                    : "border-gray-700 bg-gray-800/50"
                     }`}
                 >
                   <div>
@@ -312,8 +316,8 @@ export default function GroupPage() {
                         {invite.code}
                       </p>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${expired ? "bg-red-500/10 text-red-400" :
-                          used ? "bg-gray-700 text-gray-500" :
-                            "bg-emerald-500/10 text-emerald-400"
+                        used ? "bg-gray-700 text-gray-500" :
+                          "bg-emerald-500/10 text-emerald-400"
                         }`}>
                         {expired ? "Expiré" : used ? "Utilisé" : "Actif"}
                       </span>
