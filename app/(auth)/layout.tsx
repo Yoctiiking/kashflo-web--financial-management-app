@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AuthLayout({
@@ -11,12 +11,14 @@ export default function AuthLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/dashboard";
 
   useEffect(() => {
     if (!loading && user) {
-      router.push("/dashboard");
+      router.push(redirect);
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, redirect]);
 
   if (loading) {
     return (

@@ -12,6 +12,7 @@ import {
   updateGroupName,
   Invite
 } from "@/lib/firebase/firestore";
+import { useRouter } from "next/navigation";
 import { Group, UserProfile } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -32,6 +33,7 @@ const EXPIRY_OPTIONS = [
 
 export default function GroupPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<MemberInfo[]>([]);
@@ -70,8 +72,13 @@ export default function GroupPage() {
 
       const groupInvites = await getGroupInvites(userProfile.groupId);
       setInvites(groupInvites);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      if (err?.code === "permission-denied") {
+        // L'utilisateur a été retiré du groupe — recharger depuis le début
+        router.refresh();
+      } else {
+        console.error(err);
+      }
     } finally {
       setLoading(false);
     }
@@ -228,11 +235,10 @@ export default function GroupPage() {
                   <button
                     key={option.minutes}
                     onClick={() => setExpiryMinutes(option.minutes)}
-                    className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                      expiryMinutes === option.minutes
+                    className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${expiryMinutes === option.minutes
                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                         : "bg-gray-800 text-gray-400 hover:text-white border border-transparent"
-                    }`}
+                      }`}
                   >
                     {option.label}
                   </button>
@@ -246,21 +252,19 @@ export default function GroupPage() {
               <div className="flex bg-gray-800 rounded-xl p-1">
                 <button
                   onClick={() => setMultipleUse(false)}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    !multipleUse
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${!multipleUse
                       ? "bg-emerald-500/20 text-emerald-400"
                       : "text-gray-400 hover:text-white"
-                  }`}
+                    }`}
                 >
                   🔒 Usage unique
                 </button>
                 <button
                   onClick={() => setMultipleUse(true)}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    multipleUse
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${multipleUse
                       ? "bg-emerald-500/20 text-emerald-400"
                       : "text-gray-400 hover:text-white"
-                  }`}
+                    }`}
                 >
                   ♾️ Usages multiples
                 </button>
@@ -297,22 +301,20 @@ export default function GroupPage() {
               return (
                 <div
                   key={invite.code}
-                  className={`flex items-center justify-between p-3 rounded-xl border ${
-                    inactive
+                  className={`flex items-center justify-between p-3 rounded-xl border ${inactive
                       ? "border-gray-800 bg-gray-800/30"
                       : "border-gray-700 bg-gray-800/50"
-                  }`}
+                    }`}
                 >
                   <div>
                     <div className="flex items-center gap-2">
                       <p className={`text-sm font-mono ${inactive ? "text-gray-600" : "text-gray-300"}`}>
                         {invite.code}
                       </p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        expired ? "bg-red-500/10 text-red-400" :
-                        used ? "bg-gray-700 text-gray-500" :
-                        "bg-emerald-500/10 text-emerald-400"
-                      }`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${expired ? "bg-red-500/10 text-red-400" :
+                          used ? "bg-gray-700 text-gray-500" :
+                            "bg-emerald-500/10 text-emerald-400"
+                        }`}>
                         {expired ? "Expiré" : used ? "Utilisé" : "Actif"}
                       </span>
                       {invite.multipleUse && !inactive && (
