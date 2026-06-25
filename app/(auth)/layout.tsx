@@ -2,13 +2,9 @@
 
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function AuthRedirect() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,6 +16,16 @@ export default function AuthLayout({
     }
   }, [user, loading, router, redirect]);
 
+  return null;
+}
+
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { loading } = useAuth();
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -30,6 +36,9 @@ export default function AuthLayout({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950">
+      <Suspense>
+        <AuthRedirect />
+      </Suspense>
       <div className="w-full max-w-md px-6">
         {/* Logo */}
         <div className="text-center mb-8">
