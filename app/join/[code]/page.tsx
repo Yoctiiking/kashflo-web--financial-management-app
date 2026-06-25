@@ -190,7 +190,7 @@ export default function JoinPage() {
             <div className="w-full max-w-md px-6">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-white">
-                        Kash <span className="text-emerald-500">Flo</span>
+                        Kash<span className="text-emerald-500">Flo</span>
                     </h1>
                 </div>
 

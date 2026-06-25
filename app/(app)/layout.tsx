@@ -45,7 +45,7 @@ export default function AppLayout({
         {/* Logo */}
         <div className="p-6 border-b border-gray-800">
           <h1 className="text-xl font-bold text-white">
-            Kash <span className="text-emerald-500">Flo</span>
+            Kash<span className="text-emerald-500">Flo</span>
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">{user.displayName}</p>
         </div>
