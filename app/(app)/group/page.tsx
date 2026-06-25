@@ -53,13 +53,11 @@ export default function GroupPage() {
     if (!user) return;
     try {
       const userProfile = await getUserProfile(user.uid);
-      console.log("1. Profile:", userProfile);
       if (!userProfile) return;
       setGroupId(userProfile.groupId);
       setProfile(userProfile);
 
       const groupData = await getGroup(userProfile.groupId);
-      console.log("2. Group:", groupData);
       if (!groupData) return;
       setGroup(groupData);
       setGroupName(groupData.name);
@@ -67,7 +65,6 @@ export default function GroupPage() {
       const memberInfos = await Promise.all(
         groupData.members.map(async (uid: string) => {
           const memberProfile = await getUserProfile(uid);
-          console.log("3. Member:", uid, memberProfile);
           return memberProfile
             ? { uid, displayName: memberProfile.displayName, email: memberProfile.email }
             : null;
@@ -76,7 +73,6 @@ export default function GroupPage() {
       setMembers(memberInfos.filter(Boolean) as MemberInfo[]);
 
       const groupInvites = await getGroupInvites(userProfile.groupId);
-      console.log("4. Invites:", groupInvites);
       setInvites(groupInvites);
     } catch (err: any) {
       console.error("❌ Erreur:", err);

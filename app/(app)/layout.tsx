@@ -12,7 +12,6 @@ const navItems = [
   { href: "/budgets", label: "Budgets", icon: "🎯" },
   { href: "/recurrences", label: "Récurrences", icon: "🔄" },
   { href: "/stats", label: "Statistiques", icon: "📈" },
-  { href: "/group", label: "Groupe", icon: "👥" },
   { href: "/settings", label: "Paramètres", icon: "⚙️" },
 ];
 
