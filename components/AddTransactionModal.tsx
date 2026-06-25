@@ -44,7 +44,7 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
         type,
         category,
         label,
-        date: new Date(date),
+        date: new Date(`${date}T00:00:00`),
         addedBy: user.uid
       });
       onSuccess();

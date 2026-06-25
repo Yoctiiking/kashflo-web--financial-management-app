@@ -117,7 +117,8 @@ export const getMonthTransactions = async (groupId: string): Promise<Transaction
     collection(db, "groups", groupId, "transactions"),
     where("date", ">=", Timestamp.fromDate(startOfMonth)),
     where("date", "<=", Timestamp.fromDate(endOfMonth)),
-    orderBy("date", "desc")
+    orderBy("date", "desc"),
+    orderBy("createdAt", "desc")
   );
 
   const snapshot = await getDocs(q);
@@ -133,6 +134,7 @@ export const getRecentTransactions = async (groupId: string): Promise<Transactio
   const q = query(
     collection(db, "groups", groupId, "transactions"),
     orderBy("date", "desc"),
+    orderBy("createdAt", "desc"),
     limit(5)
   );
 
@@ -155,7 +157,8 @@ export const getLastMonthsTransactions = async (
   const q = query(
     collection(db, "groups", groupId, "transactions"),
     where("date", ">=", Timestamp.fromDate(startDate)),
-    orderBy("date", "desc")
+    orderBy("date", "desc"),
+    orderBy("createdAt", "desc")
   );
 
   const snapshot = await getDocs(q);
