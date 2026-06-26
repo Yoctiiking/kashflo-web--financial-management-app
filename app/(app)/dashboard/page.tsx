@@ -69,7 +69,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="p-8">
+        <div className="p-4 sm:p-8">
             {/* Header */}
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white capitalize">{currentMonth}</h2>
@@ -77,7 +77,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Cartes de stats */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                     <p className="text-gray-400 text-sm mb-1">Solde</p>
                     <p className={`text-2xl font-bold ${balance >= 0 ? "text-emerald-400" : "text-red-400"}`}>
@@ -94,7 +94,7 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Transactions récentes */}
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                     <h3 className="text-white font-semibold mb-4">Transactions récentes</h3>
