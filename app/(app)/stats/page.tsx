@@ -130,7 +130,7 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-white">Statistiques</h2>
@@ -175,8 +175,9 @@ export default function StatsPage() {
           {pieData.length === 0 ? (
             <p className="text-gray-500 text-sm text-center py-8">Aucune dépense ce mois-ci</p>
           ) : (
-            <div className="flex items-center gap-8">
-              <ResponsiveContainer width="50%" height={260}>
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="w-full md:w-1/2 shrink-0">
+              <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie
                     data={pieData}
@@ -197,9 +198,10 @@ export default function StatsPage() {
                   <Tooltip content={<CustomPieTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
+              </div>
 
               {/* Légende manuelle */}
-              <div className="flex-1 space-y-3">
+              <div className="w-full md:flex-1 space-y-3">
                 {pieData.map((entry, index) => (
                   <div key={entry.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
