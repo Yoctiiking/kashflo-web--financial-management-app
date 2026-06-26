@@ -40,8 +40,8 @@ export default function AppLayout({
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
+      {/* Sidebar — desktop uniquement */}
+      <aside className="hidden md:flex w-64 bg-gray-900 border-r border-gray-800 flex-col">
         {/* Logo */}
         <div className="p-6 border-b border-gray-800">
           <h1 className="text-xl font-bold text-white">
@@ -83,9 +83,30 @@ export default function AppLayout({
       </aside>
 
       {/* Contenu principal */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-20 md:pb-0">
         {children}
       </main>
+
+      {/* Bottom nav — mobile uniquement */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex z-50">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors ${
+                isActive ? "text-emerald-400" : "text-gray-500"
+              }`}
+            >
+              <span className="text-lg leading-none">{item.icon}</span>
+              <span className="truncate w-full text-center px-0.5">
+                {item.label === "Récurrences" ? "Récurr." : item.label === "Statistiques" ? "Stats" : item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

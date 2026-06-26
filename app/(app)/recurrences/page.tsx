@@ -91,24 +91,24 @@ export default function RecurrencesPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-bold text-white">Récurrences</h2>
           <p className="text-gray-400 mt-1 text-sm">Transactions automatiques</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <button
             onClick={handleProcess}
             disabled={processing}
-            className="bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white font-medium px-4 py-2.5 rounded-xl transition-colors text-sm"
+            className="bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white font-medium px-3 sm:px-4 py-2.5 rounded-xl transition-colors text-sm"
           >
-            {processing ? "Traitement..." : "🔄 Générer"}
+            {processing ? "..." : "🔄 Générer"}
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
+            className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-3 sm:px-4 py-2.5 rounded-xl transition-colors text-sm"
           >
             + Nouvelle
           </button>
@@ -137,8 +137,8 @@ export default function RecurrencesPage() {
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
           <div className="divide-y divide-gray-800">
             {recurrences.map(r => (
-              <div key={r.id} className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
+              <div key={r.id} className="flex items-center justify-between p-4 gap-2">
+                <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                   {/* Toggle actif/inactif */}
                   <button
                     onClick={() => handleToggle(r)}
@@ -157,18 +157,18 @@ export default function RecurrencesPage() {
                     {r.type === "income" ? "💰" : "💸"}
                   </div>
 
-                  <div>
-                    <p className={`text-sm font-medium ${r.isActive ? "text-white" : "text-gray-500"}`}>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-medium truncate ${r.isActive ? "text-white" : "text-gray-500"}`}>
                       {r.label}
                     </p>
-                    <p className="text-gray-500 text-xs mt-0.5">
+                    <p className="text-gray-500 text-xs mt-0.5 truncate">
                       {r.category} · {frequencyLabel[r.frequency]} · prochain {format(r.nextOccurrence, "d MMM", { locale: fr })}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <p className={`font-semibold ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
+                <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                  <p className={`font-semibold text-sm ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
                     {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
                   </p>
                   <button
