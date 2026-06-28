@@ -228,7 +228,9 @@ export default function SettingsPage() {
             {/* Devise */}
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                 <h3 className="text-white font-semibold mb-1">Devise</h3>
-                <p className="text-gray-500 text-sm mb-4">Affecte tous les membres du groupe</p>
+                <p className="text-gray-500 text-sm mb-4">
+                    Choisissez la devise dans laquelle vous saisissez vos montants. La conversion automatique entre devises sera disponible dans une prochaine version.
+                </p>
                 <div className="space-y-2">
                     {CURRENCIES.map(c => (
                         <button
@@ -236,8 +238,8 @@ export default function SettingsPage() {
                             onClick={() => handleUpdateCurrency(c.code)}
                             disabled={currencyLoading}
                             className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${currency === c.code
-                                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
-                                    : "border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600"
+                                ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
+                                : "border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600"
                                 }`}
                         >
                             <span className="text-sm">{c.label}</span>
