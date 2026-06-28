@@ -40,6 +40,8 @@ export interface Invite {
   groupName: string;
 }
 
+// User Profiles
+
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const docRef = doc(db, "users", userId);
   const docSnap = await getDoc(docRef);
@@ -53,6 +55,8 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date()
   };
 };
+
+// Groups
 
 export const getGroup = async (groupId: string) => {
   const docRef = doc(db, "groups", groupId);
@@ -107,6 +111,8 @@ export const updateGroupName = async (groupId: string, name: string) => {
 export const updateGroupCurrency = async (groupId: string, currency: string) => {
   await updateDoc(doc(db, "groups", groupId), { currency });
 };
+
+//Transactions
 
 export const getMonthTransactions = async (groupId: string): Promise<Transaction[]> => {
   const now = new Date();
@@ -191,6 +197,12 @@ export const addTransaction = async (
   });
 };
 
+export const deleteTransaction = async (groupId: string, transactionId: string) => {
+  await deleteDoc(doc(db, "groups", groupId, "transactions", transactionId));
+};
+
+//Budgets
+
 export const getBudgets = async (groupId: string): Promise<Budget[]> => {
   const q = query(collection(db, "groups", groupId, "budgets"));
   const snapshot = await getDocs(q);
@@ -213,6 +225,7 @@ export const deleteBudget = async (groupId: string, budgetId: string) => {
   await deleteDoc(doc(db, "groups", groupId, "budgets", budgetId));
 };
 
+//Recurrences
 export const getRecurrences = async (groupId: string): Promise<Recurrence[]> => {
   const q = query(
     collection(db, "groups", groupId, "recurrences"),
@@ -236,11 +249,14 @@ export const addRecurrence = async (
     label: string;
     frequency: RecurrenceFrequency;
     nextOccurrence: Date;
+    customDays?: number;
   }
 ) => {
   const ref = collection(db, "groups", groupId, "recurrences");
+  const { customDays, ...rest } = data;
   await addDoc(ref, {
-    ...data,
+    ...rest,
+    ...(customDays !== undefined && { customDays }),
     nextOccurrence: Timestamp.fromDate(data.nextOccurrence),
     isActive: true,
     createdAt: serverTimestamp()
@@ -269,6 +285,7 @@ export const updateRecurrenceNextOccurrence = async (
   });
 };
 
+//Invites
 export const createInvite = async (
   groupId: string,
   userId: string,

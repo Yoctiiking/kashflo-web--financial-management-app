@@ -41,7 +41,8 @@ export default function AppLayout({
   return (
     <div className="min-h-screen bg-gray-950 flex">
       {/* Sidebar — desktop uniquement */}
-      <aside className="hidden md:flex w-64 bg-gray-900 border-r border-gray-800 flex-col">
+      {/* <aside className="hidden md:flex w-64 bg-gray-900 border-r border-gray-800 flex-col"> */}
+      <aside className="hidden md:flex w-64 bg-gray-900 border-r border-gray-800 flex-col sticky top-0 h-screen">
         {/* Logo */}
         <div className="p-6 border-b border-gray-800">
           <h1 className="text-xl font-bold text-white">

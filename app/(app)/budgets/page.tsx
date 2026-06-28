@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { getUserProfile, getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/firestore";
 import { Budget, Transaction } from "@/types";
 import AddBudgetModal from "@/components/AddBudgetModal";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 export default function BudgetsPage() {
   const { user } = useAuth();
@@ -76,8 +77,7 @@ export default function BudgetsPage() {
       .reduce((sum, t) => sum + t.amount, 0);
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(amount);
+  const { formatCurrency } = useCurrency();
 
   const periodLabel: Record<string, string> = {
     daily: "/ jour",
