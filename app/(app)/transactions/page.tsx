@@ -7,6 +7,7 @@ import { Transaction } from "@/types";
 import AddTransactionModal from "@/components/AddTransactionModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 export default function TransactionsPage() {
   const { user } = useAuth();
@@ -46,8 +47,7 @@ export default function TransactionsPage() {
     loadData();
   }, [loadData]);
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(amount);
+  const { formatCurrency } = useCurrency();
 
   const filtered = transactions.filter(t =>
     filter === "all" ? true : t.type === filter

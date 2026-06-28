@@ -8,6 +8,7 @@ import { Recurrence } from "@/types";
 import AddRecurrenceModal from "@/components/AddRecurrenceModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 export default function RecurrencesPage() {
   const { user } = useAuth();
@@ -83,8 +84,7 @@ export default function RecurrencesPage() {
     }
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(amount);
+  const { formatCurrency } = useCurrency();
 
   if (loading) {
     return (

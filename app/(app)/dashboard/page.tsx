@@ -7,6 +7,7 @@ import { Transaction, Budget, Recurrence } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 const PIE_COLORS = [
   "#10b981", "#3b82f6", "#f59e0b", "#ef4444",
@@ -60,8 +61,7 @@ export default function DashboardPage() {
 
     const balance = totalIncome - totalExpenses;
 
-    const formatCurrency = (amount: number) =>
-        new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(amount);
+    const { formatCurrency } = useCurrency();
 
     const currentMonth = format(new Date(), "MMMM yyyy", { locale: fr });
 
