@@ -16,6 +16,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
   const [amount, setAmount] = useState("");
   const [label, setLabel] = useState("");
   const [category, setCategory] = useState("");
+  const [customDays, setCustomDays] = useState("10");
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,8 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
     daily: "Quotidien",
     weekly: "Hebdomadaire",
     monthly: "Mensuel",
-    yearly: "Annuel"
+    yearly: "Annuel",
+    custom: "Personnalisé"
   };
 
   const handleSubmit = async () => {
@@ -39,18 +41,27 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
       setError("Le montant doit être un nombre positif");
       return;
     }
+    if (frequency === "custom") {
+      const days = parseInt(customDays);
+      if (isNaN(days) || days < 2) {
+        setError("L'intervalle personnalisé doit être d'au moins 2 jours");
+        return;
+      }
+    }
 
     setLoading(true);
     setError("");
 
     try {
+      const [year, month, day] = startDate.split("-").map(Number);
       await addRecurrence(groupId, {
         amount: parseFloat(amount),
         type,
         category,
         label,
         frequency,
-        nextOccurrence: new Date(startDate)
+        customDays: frequency === "custom" ? parseInt(customDays) : undefined,
+        nextOccurrence: new Date(year, month - 1, day)
       });
       onSuccess();
       onClose();
@@ -75,17 +86,15 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
           <div className="flex bg-gray-800 rounded-xl p-1">
             <button
               onClick={() => { setType("expense"); setCategory(""); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                type === "expense" ? "bg-red-500/20 text-red-400" : "text-gray-400 hover:text-white"
-              }`}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "expense" ? "bg-red-500/20 text-red-400" : "text-gray-400 hover:text-white"
+                }`}
             >
               Dépense
             </button>
             <button
               onClick={() => { setType("income"); setCategory(""); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                type === "income" ? "bg-emerald-500/20 text-emerald-400" : "text-gray-400 hover:text-white"
-              }`}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "income" ? "bg-emerald-500/20 text-emerald-400" : "text-gray-400 hover:text-white"
+                }`}
             >
               Revenu
             </button>
@@ -136,15 +145,14 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Fréquence</label>
             <div className="grid grid-cols-2 gap-2">
-              {(["daily", "weekly", "monthly", "yearly"] as RecurrenceFrequency[]).map(f => (
+              {(["daily", "weekly", "monthly", "yearly", "custom"] as RecurrenceFrequency[]).map(f => (
                 <button
                   key={f}
                   onClick={() => setFrequency(f)}
-                  className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                    frequency === f
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "bg-gray-800 text-gray-400 hover:text-white border border-transparent"
-                  }`}
+                  className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${frequency === f
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                    : "bg-gray-800 text-gray-400 hover:text-white border border-transparent"
+                    }`}
                 >
                   {frequencyLabel[f]}
                 </button>
@@ -162,6 +170,32 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
               className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
+
+          {/* Intervalle personnalisé */}
+          {frequency === "custom" && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5">
+                Tous les combien de jours ?
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  value={customDays}
+                  onChange={(e) => setCustomDays(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                  placeholder="Ex: 14"
+                  min="2"
+                />
+                <span className="text-gray-400 text-sm whitespace-nowrap">jours</span>
+              </div>
+              <p className="text-gray-600 text-xs mt-1.5">
+                {parseInt(customDays) >= 2
+                  ? `Tous les ${customDays} jours`
+                  : "Minimum 2 jours"
+                }
+              </p>
+            </div>
+          )}
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
 

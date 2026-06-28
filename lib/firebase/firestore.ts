@@ -249,11 +249,14 @@ export const addRecurrence = async (
     label: string;
     frequency: RecurrenceFrequency;
     nextOccurrence: Date;
+    customDays?: number;
   }
 ) => {
   const ref = collection(db, "groups", groupId, "recurrences");
+  const { customDays, ...rest } = data;
   await addDoc(ref, {
-    ...data,
+    ...rest,
+    ...(customDays !== undefined && { customDays }),
     nextOccurrence: Timestamp.fromDate(data.nextOccurrence),
     isActive: true,
     createdAt: serverTimestamp()

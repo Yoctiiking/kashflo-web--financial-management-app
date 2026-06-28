@@ -72,11 +72,15 @@ export default function RecurrencesPage() {
     }
   };
 
-  const frequencyLabel: Record<string, string> = {
-    daily: "Quotidien",
-    weekly: "Hebdomadaire",
-    monthly: "Mensuel",
-    yearly: "Annuel"
+  const getFrequencyLabel = (r: Recurrence): string => {
+    switch (r.frequency) {
+      case "daily": return "Quotidien";
+      case "weekly": return "Hebdomadaire";
+      case "monthly": return "Mensuel";
+      case "yearly": return "Annuel";
+      case "custom": return `Tous les ${r.customDays ?? "?"} jours`;
+      default: return r.frequency;
+    }
   };
 
   const formatCurrency = (amount: number) =>
@@ -142,18 +146,15 @@ export default function RecurrencesPage() {
                   {/* Toggle actif/inactif */}
                   <button
                     onClick={() => handleToggle(r)}
-                    className={`w-10 h-6 rounded-full transition-colors relative ${
-                      r.isActive ? "bg-emerald-500" : "bg-gray-700"
-                    }`}
+                    className={`w-10 h-6 rounded-full transition-colors relative ${r.isActive ? "bg-emerald-500" : "bg-gray-700"
+                      }`}
                   >
-                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                      r.isActive ? "left-5" : "left-1"
-                    }`} />
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${r.isActive ? "left-5" : "left-1"
+                      }`} />
                   </button>
 
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                    r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
-                  }`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+                    }`}>
                     {r.type === "income" ? "💰" : "💸"}
                   </div>
 
@@ -162,8 +163,7 @@ export default function RecurrencesPage() {
                       {r.label}
                     </p>
                     <p className="text-gray-500 text-xs mt-0.5 truncate">
-                      {r.category} · {frequencyLabel[r.frequency]} · prochain {format(r.nextOccurrence, "d MMM", { locale: fr })}
-                    </p>
+                      {r.category} · {getFrequencyLabel(r)} · prochain: {format(r.nextOccurrence, "d MMM", { locale: fr })}                    </p>
                   </div>
                 </div>
 
