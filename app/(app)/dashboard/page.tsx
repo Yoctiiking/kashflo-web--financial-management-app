@@ -124,57 +124,60 @@ export default function DashboardPage() {
                         <p className="text-gray-500 text-sm">Aucun budget défini</p>
                     ) : (
                         <div className="space-y-4">
-                            {budgets.map(budget => {
-                                const spent = transactions
-                                    .filter(t => {
-                                        if (t.type !== "expense" || t.category !== budget.category) return false;
-
-                                        if (budget.period === "daily") {
-                                            const today = new Date();
-                                            return (
-                                                t.date.getDate() === today.getDate() &&
-                                                t.date.getMonth() === today.getMonth() &&
-                                                t.date.getFullYear() === today.getFullYear()
-                                            );
-                                        }
-
-                                        if (budget.period === "weekly") {
-                                            const now = new Date();
-                                            const startOfWeek = new Date(now);
-                                            startOfWeek.setDate(now.getDate() - now.getDay());
-                                            startOfWeek.setHours(0, 0, 0, 0);
-                                            return t.date >= startOfWeek;
-                                        }
-
-                                        // monthly — toutes les transactions du mois déjà chargées
-                                        return true;
-                                    })
-                                    .reduce((sum, t) => sum + t.amount, 0);
-                                const percentage = Math.min((spent / budget.limit) * 100, 100);
-                                const isOver = spent > budget.limit;
-
-                                return (
-                                    <div key={budget.id}>
-                                        <div className="flex justify-between text-sm mb-1.5">
-                                            <div>
-                                                <span className="text-gray-300">{budget.category}</span>
-                                                <span className="text-gray-600 text-xs ml-2">
-                                                    {budget.period === "daily" ? "/ jour" : budget.period === "weekly" ? "/ semaine" : "/ mois"}
+                            {budgets
+                                .map(budget => {
+                                    const spent = transactions
+                                        .filter(t => {
+                                            if (t.type !== "expense" || t.category !== budget.category) return false;
+                                            if (budget.period === "daily") {
+                                                const today = new Date();
+                                                return (
+                                                    t.date.getDate() === today.getDate() &&
+                                                    t.date.getMonth() === today.getMonth() &&
+                                                    t.date.getFullYear() === today.getFullYear()
+                                                );
+                                            }
+                                            if (budget.period === "weekly") {
+                                                const now = new Date();
+                                                const startOfWeek = new Date(now);
+                                                startOfWeek.setDate(now.getDate() - now.getDay());
+                                                startOfWeek.setHours(0, 0, 0, 0);
+                                                return t.date >= startOfWeek;
+                                            }
+                                            return true;
+                                        })
+                                        .reduce((sum, t) => sum + t.amount, 0);
+                                    return { ...budget, spent };
+                                })
+                                .sort((a, b) => b.spent - a.spent)
+                                .slice(0, 5)
+                                .map(budget => {
+                                    const spent = budget.spent;
+                                    const percentage = Math.min((spent / budget.limit) * 100, 100);
+                                    const isOver = spent > budget.limit;
+                                    return (
+                                        <div key={budget.id}>
+                                            <div className="flex justify-between text-sm mb-1.5">
+                                                <div>
+                                                    <span className="text-gray-300">{budget.category}</span>
+                                                    <span className="text-gray-600 text-xs ml-2">
+                                                        {budget.period === "daily" ? "/ jour" : budget.period === "weekly" ? "/ semaine" : "/ mois"}
+                                                    </span>
+                                                </div>
+                                                <span className={isOver ? "text-red-400" : "text-gray-400"}>
+                                                    {formatCurrency(spent)} / {formatCurrency(budget.limit)}
                                                 </span>
                                             </div>
-                                            <span className={isOver ? "text-red-400" : "text-gray-400"}>
-                                                {formatCurrency(spent)} / {formatCurrency(budget.limit)}
-                                            </span>
+                                            <div className="w-full bg-gray-800 rounded-full h-1.5">
+                                                <div
+                                                    className={`h-1.5 rounded-full transition-all ${isOver ? "bg-red-500" : "bg-emerald-500"}`}
+                                                    style={{ width: `${percentage}%` }}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="w-full bg-gray-800 rounded-full h-1.5">
-                                            <div
-                                                className={`h-1.5 rounded-full transition-all ${isOver ? "bg-red-500" : "bg-emerald-500"}`}
-                                                style={{ width: `${percentage}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })
+                            }
                         </div>
                     )}
                 </div>
