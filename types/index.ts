@@ -1,8 +1,8 @@
 export type TransactionType = "expense" | "income";
 
-export type RecurrenceFrequency = "daily" | "weekly" | "monthly" | "yearly";
+export type RecurrenceFrequency = "daily" | "weekly" | "monthly" | "yearly" | "custom";
 
-export type BudgetPeriod = "monthly" | "weekly" | "daily";
+export type BudgetPeriod = "daily" | "weekly" | "monthly";
 
 export interface Transaction {
   id: string;
@@ -31,6 +31,7 @@ export interface Recurrence {
   category: string;
   label: string;
   frequency: RecurrenceFrequency;
+  customDays?: number;
   nextOccurrence: Date;
   isActive: boolean;
   createdAt: Date;

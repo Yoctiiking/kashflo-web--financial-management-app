@@ -19,6 +19,7 @@ import {
   Cell,
   Legend
 } from "recharts";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 // Couleurs pour le camembert
 const PIE_COLORS = [
@@ -90,8 +91,7 @@ export default function StatsPage() {
     .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
     .sort((a, b) => b.value - a.value);
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(amount);
+  const { formatCurrency } = useCurrency();
 
   // Tooltip personnalisé pour le BarChart
   const CustomBarTooltip = ({ active, payload, label }: any) => {
@@ -177,27 +177,27 @@ export default function StatsPage() {
           ) : (
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="w-full md:w-1/2 shrink-0">
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={110}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {pieData.map((_, index) => (
-                      <Cell
-                        key={index}
-                        fill={PIE_COLORS[index % PIE_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomPieTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={70}
+                      outerRadius={110}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {pieData.map((_, index) => (
+                        <Cell
+                          key={index}
+                          fill={PIE_COLORS[index % PIE_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomPieTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
 
               {/* Légende manuelle */}

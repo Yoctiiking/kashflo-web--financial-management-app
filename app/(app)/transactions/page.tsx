@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getMonthTransactions } from "@/lib/firebase/firestore";
+import { getUserProfile, getMonthTransactions, deleteTransaction } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
 import AddTransactionModal from "@/components/AddTransactionModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 export default function TransactionsPage() {
   const { user } = useAuth();
@@ -31,12 +32,22 @@ export default function TransactionsPage() {
     }
   }, [user]);
 
+  const handleDelete = async (transactionId: string) => {
+    if (!groupId) return;
+    if (!confirm("Supprimer cette transaction ?")) return;
+    try {
+      await deleteTransaction(groupId, transactionId);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(amount);
+  const { formatCurrency } = useCurrency();
 
   const filtered = transactions.filter(t =>
     filter === "all" ? true : t.type === filter
@@ -72,11 +83,10 @@ export default function TransactionsPage() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-              filter === f
-                ? "bg-emerald-500/20 text-emerald-400"
-                : "bg-gray-800 text-gray-400 hover:text-white"
-            }`}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filter === f
+              ? "bg-emerald-500/20 text-emerald-400"
+              : "bg-gray-800 text-gray-400 hover:text-white"
+              }`}
           >
             {f === "all" ? "Tout" : f === "expense" ? "Dépenses" : "Revenus"}
           </button>
@@ -94,9 +104,8 @@ export default function TransactionsPage() {
             {filtered.map(tx => (
               <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                    tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
-                  }`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+                    }`}>
                     {tx.type === "income" ? "💰" : "💸"}
                   </div>
                   <div>
@@ -106,9 +115,17 @@ export default function TransactionsPage() {
                     </p>
                   </div>
                 </div>
-                <p className={`font-semibold ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
-                  {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
-                </p>
+                <div className="flex items-center gap-4">
+                  <p className={`font-semibold ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
+                    {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
+                  </p>
+                  <button
+                    onClick={() => handleDelete(tx.id)}
+                    className="text-gray-600 hover:text-red-400 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             ))}
           </div>
