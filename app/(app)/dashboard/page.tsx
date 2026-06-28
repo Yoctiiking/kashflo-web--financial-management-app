@@ -2,17 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getMonthTransactions, getRecentTransactions, getBudgets } from "@/lib/firebase/firestore";
-import { Transaction, Budget, UserProfile } from "@/types";
+import { getUserProfile, getMonthTransactions, getRecentTransactions, getBudgets, getRecurrences } from "@/lib/firebase/firestore";
+import { Transaction, Budget, Recurrence } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+
+const PIE_COLORS = [
+  "#10b981", "#3b82f6", "#f59e0b", "#ef4444",
+  "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"
+];
 
 export default function DashboardPage() {
     const { user } = useAuth();
-    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
+    const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -23,17 +29,17 @@ export default function DashboardPage() {
                 const userProfile = await getUserProfile(user.uid);
                 if (!userProfile) return;
 
-                setProfile(userProfile);
-
-                const [monthTx, recentTx, userBudgets] = await Promise.all([
+                const [monthTx, recentTx, userBudgets, userRecurrences] = await Promise.all([
                     getMonthTransactions(userProfile.groupId),
                     getRecentTransactions(userProfile.groupId),
-                    getBudgets(userProfile.groupId)
+                    getBudgets(userProfile.groupId),
+                    getRecurrences(userProfile.groupId)
                 ]);
 
                 setTransactions(monthTx);
                 setRecentTransactions(recentTx);
                 setBudgets(userBudgets);
+                setRecurrences(userRecurrences);
             } catch (error) {
                 console.error("Erreur chargement dashboard:", error);
             } finally {
@@ -44,7 +50,6 @@ export default function DashboardPage() {
         loadData();
     }, [user]);
 
-    // Calculs
     const totalIncome = transactions
         .filter(t => t.type === "income")
         .reduce((sum, t) => sum + t.amount, 0);
@@ -59,6 +64,37 @@ export default function DashboardPage() {
         new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(amount);
 
     const currentMonth = format(new Date(), "MMMM yyyy", { locale: fr });
+
+    // Récurrences du mois en cours
+    const now = new Date();
+    const monthRecurrences = recurrences.filter(r => {
+        return r.isActive &&
+            r.nextOccurrence.getMonth() === now.getMonth() &&
+            r.nextOccurrence.getFullYear() === now.getFullYear();
+    });
+
+    // Pie chart — dépenses par catégorie ce mois
+    const monthExpenses = transactions.filter(t => t.type === "expense");
+    const pieData = Object.entries(
+        monthExpenses.reduce((acc, t) => {
+            acc[t.category] = (acc[t.category] || 0) + t.amount;
+            return acc;
+        }, {} as Record<string, number>)
+    )
+        .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
+        .sort((a, b) => b.value - a.value);
+
+    const CustomPieTooltip = ({ active, payload }: any) => {
+        if (!active || !payload?.length) return null;
+        return (
+            <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm">
+                <p className="text-white font-medium">{payload[0].name}</p>
+                <p style={{ color: payload[0].payload.fill }}>
+                    {formatCurrency(payload[0].value)}
+                </p>
+            </div>
+        );
+    };
 
     if (loading) {
         return (
@@ -178,6 +214,83 @@ export default function DashboardPage() {
                                     );
                                 })
                             }
+                        </div>
+                    )}
+                </div>
+
+                {/* Récurrences du mois */}
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-white font-semibold mb-4">Récurrences ce mois</h3>
+                    {monthRecurrences.length === 0 ? (
+                        <p className="text-gray-500 text-sm">Aucune récurrence prévue ce mois</p>
+                    ) : (
+                        <div className="space-y-3">
+                            {monthRecurrences.map(r => (
+                                <div key={r.id} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
+                                            r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+                                        }`}>
+                                            {r.type === "income" ? "💰" : "💸"}
+                                        </div>
+                                        <div>
+                                            <p className="text-white text-sm font-medium">{r.label}</p>
+                                            <p className="text-gray-500 text-xs">
+                                                {format(r.nextOccurrence, "d MMM", { locale: fr })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p className={`font-semibold text-sm ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
+                                        {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Pie chart */}
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-white font-semibold mb-4">Dépenses par catégorie</h3>
+                    {pieData.length === 0 ? (
+                        <p className="text-gray-500 text-sm">Aucune dépense ce mois-ci</p>
+                    ) : (
+                        <div className="flex items-center gap-4">
+                            <ResponsiveContainer width="50%" height={200}>
+                                <PieChart>
+                                    <Pie
+                                        data={pieData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={80}
+                                        paddingAngle={3}
+                                        dataKey="value"
+                                    >
+                                        {pieData.map((_, index) => (
+                                            <Cell
+                                                key={index}
+                                                fill={PIE_COLORS[index % PIE_COLORS.length]}
+                                            />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<CustomPieTooltip />} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="flex-1 space-y-2">
+                                {pieData.slice(0, 5).map((entry, index) => (
+                                    <div key={entry.name} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div
+                                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                                style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                                            />
+                                            <span className="text-gray-300 text-xs truncate">{entry.name}</span>
+                                        </div>
+                                        <span className="text-gray-400 text-xs shrink-0 ml-2">{formatCurrency(entry.value)}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
