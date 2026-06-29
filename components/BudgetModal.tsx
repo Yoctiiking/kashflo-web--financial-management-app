@@ -1,22 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { addBudget } from "@/lib/firebase/firestore";
-import { BudgetPeriod } from "@/types";
+import { addBudget, updateBudget } from "@/lib/firebase/firestore";
+import { Budget, BudgetPeriod } from "@/types";
 import { EXPENSE_CATEGORIES } from "@/lib/categories";
 
 interface Props {
   groupId: string;
+  budget?: Budget; // si fourni, mode édition
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function AddBudgetModal({ groupId, onClose, onSuccess }: Props) {
-  const [category, setCategory] = useState("");
-  const [limit, setLimit] = useState("");
-  const [period, setPeriod] = useState<BudgetPeriod>("monthly");
+export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Props) {
+  const [category, setCategory] = useState(budget?.category || "");
+  const [limit, setLimit] = useState(budget?.limit.toString() || "");
+  const [period, setPeriod] = useState<BudgetPeriod>(budget?.period || "monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const isEditing = !!budget;
 
   const handleSubmit = async () => {
     if (!category || !limit) {
@@ -32,16 +35,24 @@ export default function AddBudgetModal({ groupId, onClose, onSuccess }: Props) {
     setError("");
 
     try {
-      await addBudget(groupId, {
-        category,
-        limit: parseFloat(limit),
-        period
-      });
+      if (isEditing) {
+        await updateBudget(groupId, budget.id, {
+          category,
+          limit: parseFloat(limit),
+          period
+        });
+      } else {
+        await addBudget(groupId, {
+          category,
+          limit: parseFloat(limit),
+          period
+        });
+      }
       onSuccess();
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Erreur lors de la création");
+      setError(isEditing ? "Erreur lors de la modification" : "Erreur lors de la création");
     } finally {
       setLoading(false);
     }
@@ -56,12 +67,11 @@ export default function AddBudgetModal({ groupId, onClose, onSuccess }: Props) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-md mx-4">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white font-semibold text-lg">Nouveau budget</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
-            ✕
-          </button>
+          <h2 className="text-white font-semibold text-lg">
+            {isEditing ? "Modifier le budget" : "Nouveau budget"}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
         </div>
 
         <div className="space-y-4">
@@ -121,7 +131,7 @@ export default function AddBudgetModal({ groupId, onClose, onSuccess }: Props) {
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
           >
-            {loading ? "Création..." : "Créer le budget"}
+            {loading ? "..." : isEditing ? "Sauvegarder" : "Créer le budget"}
           </button>
         </div>
       </div>

@@ -221,6 +221,14 @@ export const addBudget = async (
   await addDoc(ref, { ...data, createdAt: serverTimestamp() });
 };
 
+export const updateBudget = async (
+  groupId: string,
+  budgetId: string,
+  data: { category: string; limit: number; period: BudgetPeriod }
+) => {
+  await updateDoc(doc(db, "groups", groupId, "budgets", budgetId), data);
+};
+
 export const deleteBudget = async (groupId: string, budgetId: string) => {
   await deleteDoc(doc(db, "groups", groupId, "budgets", budgetId));
 };

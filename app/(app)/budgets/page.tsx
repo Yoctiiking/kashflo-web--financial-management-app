@@ -4,13 +4,14 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { getUserProfile, getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/firestore";
 import { Budget, Transaction } from "@/types";
-import AddBudgetModal from "@/components/AddBudgetModal";
+import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 
 export default function BudgetsPage() {
   const { user } = useAuth();
   const [groupId, setGroupId] = useState<string | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -131,12 +132,21 @@ export default function BudgetsPage() {
                     <p className="text-white font-semibold">{budget.category}</p>
                     <p className="text-gray-500 text-xs mt-0.5">{periodLabel[budget.period]}</p>
                   </div>
-                  <button
-                    onClick={() => handleDelete(budget.id)}
-                    className="text-gray-600 hover:text-red-400 transition-colors text-sm"
-                  >
-                    ✕
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditingBudget(budget)}
+                      className="text-gray-600 hover:text-emerald-400 transition-colors text-sm"
+                    >
+                      ✏️
+                    </button>
+                    |
+                    <button
+                      onClick={() => handleDelete(budget.id)}
+                      className="text-gray-600 hover:text-red-400 transition-colors text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
 
                 {/* Montants */}
@@ -172,9 +182,18 @@ export default function BudgetsPage() {
 
       {/* Modale */}
       {showModal && groupId && (
-        <AddBudgetModal
+        <BudgetModal
           groupId={groupId}
           onClose={() => setShowModal(false)}
+          onSuccess={loadData}
+        />
+      )}
+
+      {editingBudget && groupId && (
+        <BudgetModal
+          groupId={groupId}
+          budget={editingBudget}
+          onClose={() => setEditingBudget(null)}
           onSuccess={loadData}
         />
       )}
