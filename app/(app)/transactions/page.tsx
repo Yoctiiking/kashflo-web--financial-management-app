@@ -16,6 +16,7 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState<"all" | "expense" | "income">("all");
+  const [search, setSearch] = useState("");
 
   const now = new Date();
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
@@ -73,9 +74,13 @@ export default function TransactionsPage() {
 
   const { formatCurrency } = useCurrency();
 
-  const filtered = transactions.filter(t =>
-    filter === "all" ? true : t.type === filter
-  );
+  const filtered = transactions.filter(t => {
+    const matchesFilter = filter === "all" ? true : t.type === filter;
+    const matchesSearch = search === "" ||
+      t.label.toLowerCase().includes(search.toLowerCase()) ||
+      t.category.toLowerCase().includes(search.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   if (loading) {
     return (
@@ -118,20 +123,41 @@ export default function TransactionsPage() {
         </button>
       </div>
 
-      {/* Filtres */}
-      <div className="flex gap-2 mb-6">
-        {(["all", "expense", "income"] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filter === f
-              ? "bg-emerald-500/20 text-emerald-400"
-              : "bg-gray-800 text-gray-400 hover:text-white"
-              }`}
-          >
-            {f === "all" ? "Tout" : f === "expense" ? "Dépenses" : "Revenus"}
-          </button>
-        ))}
+      {/* Filtres + Recherche */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        <div className="flex gap-2">
+          {(["all", "expense", "income"] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${filter === f
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "bg-gray-800 text-gray-400 hover:text-white"
+                }`}
+            >
+              {f === "all" ? "Tout" : f === "expense" ? "Dépenses" : "Revenus"}
+            </button>
+          ))}
+        </div>
+
+        {/* Recherche */}
+        <div className="relative sm:ml-auto">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher..."
+            className="w-full sm:w-48 bg-gray-800 border border-gray-700 rounded-xl pl-4 pr-9 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Liste */}
