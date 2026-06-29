@@ -114,10 +114,17 @@ export const updateGroupCurrency = async (groupId: string, currency: string) => 
 
 //Transactions
 
-export const getMonthTransactions = async (groupId: string): Promise<Transaction[]> => {
+export const getMonthTransactions = async (
+  groupId: string,
+  year?: number,
+  month?: number
+): Promise<Transaction[]> => {
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const y = year ?? now.getFullYear();
+  const m = month ?? now.getMonth();
+
+  const startOfMonth = new Date(y, m, 1);
+  const endOfMonth = new Date(y, m + 1, 0, 23, 59, 59, 999);
 
   const q = query(
     collection(db, "groups", groupId, "transactions"),

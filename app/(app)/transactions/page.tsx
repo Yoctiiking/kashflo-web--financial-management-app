@@ -17,20 +17,44 @@ export default function TransactionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState<"all" | "expense" | "income">("all");
 
+  const now = new Date();
+  const [currentYear, setCurrentYear] = useState(now.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+
+  const goToPreviousMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(y => y - 1);
+    } else {
+      setCurrentMonth(m => m - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    const isCurrentMonth = currentYear === now.getFullYear() && currentMonth === now.getMonth();
+    if (isCurrentMonth) return; // pas de navigation dans le futur
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(y => y + 1);
+    } else {
+      setCurrentMonth(m => m + 1);
+    }
+  };
+
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
       const profile = await getUserProfile(user.uid);
       if (!profile) return;
       setGroupId(profile.groupId);
-      const tx = await getMonthTransactions(profile.groupId);
+      const tx = await getMonthTransactions(profile.groupId, currentYear, currentMonth);
       setTransactions(tx);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, currentYear, currentMonth]);
 
   const handleDelete = async (transactionId: string) => {
     if (!groupId) return;
@@ -67,7 +91,24 @@ export default function TransactionsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-2xl font-bold text-white">Transactions</h2>
-          <p className="text-gray-400 mt-1 text-sm">Ce mois-ci</p>
+          <div className="flex items-center gap-3 mt-2">
+            <button
+              onClick={goToPreviousMonth}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              ←
+            </button>
+            <p className="text-gray-400 text-sm capitalize">
+              {format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: fr })}
+            </p>
+            <button
+              onClick={goToNextMonth}
+              disabled={currentYear === now.getFullYear() && currentMonth === now.getMonth()}
+              className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              →
+            </button>
+          </div>
         </div>
         <button
           onClick={() => setShowModal(true)}
