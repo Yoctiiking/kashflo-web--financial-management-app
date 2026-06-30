@@ -81,7 +81,7 @@ export default function SavingsPage() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
+          className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
         >
           + Nouvel objectif
         </button>
@@ -151,27 +151,30 @@ export default function SavingsPage() {
                 </p>
 
                 {addingTo === goal.id ? (
-                  <div className="flex gap-2">
+                  <div className="space-y-2">
                     <input
                       type="number"
                       value={addAmount}
                       onChange={(e) => setAddAmount(e.target.value)}
-                      className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-                      placeholder="Montant"
+                      onKeyDown={(e) => { if (e.key === "Enter") handleAddAmount(goal.id); if (e.key === "Escape") { setAddingTo(null); setAddAmount(""); } }}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                      placeholder="Montant à ajouter"
                       autoFocus
                     />
-                    <button
-                      onClick={() => handleAddAmount(goal.id)}
-                      className="bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors"
-                    >
-                      ✓
-                    </button>
-                    <button
-                      onClick={() => { setAddingTo(null); setAddAmount(""); }}
-                      className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-3 py-2 rounded-xl transition-colors"
-                    >
-                      ✕
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAddAmount(goal.id)}
+                        className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-medium py-2 rounded-xl transition-colors"
+                      >
+                        Confirmer
+                      </button>
+                      <button
+                        onClick={() => { setAddingTo(null); setAddAmount(""); }}
+                        className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-400 text-sm py-2 rounded-xl transition-colors"
+                      >
+                        Annuler
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -186,6 +189,14 @@ export default function SavingsPage() {
           })}
         </div>
       )}
+
+      {/* FAB mobile */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="sm:hidden fixed bottom-24 left-4 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-white text-2xl font-light rounded-full shadow-lg shadow-emerald-500/30 transition-colors z-40 flex items-center justify-center"
+      >
+        +
+      </button>
 
       {showModal && groupId && (
         <SavingsGoalModal
