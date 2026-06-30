@@ -8,6 +8,7 @@ import AddTransactionModal from "@/components/AddTransactionModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
 
 export default function TransactionsPage() {
   const { user } = useAuth();
@@ -17,10 +18,24 @@ export default function TransactionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState<"all" | "expense" | "income">("all");
   const [search, setSearch] = useState("");
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   const now = new Date();
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+
+  const handleExportCSV = () => {
+    const monthLabel = format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: fr });
+    exportTransactionsToCSV(filtered, `transactions-${monthLabel}`);
+    setShowExportMenu(false);
+  };
+
+  const handleExportPDF = () => {
+    const monthLabel = format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: fr });
+    exportTransactionsToPDF(filtered, `transactions-${monthLabel}`, monthLabel, formatCurrency);
+    setShowExportMenu(false);
+  };
 
   const goToPreviousMonth = () => {
     if (currentMonth === 0) {
@@ -115,12 +130,54 @@ export default function TransactionsPage() {
             </button>
           </div>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
-        >
-          + Ajouter
-        </button>
+        <div className="flex gap-2">
+          {/* Recherche — icône mobile */}
+          <button
+            onClick={() => setShowSearch(s => !s)}
+            className={`sm:hidden p-2.5 rounded-xl transition-colors ${showSearch ? "bg-emerald-500/20 text-emerald-400" : "bg-gray-800 text-gray-400 hover:text-white"}`}
+            aria-label="Rechercher"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+          </button>
+
+          {/* Export */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="bg-gray-800 hover:bg-gray-700 text-white font-medium p-2.5 sm:px-4 sm:py-2.5 rounded-xl transition-colors text-sm flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span className="hidden sm:inline">Exporter</span>
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 bg-gray-800 border border-gray-700 rounded-xl overflow-hidden z-10 w-32">
+                <button
+                  onClick={handleExportCSV}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                >
+                  CSV
+                </button>
+                <button
+                  onClick={handleExportPDF}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                >
+                  PDF
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => setShowModal(true)}
+            className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
+          >
+            + Ajouter
+          </button>
+        </div>
       </div>
 
       {/* Filtres + Recherche */}
@@ -131,8 +188,8 @@ export default function TransactionsPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${filter === f
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "bg-gray-800 text-gray-400 hover:text-white"
+                ? "bg-emerald-500/20 text-emerald-400"
+                : "bg-gray-800 text-gray-400 hover:text-white"
                 }`}
             >
               {f === "all" ? "Tout" : f === "expense" ? "Dépenses" : "Revenus"}
@@ -140,13 +197,14 @@ export default function TransactionsPage() {
           ))}
         </div>
 
-        {/* Recherche */}
-        <div className="relative sm:ml-auto">
+        {/* Recherche — toujours visible sur desktop, toggle sur mobile */}
+        <div className={`relative sm:ml-auto ${showSearch ? "block" : "hidden sm:block"}`}>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher..."
+            autoFocus={showSearch}
             className="w-full sm:w-48 bg-gray-800 border border-gray-700 rounded-xl pl-4 pr-9 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
           />
           {search && (
@@ -198,6 +256,14 @@ export default function TransactionsPage() {
           </div>
         )}
       </div>
+
+      {/* FAB mobile */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="sm:hidden fixed bottom-24 right-4 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-white text-2xl font-light rounded-full shadow-lg shadow-emerald-500/30 transition-colors z-40 flex items-center justify-center"
+      >
+        +
+      </button>
 
       {/* Modale */}
       {showModal && groupId && (

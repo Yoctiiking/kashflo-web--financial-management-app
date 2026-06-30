@@ -106,7 +106,8 @@ export default function BudgetsPage() {
           onClick={() => setShowModal(true)}
           className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
         >
-          + Nouveau budget
+          <span className="sm:hidden">+</span>
+          <span className="hidden sm:inline">+ Nouveau budget</span>
         </button>
       </div>
 

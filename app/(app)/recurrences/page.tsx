@@ -114,7 +114,8 @@ export default function RecurrencesPage() {
             onClick={() => setShowModal(true)}
             className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-3 sm:px-4 py-2.5 rounded-xl transition-colors text-sm"
           >
-            + Nouvelle
+            <span className="sm:hidden">+</span>
+            <span className="hidden sm:inline">+ Nouvelle</span>
           </button>
         </div>
       </div>
