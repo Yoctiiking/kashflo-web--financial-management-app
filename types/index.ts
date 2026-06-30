@@ -53,3 +53,12 @@ export interface UserProfile {
   groupId: string;
   createdAt: Date;
 }
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: Date;
+  createdAt: Date;
+}

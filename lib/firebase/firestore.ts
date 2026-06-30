@@ -27,7 +27,8 @@ import {
   TransactionType,
   BudgetPeriod,
   Recurrence,
-  RecurrenceFrequency
+  RecurrenceFrequency,
+  SavingsGoal
 } from "@/types";
 
 export interface Invite {
@@ -297,6 +298,56 @@ export const updateRecurrenceNextOccurrence = async (
 ) => {
   await updateDoc(doc(db, "groups", groupId, "recurrences", recurrenceId), {
     nextOccurrence: Timestamp.fromDate(nextOccurrence)
+  });
+};
+
+//Savings Goals
+export const getSavingsGoals = async (groupId: string): Promise<SavingsGoal[]> => {
+  const q = query(
+    collection(db, "groups", groupId, "savingsGoals"),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    targetDate: doc.data().targetDate ? (doc.data().targetDate as Timestamp).toDate() : undefined,
+    createdAt: (doc.data().createdAt as Timestamp).toDate()
+  })) as SavingsGoal[];
+};
+
+export const addSavingsGoal = async (
+  groupId: string,
+  data: { name: string; targetAmount: number; currentAmount: number; targetDate?: Date }
+) => {
+  const ref = collection(db, "groups", groupId, "savingsGoals");
+  const { targetDate, ...rest } = data;
+  await addDoc(ref, {
+    ...rest,
+    ...(targetDate !== undefined && { targetDate: Timestamp.fromDate(targetDate) }),
+    createdAt: serverTimestamp()
+  });
+};
+
+export const updateSavingsGoal = async (
+  groupId: string,
+  goalId: string,
+  data: { name: string; targetAmount: number; currentAmount: number; targetDate?: Date }
+) => {
+  const { targetDate, ...rest } = data;
+  await updateDoc(doc(db, "groups", groupId, "savingsGoals", goalId), {
+    ...rest,
+    ...(targetDate !== undefined && { targetDate: Timestamp.fromDate(targetDate) })
+  });
+};
+
+export const deleteSavingsGoal = async (groupId: string, goalId: string) => {
+  await deleteDoc(doc(db, "groups", groupId, "savingsGoals", goalId));
+};
+
+export const addToSavingsGoal = async (groupId: string, goalId: string, amount: number) => {
+  await updateDoc(doc(db, "groups", groupId, "savingsGoals", goalId), {
+    currentAmount: increment(amount)
   });
 };
 
