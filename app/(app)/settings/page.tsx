@@ -12,6 +12,7 @@ import {
 import { getGroup, updateGroupCurrency } from "@/lib/firebase/firestore";
 import { getUserProfile } from "@/lib/firebase/firestore";
 import { useEffect } from "react";
+import FeedbackModal from "@/components/FeedbackModal";
 
 const CURRENCIES = [
     { code: "CAD", label: "Dollar canadien (CAD)" },
@@ -45,6 +46,14 @@ export default function SettingsPage() {
     const [currency, setCurrency] = useState("CAD");
     const [currencyLoading, setCurrencyLoading] = useState(false);
     const [currencySuccess, setCurrencySuccess] = useState(false);
+
+    //Feedback
+    const [feedbackMessage, setFeedbackMessage] = useState("");
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
+    const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+    const [feedbackError, setFeedbackError] = useState("");
+    const [showFeedback, setShowFeedback] = useState(false);
+
 
     // Suppression
     const [deletePassword, setDeletePassword] = useState("");
@@ -249,6 +258,19 @@ export default function SettingsPage() {
                 </div>
                 {currencySuccess && <p className="text-emerald-400 text-sm mt-3">✅ Devise mise à jour</p>}
             </div>
+
+            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                <h3 className="text-white font-semibold mb-1">Nous contacter</h3>
+                <p className="text-gray-500 text-sm mb-4">Une question, un bug, ou une suggestion ?</p>
+                <button
+                    onClick={() => setShowFeedback(true)}
+                    className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors"
+                >
+                    ✉️ Envoyer un message
+                </button>
+            </div>
+
+            {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
 
             {/* Déconnexion */}
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">

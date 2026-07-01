@@ -709,3 +709,17 @@ export const unshareExpenseToPersonal = async (
 
   await batch.commit();
 };
+
+// Feedback
+export const saveFeedback = async (data: {
+  name: string;
+  email: string;
+  message: string;
+  userId?: string;
+}) => {
+  const ref = collection(db, "feedback");
+  await addDoc(ref, {
+    ...data,
+    createdAt: serverTimestamp()
+  });
+};
