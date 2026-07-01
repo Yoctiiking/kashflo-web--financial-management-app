@@ -16,7 +16,8 @@ import {
   setDoc,
   arrayRemove,
   arrayUnion,
-  writeBatch
+  writeBatch,
+  onSnapshot
 } from "firebase/firestore";
 import { db } from "./config";
 import { nanoid } from "nanoid";
@@ -474,6 +475,65 @@ export const deleteSharedBudget = async (budgetId: string) => {
   await deleteDoc(doc(db, "sharedBudgets", budgetId));
 };
 
+export const subscribeToSharedExpenses = (
+  budgetId: string,
+  callback: (expenses: SharedExpense[]) => void
+) => {
+  const q = query(
+    collection(db, "sharedBudgets", budgetId, "expenses"),
+    orderBy("date", "desc"),
+    orderBy("createdAt", "desc")
+  );
+  return onSnapshot(q, 
+    (snapshot) => {
+      const expenses = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          date: data.date ? (data.date as Timestamp).toDate() : new Date(),
+          createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date()
+        };
+      }) as SharedExpense[];
+      callback(expenses);
+    },
+    (error) => {
+      if (error.code !== "permission-denied") {
+        console.error("Erreur listener dépenses:", error);
+      }
+      callback([]);
+    }
+  );
+};
+
+export const subscribeToSharedBudget = (
+  budgetId: string,
+  callback: (budget: SharedBudget | null) => void
+) => {
+  const ref = doc(db, "sharedBudgets", budgetId);
+  return onSnapshot(ref, 
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        callback(null);
+        return;
+      }
+      const data = snapshot.data();
+      callback({
+        id: snapshot.id,
+        ...data,
+        createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date()
+      } as SharedBudget);
+    },
+    (error) => {
+      // Permission refusée = normal si l'utilisateur vient de quitter le budget
+      if (error.code !== "permission-denied") {
+        console.error("Erreur listener budget:", error);
+      }
+      callback(null);
+    }
+  );
+};
+
 // ─── SHARED EXPENSES ───
 
 export const getSharedExpenses = async (budgetId: string): Promise<SharedExpense[]> => {
@@ -493,7 +553,7 @@ export const getSharedExpenses = async (budgetId: string): Promise<SharedExpense
 
 export const addSharedExpense = async (
   budgetId: string,
-  data: { amount: number; label: string; date: Date; addedBy: string }
+  data: { amount: number; label: string; date: Date; addedBy: string; addedByName: string }
 ) => {
   const ref = collection(db, "sharedBudgets", budgetId, "expenses");
   await addDoc(ref, {
@@ -519,12 +579,16 @@ export const createSharedBudgetInvite = async (
   const expiresAt = new Date();
   expiresAt.setMinutes(expiresAt.getMinutes() + expiresInMinutes);
 
+  const budgetDoc = await getDoc(doc(db, "sharedBudgets", budgetId));
+  const budgetName = budgetDoc.exists() ? budgetDoc.data().name : "Budget partagé";
+
   await setDoc(doc(db, "sharedBudgets", budgetId, "invites", code), {
     createdBy,
     createdAt: serverTimestamp(),
     expiresAt: Timestamp.fromDate(expiresAt),
     multipleUse,
-    usedCount: 0
+    usedCount: 0,
+    budgetName
   });
 
   return code;
@@ -540,7 +604,8 @@ export const getSharedBudgetInvite = async (budgetId: string, code: string) => {
     createdBy: data.createdBy,
     expiresAt: (data.expiresAt as Timestamp).toDate(),
     multipleUse: data.multipleUse,
-    usedCount: data.usedCount
+    usedCount: data.usedCount,
+    budgetName: data.budgetName
   };
 };
 

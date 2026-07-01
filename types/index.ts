@@ -80,5 +80,6 @@ export interface SharedExpense {
   label: string;
   date: Date;
   addedBy: string;
+  addedByName: string;
   createdAt: Date;
 }

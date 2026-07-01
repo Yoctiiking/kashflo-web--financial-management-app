@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useParams } from "next/navigation";
 import {
-  getSharedBudgets, getSharedExpenses, addSharedExpense,
+  subscribeToSharedBudget, subscribeToSharedExpenses, addSharedExpense,
   deleteSharedExpense, createSharedBudgetInvite, getUserProfile,
   removeMemberFromSharedBudget,
   leaveSharedBudget
@@ -14,7 +14,6 @@ import { useCurrency } from "@/lib/hooks/useCurrency";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useRouter } from "next/navigation";
-import { EXPENSE_CATEGORIES } from "@/lib/categories";
 
 const EXPIRY_OPTIONS = [
   { label: "1 heure", minutes: 60 },
@@ -32,6 +31,7 @@ export default function SharedBudgetDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
+  const [multipleUse, setMultipleUse] = useState(false);
   const [expiryMinutes, setExpiryMinutes] = useState(1440);
   const [copiedCode, setCopiedCode] = useState(false);
   const { formatCurrency } = useCurrency();
@@ -44,35 +44,38 @@ export default function SharedBudgetDetailPage() {
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
-  const loadData = useCallback(async () => {
-    if (!user) return;
-    try {
-      const [allBudgets, budgetExpenses] = await Promise.all([
-        getSharedBudgets(user.uid),
-        getSharedExpenses(budgetId)
-      ]);
-      const found = allBudgets.find(b => b.id === budgetId) || null;
-      setBudget(found);
-      setExpenses(budgetExpenses);
-
-      if (found) {
-        const names: Record<string, string> = {};
-        await Promise.all(found.members.map(async uid => {
-          const profile = await getUserProfile(uid);
-          names[uid] = profile?.displayName || uid;
-        }));
-        setMemberNames(names);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, budgetId]);
-
+  // Écoute temps réel du budget
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (!budgetId) return;
+    const unsubscribe = subscribeToSharedBudget(budgetId, (data) => {
+      setBudget(data);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [budgetId]);
+
+  // Écoute temps réel des dépenses
+  useEffect(() => {
+    if (!budgetId) return;
+    const unsubscribe = subscribeToSharedExpenses(budgetId, (data) => {
+      setExpenses(data);
+    });
+    return () => unsubscribe();
+  }, [budgetId]);
+
+  // Charge les noms des membres à chaque changement du budget
+  useEffect(() => {
+    if (!budget) return;
+    const loadNames = async () => {
+      const names: Record<string, string> = {};
+      await Promise.all(budget.members.map(async uid => {
+        const profile = await getUserProfile(uid);
+        names[uid] = profile?.displayName || uid;
+      }));
+      setMemberNames(names);
+    };
+    loadNames();
+  }, [budget]);
 
   const handleAddExpense = async () => {
     if (!user || !label || !amount) {
@@ -91,11 +94,11 @@ export default function SharedBudgetDetailPage() {
         amount: parseFloat(amount),
         label,
         date: new Date(year, month - 1, day),
-        addedBy: user.uid
+        addedBy: user.uid,
+        addedByName: user.displayName || "Utilisateur"
       });
       setLabel(""); setAmount(""); setDate(new Date().toISOString().split("T")[0]);
       setShowAddExpense(false);
-      await loadData();
     } catch (err) {
       console.error(err);
       setFormError("Erreur lors de l'ajout");
@@ -106,7 +109,7 @@ export default function SharedBudgetDetailPage() {
 
   const handleInvite = async () => {
     if (!user || !budget) return;
-    const code = await createSharedBudgetInvite(budgetId, user.uid, expiryMinutes, false);
+    const code = await createSharedBudgetInvite(budgetId, user.uid, expiryMinutes, multipleUse);
     const link = `${window.location.origin}/join-budget/${budgetId}--${code}`;
     await navigator.clipboard.writeText(link);
     setCopiedCode(true);
@@ -117,7 +120,7 @@ export default function SharedBudgetDetailPage() {
     if (!confirm("Retirer ce membre du budget ?")) return;
     try {
       await removeMemberFromSharedBudget(budgetId, uid);
-      await loadData();
+      // Plus besoin de loadData() — le listener met à jour automatiquement
     } catch (err) {
       console.error(err);
     }
@@ -242,6 +245,28 @@ export default function SharedBudgetDetailPage() {
                 </button>
               ))}
             </div>
+
+            <div className="flex bg-gray-800 rounded-xl p-1">
+              <button
+                onClick={() => setMultipleUse(false)}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${!multipleUse
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "text-gray-400 hover:text-white"
+                  }`}
+              >
+                🔒 Usage unique
+              </button>
+              <button
+                onClick={() => setMultipleUse(true)}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${multipleUse
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "text-gray-400 hover:text-white"
+                  }`}
+              >
+                ♾️ Usages multiples
+              </button>
+            </div>
+
             <button
               onClick={handleInvite}
               className="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
@@ -316,14 +341,14 @@ export default function SharedBudgetDetailPage() {
                 <div>
                   <p className="text-white text-sm font-medium">{expense.label}</p>
                   <p className="text-gray-500 text-xs">
-                    {memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: fr })}
+                    {expense.addedByName || memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: fr })}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <p className="text-red-400 font-semibold text-sm">{formatCurrency(expense.amount)}</p>
                   {expense.addedBy === user?.uid && (
                     <button
-                      onClick={() => deleteSharedExpense(budgetId, expense.id).then(loadData)}
+                      onClick={() => deleteSharedExpense(budgetId, expense.id)}
                       className="text-gray-600 hover:text-red-400 transition-colors text-sm"
                     >
                       ✕

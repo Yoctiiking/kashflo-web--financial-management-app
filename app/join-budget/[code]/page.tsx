@@ -14,6 +14,7 @@ export default function JoinBudgetPage() {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("loading");
   const [budgetId, setBudgetId] = useState<string | null>(null);
+  const [budgetName, setBudgetName] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -27,6 +28,8 @@ export default function JoinBudgetPage() {
         if (!invite) { setStatus("invalid"); return; }
         if (invite.expiresAt < new Date()) { setStatus("expired"); return; }
         if (!invite.multipleUse && invite.usedCount >= 1) { setStatus("used"); return; }
+
+        setBudgetName(invite.budgetName || "");
         setStatus("valid");
       } catch {
         setStatus("invalid");
@@ -49,13 +52,21 @@ export default function JoinBudgetPage() {
     }
   };
 
-  const states: Record<Status, { icon: string; title: string; message: string; action?: React.ReactNode }> = {
+  const states: Record<Status, { icon: string; title: React.ReactNode; message: string; action?: React.ReactNode }> = {
     loading: { icon: "⏳", title: "Vérification...", message: "On vérifie ton invitation" },
     invalid: { icon: "❌", title: "Lien invalide", message: "Ce lien n'existe pas ou a été supprimé" },
     expired: { icon: "⏰", title: "Lien expiré", message: "Ce lien a expiré" },
     used: { icon: "🔒", title: "Lien déjà utilisé", message: "Ce lien à usage unique a déjà été utilisé" },
     valid: {
-      icon: "👥", title: "Rejoindre le budget partagé", message: user ? "Tu es invité à rejoindre ce budget partagé" : "Connecte-toi pour rejoindre ce budget",
+      icon: "👥",
+      title: budgetName ? (
+        <>
+          Rejoindre le budget
+          <br />
+          <span className="text-emerald-500">{budgetName}</span>
+        </>
+      ) : "Rejoindre le budget partagé",
+      message: user ? "Tu es invité à rejoindre ce budget partagé" : "Connecte-toi pour rejoindre ce budget",
       action: user ? (
         <button onClick={handleJoin} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 rounded-xl transition-colors mt-4">
           Rejoindre
