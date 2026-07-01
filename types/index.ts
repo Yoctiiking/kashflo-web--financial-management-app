@@ -62,3 +62,23 @@ export interface SavingsGoal {
   targetDate?: Date;
   createdAt: Date;
 }
+
+export interface SharedBudget {
+  id: string;
+  name: string;
+  limit: number;
+  period: BudgetPeriod;
+  category: string;
+  createdBy: string;
+  members: string[];
+  createdAt: Date;
+}
+
+export interface SharedExpense {
+  id: string;
+  amount: number;
+  label: string;
+  date: Date;
+  addedBy: string;
+  createdAt: Date;
+}

@@ -28,7 +28,9 @@ import {
   BudgetPeriod,
   Recurrence,
   RecurrenceFrequency,
-  SavingsGoal
+  SavingsGoal,
+  SharedExpense,
+  SharedBudget
 } from "@/types";
 
 export interface Invite {
@@ -431,4 +433,133 @@ export const getGroupInvites = async (groupId: string): Promise<Invite[]> => {
 
 export const deleteInvite = async (groupId: string, code: string) => {
   await deleteDoc(doc(db, "groups", groupId, "invites", code));
+};
+
+// ─── SHARED BUDGETS ───
+
+export const getSharedBudgets = async (userId: string): Promise<SharedBudget[]> => {
+  const q = query(
+    collection(db, "sharedBudgets"),
+    where("members", "array-contains", userId),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    createdAt: (doc.data().createdAt as Timestamp).toDate()
+  })) as SharedBudget[];
+};
+
+export const createSharedBudget = async (
+  data: { name: string; limit: number; period: BudgetPeriod; category: string; createdBy: string }
+) => {
+  const ref = collection(db, "sharedBudgets");
+  const docRef = await addDoc(ref, {
+    ...data,
+    members: [data.createdBy],
+    createdAt: serverTimestamp()
+  });
+  return docRef.id;
+};
+
+export const updateSharedBudget = async (
+  budgetId: string,
+  data: { name: string; limit: number; period: BudgetPeriod; category: string }
+) => {
+  await updateDoc(doc(db, "sharedBudgets", budgetId), data);
+};
+
+export const deleteSharedBudget = async (budgetId: string) => {
+  await deleteDoc(doc(db, "sharedBudgets", budgetId));
+};
+
+// ─── SHARED EXPENSES ───
+
+export const getSharedExpenses = async (budgetId: string): Promise<SharedExpense[]> => {
+  const q = query(
+    collection(db, "sharedBudgets", budgetId, "expenses"),
+    orderBy("date", "desc"),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    date: (doc.data().date as Timestamp).toDate(),
+    createdAt: (doc.data().createdAt as Timestamp).toDate()
+  })) as SharedExpense[];
+};
+
+export const addSharedExpense = async (
+  budgetId: string,
+  data: { amount: number; label: string; date: Date; addedBy: string }
+) => {
+  const ref = collection(db, "sharedBudgets", budgetId, "expenses");
+  await addDoc(ref, {
+    ...data,
+    date: Timestamp.fromDate(data.date),
+    createdAt: serverTimestamp()
+  });
+};
+
+export const deleteSharedExpense = async (budgetId: string, expenseId: string) => {
+  await deleteDoc(doc(db, "sharedBudgets", budgetId, "expenses", expenseId));
+};
+
+// ─── SHARED BUDGET INVITES ───
+
+export const createSharedBudgetInvite = async (
+  budgetId: string,
+  createdBy: string,
+  expiresInMinutes: number,
+  multipleUse: boolean
+): Promise<string> => {
+  const code = nanoid(10);
+  const expiresAt = new Date();
+  expiresAt.setMinutes(expiresAt.getMinutes() + expiresInMinutes);
+
+  await setDoc(doc(db, "sharedBudgets", budgetId, "invites", code), {
+    createdBy,
+    createdAt: serverTimestamp(),
+    expiresAt: Timestamp.fromDate(expiresAt),
+    multipleUse,
+    usedCount: 0
+  });
+
+  return code;
+};
+
+export const getSharedBudgetInvite = async (budgetId: string, code: string) => {
+  const docRef = doc(db, "sharedBudgets", budgetId, "invites", code);
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) return null;
+  const data = docSnap.data();
+  return {
+    code,
+    createdBy: data.createdBy,
+    expiresAt: (data.expiresAt as Timestamp).toDate(),
+    multipleUse: data.multipleUse,
+    usedCount: data.usedCount
+  };
+};
+
+export const useSharedBudgetInvite = async (
+  budgetId: string,
+  code: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> => {
+  const invite = await getSharedBudgetInvite(budgetId, code);
+  if (!invite) return { success: false, error: "Lien invalide" };
+  if (invite.expiresAt < new Date()) return { success: false, error: "Lien expiré" };
+  if (!invite.multipleUse && invite.usedCount >= 1) return { success: false, error: "Lien déjà utilisé" };
+
+  await updateDoc(doc(db, "sharedBudgets", budgetId), {
+    members: arrayUnion(userId)
+  });
+  await updateDoc(doc(db, "sharedBudgets", budgetId, "invites", code), {
+    usedCount: increment(1)
+  });
+
+  return { success: true };
 };

@@ -112,10 +112,9 @@ export default function RecurrencesPage() {
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-3 sm:px-4 py-2.5 rounded-xl transition-colors text-sm"
+            className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors text-sm"
           >
-            <span className="sm:hidden">+</span>
-            <span className="hidden sm:inline">+ Nouvelle</span>
+            + Nouvelle
           </button>
         </div>
       </div>
@@ -184,6 +183,14 @@ export default function RecurrencesPage() {
           </div>
         </div>
       )}
+
+      {/* FAB mobile */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="sm:hidden fixed bottom-24 right-4 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-white text-2xl font-light rounded-full shadow-lg shadow-emerald-500/30 transition-colors z-40 flex items-center justify-center"
+      >
+        +
+      </button>
 
       {showModal && groupId && (
         <AddRecurrenceModal

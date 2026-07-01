@@ -11,6 +11,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
   { href: "/transactions", label: "Transactions", icon: "💸" },
   { href: "/budgets", label: "Budgets", icon: "🎯" },
+  { href: "/shared-budgets", label: "Partagés", icon: "🤝" },
   { href: "/savings", label: "Épargne", icon: "🏦" },
   { href: "/recurrences", label: "Récurrences", icon: "🔄" },
   { href: "/stats", label: "Statistiques", icon: "📈" },
@@ -84,8 +85,8 @@ export default function AppLayout({
                 key={item.href}
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors relative ${isActive
-                    ? "bg-emerald-500/10 text-emerald-400 font-medium"
-                    : "text-gray-400 hover:text-white hover:bg-gray-800"
+                  ? "bg-emerald-500/10 text-emerald-400 font-medium"
+                  : "text-gray-400 hover:text-white hover:bg-gray-800"
                   }`}
               >
                 <span>{item.icon}</span>
