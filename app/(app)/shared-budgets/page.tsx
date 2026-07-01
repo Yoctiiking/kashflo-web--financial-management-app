@@ -65,7 +65,7 @@ export default function SharedBudgetsPage() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
+          className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
         >
           + Nouveau
         </button>
@@ -114,6 +114,14 @@ export default function SharedBudgetsPage() {
           ))}
         </div>
       )}
+
+      {/* FAB mobile */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="sm:hidden fixed bottom-24 right-4 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-white text-2xl font-light rounded-full shadow-lg shadow-emerald-500/30 transition-colors z-40 flex items-center justify-center"
+      >
+        +
+      </button>
 
       {showModal && user && (
         <SharedBudgetModal
