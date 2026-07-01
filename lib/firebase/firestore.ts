@@ -651,3 +651,61 @@ export const leaveSharedBudget = async (budgetId: string, userId: string) => {
     members: arrayRemove(userId)
   });
 };
+
+// Migrate a personal transaction to a shared budget
+export const migrateTransactionToSharedBudget = async (
+  groupId: string,
+  transactionId: string,
+  budgetId: string,
+  transaction: { amount: number; label: string; date: Date; addedByName: string },
+  userId: string
+) => {
+  const batch = writeBatch(db);
+
+  // 1. Supprimer la transaction personnelle
+  batch.delete(doc(db, "groups", groupId, "transactions", transactionId));
+
+  // 2. Créer la dépense partagée
+  const expenseRef = doc(collection(db, "sharedBudgets", budgetId, "expenses"));
+  batch.set(expenseRef, {
+    amount: transaction.amount,
+    label: transaction.label,
+    date: Timestamp.fromDate(transaction.date),
+    addedBy: userId,
+    addedByName: transaction.addedByName,
+    createdAt: serverTimestamp()
+  });
+
+  await batch.commit();
+};
+
+// Unshare a shared expense back to personal transactions
+export const unshareExpenseToPersonal = async (
+  budgetId: string,
+  expenseId: string,
+  expense: { amount: number; label: string; date: Date; addedBy: string }
+) => {
+  // Récupérer le groupId de la personne qui a ajouté la dépense
+  const userProfile = await getUserProfile(expense.addedBy);
+  if (!userProfile) throw new Error("Utilisateur introuvable");
+
+  const batch = writeBatch(db);
+
+  // 1. Supprimer la dépense partagée
+  batch.delete(doc(db, "sharedBudgets", budgetId, "expenses", expenseId));
+
+  // 2. Recréer la transaction personnelle
+  const transactionRef = doc(collection(db, "groups", userProfile.groupId, "transactions"));
+  batch.set(transactionRef, {
+    amount: expense.amount,
+    type: "expense",
+    category: "Autre",
+    label: expense.label,
+    date: Timestamp.fromDate(expense.date),
+    addedBy: expense.addedBy,
+    recurrenceId: null,
+    createdAt: serverTimestamp()
+  });
+
+  await batch.commit();
+};

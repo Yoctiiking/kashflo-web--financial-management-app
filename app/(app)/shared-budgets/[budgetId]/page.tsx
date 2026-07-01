@@ -15,6 +15,9 @@ import { useCurrency } from "@/lib/hooks/useCurrency";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import DeleteExpenseModal from "@/components/DeleteExpenseModal";
+import { unshareExpenseToPersonal } from "@/lib/firebase/firestore";
+import MigrateTransactionModal from "@/components/MigrateTransactionModal";
 
 const EXPIRY_OPTIONS = [
   { label: "1 heure", minutes: 60 },
@@ -29,9 +32,11 @@ export default function SharedBudgetDetailPage() {
   const [budget, setBudget] = useState<SharedBudget | null>(null);
   const [expenses, setExpenses] = useState<SharedExpense[]>([]);
   const [editingExpense, setEditingExpense] = useState<SharedExpense | null>(null);
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [deletingExpense, setDeletingExpense] = useState<SharedExpense | null>(null);
+  const [showMigrateModal, setShowMigrateModal] = useState(false);
   const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [showAddExpense, setShowAddExpense] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [multipleUse, setMultipleUse] = useState(false);
   const [expiryMinutes, setExpiryMinutes] = useState(1440);
@@ -124,6 +129,33 @@ export default function SharedBudgetDetailPage() {
     setAmount(expense.amount.toString());
     setDate(expense.date.toISOString().split("T")[0]);
     setShowAddExpense(true);
+  };
+
+  const handleDeletePermanently = async () => {
+    if (!deletingExpense) return;
+    try {
+      await deleteSharedExpense(budgetId, deletingExpense.id);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingExpense(null);
+    }
+  };
+
+  const handleUnshare = async () => {
+    if (!deletingExpense) return;
+    try {
+      await unshareExpenseToPersonal(budgetId, deletingExpense.id, {
+        amount: deletingExpense.amount,
+        label: deletingExpense.label,
+        date: deletingExpense.date,
+        addedBy: deletingExpense.addedBy
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingExpense(null);
+    }
   };
 
   const handleInvite = async () => {
@@ -300,13 +332,29 @@ export default function SharedBudgetDetailPage() {
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-semibold">Dépenses</h3>
-          <button
-            onClick={() => setShowAddExpense(!showAddExpense)}
-            className="text-emerald-500 text-sm hover:text-emerald-400 transition-colors"
-          >
-            + Ajouter
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowMigrateModal(true)}
+              className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
+            >
+              📥 Depuis mes transactions
+            </button>
+            <button
+              onClick={() => setShowAddExpense(!showAddExpense)}
+              className="text-emerald-500 text-sm hover:text-emerald-400 transition-colors"
+            >
+              + Ajouter
+            </button>
+          </div>
         </div>
+
+        {showMigrateModal && (
+          <MigrateTransactionModal
+            budgetId={budgetId}
+            onClose={() => setShowMigrateModal(false)}
+            onSuccess={() => { }}
+          />
+        )}
 
         {showAddExpense && (
           <div className="mb-4 p-4 bg-gray-800 rounded-xl space-y-3">
@@ -376,7 +424,7 @@ export default function SharedBudgetDetailPage() {
                         ✏️
                       </button>
                       <button
-                        onClick={() => deleteSharedExpense(budgetId, expense.id)}
+                        onClick={() => setDeletingExpense(expense)}
                         className="text-gray-600 hover:text-red-400 transition-colors text-sm"
                       >
                         ✕
@@ -396,6 +444,15 @@ export default function SharedBudgetDetailPage() {
         >
           Quitter ce budget partagé
         </button>
+      )}
+
+      {deletingExpense && (
+        <DeleteExpenseModal
+          expenseLabel={deletingExpense.label}
+          onDeletePermanently={handleDeletePermanently}
+          onUnshare={handleUnshare}
+          onCancel={() => setDeletingExpense(null)}
+        />
       )}
     </div>
   );

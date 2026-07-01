@@ -10,8 +10,38 @@ import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
 
+const MONTHS_FR = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+];
+
+function normalize(str: string) {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+// Détecte un nom de mois (+ année optionnelle) au début de la recherche
+function parseMonthSearch(search: string): { month: number; year: number | null; remainder: string } | null {
+  const normalized = normalize(search);
+  for (let i = 0; i < MONTHS_FR.length; i++) {
+    const monthNorm = normalize(MONTHS_FR[i]);
+    if (normalized === monthNorm) {
+      return { month: i, year: null, remainder: "" };
+    }
+    if (normalized.startsWith(monthNorm + " ")) {
+      const rest = normalized.slice(monthNorm.length + 1).trim();
+      const yearMatch = rest.match(/^(\d{4})\b/);
+      if (yearMatch) {
+        return { month: i, year: parseInt(yearMatch[1]), remainder: rest.slice(yearMatch[0].length).trim() };
+      }
+      return { month: i, year: null, remainder: rest };
+    }
+  }
+  return null;
+}
+
 export default function TransactionsPage() {
   const { user } = useAuth();
+  const now = new Date();
   const [groupId, setGroupId] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,10 +50,25 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-
-  const now = new Date();
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
+  const [pickerYear, setPickerYear] = useState(currentYear);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+
+  // Détecte un nom de mois tapé dans la recherche et navigue automatiquement
+  useEffect(() => {
+    const parsed = parseMonthSearch(search);
+    if (!parsed) return;
+    const targetYear = parsed.year ?? currentYear;
+    const isFuture = targetYear > now.getFullYear() ||
+      (targetYear === now.getFullYear() && parsed.month > now.getMonth());
+    if (isFuture) return;
+    if (parsed.month !== currentMonth || targetYear !== currentYear) {
+      setCurrentMonth(parsed.month);
+      setCurrentYear(targetYear);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const handleExportCSV = () => {
     const monthLabel = format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: fr });
@@ -37,6 +82,11 @@ export default function TransactionsPage() {
     setShowExportMenu(false);
   };
 
+  const openMonthPicker = () => {
+    setPickerYear(currentYear);
+    setShowMonthPicker(true);
+  };
+
   const goToPreviousMonth = () => {
     if (currentMonth === 0) {
       setCurrentMonth(11);
@@ -48,7 +98,7 @@ export default function TransactionsPage() {
 
   const goToNextMonth = () => {
     const isCurrentMonth = currentYear === now.getFullYear() && currentMonth === now.getMonth();
-    if (isCurrentMonth) return; // pas de navigation dans le futur
+    if (isCurrentMonth) return;
     if (currentMonth === 11) {
       setCurrentMonth(0);
       setCurrentYear(y => y + 1);
@@ -89,11 +139,15 @@ export default function TransactionsPage() {
 
   const { formatCurrency } = useCurrency();
 
+  // Si la recherche commence par un nom de mois, on filtre avec le reste seulement
+  const parsedSearch = parseMonthSearch(search);
+  const effectiveSearch = parsedSearch !== null ? parsedSearch.remainder : search;
+
   const filtered = transactions.filter(t => {
     const matchesFilter = filter === "all" ? true : t.type === filter;
-    const matchesSearch = search === "" ||
-      t.label.toLowerCase().includes(search.toLowerCase()) ||
-      t.category.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = effectiveSearch === "" ||
+      t.label.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
+      t.category.toLowerCase().includes(effectiveSearch.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -111,23 +165,90 @@ export default function TransactionsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-2xl font-bold text-white">Transactions</h2>
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-3 mt-2 relative">
             <button
               onClick={goToPreviousMonth}
               className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Mois précédent"
             >
-              ←
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </button>
-            <p className="text-gray-400 text-sm capitalize">
+
+            <button
+              onClick={openMonthPicker}
+              className="text-gray-400 hover:text-white text-sm capitalize transition-colors"
+            >
               {format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: fr })}
-            </p>
+            </button>
+
             <button
               onClick={goToNextMonth}
               disabled={currentYear === now.getFullYear() && currentMonth === now.getMonth()}
               className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              aria-label="Mois suivant"
             >
-              →
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </button>
+
+            {showMonthPicker && (
+              <>
+                {/* Overlay invisible pour fermer au clic extérieur */}
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowMonthPicker(false)}
+                />
+
+                <div className="absolute top-full left-0 mt-2 bg-gray-800 border border-gray-700 rounded-xl p-4 z-20 w-64">
+                  <div className="flex items-center justify-between mb-3">
+                    <button
+                      onClick={() => setPickerYear(y => y - 1)}
+                      className="text-gray-400 hover:text-white transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </button>
+                    <span className="text-white text-sm font-medium">{pickerYear}</span>
+                    <button
+                      onClick={() => setPickerYear(y => y + 1)}
+                      disabled={pickerYear >= now.getFullYear()}
+                      className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {MONTHS_FR.map((m, i) => {
+                      const isFuture = pickerYear === now.getFullYear() && i > now.getMonth();
+                      const isSelected = pickerYear === currentYear && i === currentMonth;
+                      return (
+                        <button
+                          key={m}
+                          disabled={isFuture}
+                          onClick={() => {
+                            setCurrentMonth(i);
+                            setCurrentYear(pickerYear);
+                            setShowMonthPicker(false);
+                          }}
+                          className={`py-2 rounded-lg text-xs font-medium capitalize transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isSelected
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "text-gray-300 hover:bg-gray-700"
+                            }`}
+                        >
+                          {m.slice(0, 3)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
@@ -138,7 +259,7 @@ export default function TransactionsPage() {
             aria-label="Rechercher"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
             </svg>
           </button>
 
@@ -149,7 +270,7 @@ export default function TransactionsPage() {
               className="bg-gray-800 hover:bg-gray-700 text-white font-medium p-2.5 sm:px-4 sm:py-2.5 rounded-xl transition-colors text-sm flex items-center gap-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
               </svg>
               <span className="hidden sm:inline">Exporter</span>
             </button>
@@ -203,9 +324,9 @@ export default function TransactionsPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher..."
+            placeholder="Nom, catégorie, ou mois (ex: juin)"
             autoFocus={showSearch}
-            className="w-full sm:w-48 bg-gray-800 border border-gray-700 rounded-xl pl-4 pr-9 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full sm:w-56 bg-gray-800 border border-gray-700 rounded-xl pl-4 pr-9 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
           />
           {search && (
             <button
