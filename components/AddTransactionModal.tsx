@@ -58,10 +58,10 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+      <div className="bg-gray-900 border border-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-0 sm:mx-4 max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h2 className="text-white font-semibold text-lg">Nouvelle transaction</h2>
           <button
             onClick={onClose}
@@ -71,7 +71,7 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
           {/* Type toggle */}
           <div className="flex bg-gray-800 rounded-xl p-1">
             <button
@@ -144,7 +144,7 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
             />
           </div>
 

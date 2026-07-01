@@ -18,6 +18,9 @@ const navItems = [
   { href: "/settings", label: "Paramètres", icon: "⚙️" },
 ];
 
+// Les 4 onglets principaux affichés directement dans la bottom nav
+const primaryMobileItems = ["/dashboard", "/transactions", "/budgets", "/recurrences"];
+
 export default function AppLayout({
   children,
 }: {
@@ -27,6 +30,7 @@ export default function AppLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [upcomingCount, setUpcomingCount] = useState(0);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -55,6 +59,10 @@ export default function AppLayout({
     loadUpcoming();
   }, [user]);
 
+  useEffect(() => {
+    setShowMoreMenu(false);
+  }, [pathname]);
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -62,6 +70,10 @@ export default function AppLayout({
       </div>
     );
   }
+
+  const mobilePrimary = navItems.filter(item => primaryMobileItems.includes(item.href));
+  const mobileMore = navItems.filter(item => !primaryMobileItems.includes(item.href));
+  const isMoreActive = mobileMore.some(item => item.href === pathname);
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
@@ -117,9 +129,49 @@ export default function AppLayout({
         {children}
       </main>
 
+      {/* Menu "Plus" — mobile uniquement */}
+      {showMoreMenu && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-6"
+          onClick={() => setShowMoreMenu(false)}
+        >
+          <div
+            className="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {mobileMore.map(item => {
+              const isActive = pathname === item.href;
+              const showBadge = item.href === "/recurrences" && upcomingCount > 0;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-4 px-6 py-4 text-base border-b border-gray-800 last:border-0 transition-colors ${isActive ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300"
+                    }`}
+                >
+                  <span className="text-xl">{item.icon}</span>
+                  {item.label}
+                  {showBadge && (
+                    <span className="ml-auto bg-amber-500 text-gray-950 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                      {upcomingCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+            <button
+              onClick={() => logoutUser().then(() => router.push("/login"))}
+              className="w-full flex items-center gap-4 px-6 py-4 text-base text-red-400 border-t border-gray-800"
+            >
+              🚪 Déconnexion
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Bottom nav — mobile uniquement */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex z-50">
-        {navItems.map((item) => {
+        {mobilePrimary.map((item) => {
           const isActive = pathname === item.href;
           const showBadge = item.href === "/recurrences" && upcomingCount > 0;
           return (
@@ -138,11 +190,19 @@ export default function AppLayout({
                 )}
               </span>
               <span className="truncate w-full text-center px-0.5">
-                {item.label === "Récurrences" ? "Récurr." : item.label === "Statistiques" ? "Stats" : item.label}
+                {item.label === "Récurrences" ? "Récurr." : item.label}
               </span>
             </Link>
           );
         })}
+        <button
+          onClick={() => setShowMoreMenu(!showMoreMenu)}
+          className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors ${isMoreActive || showMoreMenu ? "text-emerald-400" : "text-gray-500"
+            }`}
+        >
+          <span className="text-lg leading-none">☰</span>
+          <span>Plus</span>
+        </button>
       </nav>
     </div>
   );

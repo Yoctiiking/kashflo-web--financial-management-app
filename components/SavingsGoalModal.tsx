@@ -66,16 +66,16 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-md mx-4">
-        <div className="flex items-center justify-between mb-6">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+      <div className="bg-gray-900 border border-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-0 sm:mx-4 max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h2 className="text-white font-semibold text-lg">
             {isEditing ? "Modifier l'objectif" : "Nouvel objectif d'épargne"}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
         </div>
 
-        <div className="space-y-4">
+        <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Nom de l'objectif</label>
             <input
@@ -119,7 +119,7 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
               type="date"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
             />
           </div>
 

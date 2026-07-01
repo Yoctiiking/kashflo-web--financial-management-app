@@ -169,7 +169,7 @@ export default function SettingsPage() {
             {/* Nom */}
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                 <h3 className="text-white font-semibold mb-4">Nom d'affichage</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                     <input
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
@@ -179,7 +179,7 @@ export default function SettingsPage() {
                     <button
                         onClick={handleUpdateName}
                         disabled={nameLoading}
-                        className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-medium px-4 py-3 rounded-xl transition-colors"
+                        className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-medium px-5 py-3 rounded-xl transition-colors whitespace-nowrap"
                     >
                         {nameLoading ? "..." : "Sauvegarder"}
                     </button>
