@@ -5,12 +5,15 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { useParams } from "next/navigation";
 import {
   getSharedBudgets, getSharedExpenses, addSharedExpense,
-  deleteSharedExpense, createSharedBudgetInvite, getUserProfile
+  deleteSharedExpense, createSharedBudgetInvite, getUserProfile,
+  removeMemberFromSharedBudget,
+  leaveSharedBudget
 } from "@/lib/firebase/firestore";
 import { SharedBudget, SharedExpense } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useRouter } from "next/navigation";
 import { EXPENSE_CATEGORIES } from "@/lib/categories";
 
 const EXPIRY_OPTIONS = [
@@ -21,6 +24,7 @@ const EXPIRY_OPTIONS = [
 
 export default function SharedBudgetDetailPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const { budgetId } = useParams<{ budgetId: string }>();
   const [budget, setBudget] = useState<SharedBudget | null>(null);
   const [expenses, setExpenses] = useState<SharedExpense[]>([]);
@@ -109,6 +113,27 @@ export default function SharedBudgetDetailPage() {
     setTimeout(() => setCopiedCode(false), 3000);
   };
 
+  const handleRemoveMember = async (uid: string) => {
+    if (!confirm("Retirer ce membre du budget ?")) return;
+    try {
+      await removeMemberFromSharedBudget(budgetId, uid);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleLeave = async () => {
+    if (!user) return;
+    if (!confirm("Quitter ce budget partagé ?")) return;
+    try {
+      await leaveSharedBudget(budgetId, user.uid);
+      router.push("/shared-budgets");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
   const percentage = budget ? Math.min((totalSpent / budget.limit) * 100, 100) : 0;
   const isOver = budget ? totalSpent > budget.limit : false;
@@ -177,16 +202,26 @@ export default function SharedBudgetDetailPage() {
         </div>
         <div className="space-y-2">
           {budget.members.map(uid => (
-            <div key={uid} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-semibold">
-                {(memberNames[uid] || uid).charAt(0).toUpperCase()}
+            <div key={uid} className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-semibold">
+                  {(memberNames[uid] || uid).charAt(0).toUpperCase()}
+                </div>
+                <span className="text-gray-300 text-sm">
+                  {memberNames[uid] || uid}
+                  {uid === budget.createdBy && (
+                    <span className="ml-2 text-xs text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Admin</span>
+                  )}
+                </span>
               </div>
-              <span className="text-gray-300 text-sm">
-                {memberNames[uid] || uid}
-                {uid === budget.createdBy && (
-                  <span className="ml-2 text-xs text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Admin</span>
-                )}
-              </span>
+              {isAdmin && uid !== budget.createdBy && uid !== user?.uid && (
+                <button
+                  onClick={() => handleRemoveMember(uid)}
+                  className="text-gray-600 hover:text-red-400 transition-colors text-sm"
+                >
+                  Retirer
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -198,11 +233,10 @@ export default function SharedBudgetDetailPage() {
                 <button
                   key={opt.minutes}
                   onClick={() => setExpiryMinutes(opt.minutes)}
-                  className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                    expiryMinutes === opt.minutes
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "bg-gray-800 text-gray-400 border border-transparent"
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${expiryMinutes === opt.minutes
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                    : "bg-gray-800 text-gray-400 border border-transparent"
+                    }`}
                 >
                   {opt.label}
                 </button>
@@ -301,6 +335,14 @@ export default function SharedBudgetDetailPage() {
           </div>
         )}
       </div>
+      {!isAdmin && (
+        <button
+          onClick={handleLeave}
+          className="w-full mt-6 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium py-3 rounded-xl transition-colors border border-red-500/20"
+        >
+          Quitter ce budget partagé
+        </button>
+      )}
     </div>
   );
 }

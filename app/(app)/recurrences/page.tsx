@@ -141,39 +141,37 @@ export default function RecurrencesPage() {
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
           <div className="divide-y divide-gray-800">
             {recurrences.map(r => (
-              <div key={r.id} className="flex items-center justify-between p-4 gap-2">
-                <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-                  {/* Toggle actif/inactif */}
+              <div key={r.id} className="p-4 hover:bg-gray-800/50 transition-colors">
+                {/* Ligne principale : toggle + icône + label + montant */}
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleToggle(r)}
-                    className={`w-10 h-6 rounded-full transition-colors relative ${r.isActive ? "bg-emerald-500" : "bg-gray-700"
-                      }`}
+                    className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${r.isActive ? "bg-emerald-500" : "bg-gray-700"}`}
                   >
-                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${r.isActive ? "left-5" : "left-1"
-                      }`} />
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${r.isActive ? "left-5" : "left-1"}`} />
                   </button>
 
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
-                    }`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"}`}>
                     {r.type === "income" ? "💰" : "💸"}
                   </div>
 
-                  <div className="min-w-0">
-                    <p className={`text-sm font-medium truncate ${r.isActive ? "text-white" : "text-gray-500"}`}>
-                      {r.label}
-                    </p>
-                    <p className="text-gray-500 text-xs mt-0.5 truncate">
-                      {r.category} · {getFrequencyLabel(r)} · prochain: {format(r.nextOccurrence, "d MMM", { locale: fr })}                    </p>
-                  </div>
+                  <p className={`flex-1 text-sm font-medium truncate min-w-0 ${r.isActive ? "text-white" : "text-gray-500"}`}>
+                    {r.label}
+                  </p>
+
+                  <p className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
+                    {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                  <p className={`font-semibold text-sm ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
-                    {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
+                {/* Ligne secondaire : meta + bouton supprimer */}
+                <div className="flex items-center justify-between mt-1.5 pl-[6.5rem]">
+                  <p className="text-gray-500 text-xs truncate mr-2">
+                    {r.category} · {getFrequencyLabel(r)} · prochain: {format(r.nextOccurrence, "d MMM", { locale: fr })}
                   </p>
                   <button
                     onClick={() => handleDelete(r.id)}
-                    className="text-gray-600 hover:text-red-400 transition-colors"
+                    className="text-gray-600 hover:text-red-400 transition-colors shrink-0 text-sm"
                   >
                     ✕
                   </button>

@@ -563,3 +563,15 @@ export const useSharedBudgetInvite = async (
 
   return { success: true };
 };
+
+export const removeMemberFromSharedBudget = async (budgetId: string, userId: string) => {
+  await updateDoc(doc(db, "sharedBudgets", budgetId), {
+    members: arrayRemove(userId)
+  });
+};
+
+export const leaveSharedBudget = async (budgetId: string, userId: string) => {
+  await updateDoc(doc(db, "sharedBudgets", budgetId), {
+    members: arrayRemove(userId)
+  });
+};
