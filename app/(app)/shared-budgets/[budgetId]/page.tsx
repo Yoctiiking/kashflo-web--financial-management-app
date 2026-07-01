@@ -7,7 +7,8 @@ import {
   subscribeToSharedBudget, subscribeToSharedExpenses, addSharedExpense,
   deleteSharedExpense, createSharedBudgetInvite, getUserProfile,
   removeMemberFromSharedBudget,
-  leaveSharedBudget
+  leaveSharedBudget,
+  updateSharedExpense
 } from "@/lib/firebase/firestore";
 import { SharedBudget, SharedExpense } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
@@ -27,6 +28,7 @@ export default function SharedBudgetDetailPage() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const [budget, setBudget] = useState<SharedBudget | null>(null);
   const [expenses, setExpenses] = useState<SharedExpense[]>([]);
+  const [editingExpense, setEditingExpense] = useState<SharedExpense | null>(null);
   const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showAddExpense, setShowAddExpense] = useState(false);
@@ -77,7 +79,7 @@ export default function SharedBudgetDetailPage() {
     loadNames();
   }, [budget]);
 
-  const handleAddExpense = async () => {
+  const handleSubmitExpense = async () => {
     if (!user || !label || !amount) {
       setFormError("Tous les champs sont obligatoires");
       return;
@@ -90,21 +92,38 @@ export default function SharedBudgetDetailPage() {
     setFormError("");
     try {
       const [year, month, day] = date.split("-").map(Number);
-      await addSharedExpense(budgetId, {
-        amount: parseFloat(amount),
-        label,
-        date: new Date(year, month - 1, day),
-        addedBy: user.uid,
-        addedByName: user.displayName || "Utilisateur"
-      });
+      if (editingExpense) {
+        await updateSharedExpense(budgetId, editingExpense.id, {
+          amount: parseFloat(amount),
+          label,
+          date: new Date(year, month - 1, day)
+        });
+      } else {
+        await addSharedExpense(budgetId, {
+          amount: parseFloat(amount),
+          label,
+          date: new Date(year, month - 1, day),
+          addedBy: user.uid,
+          addedByName: user.displayName || "Utilisateur"
+        });
+      }
       setLabel(""); setAmount(""); setDate(new Date().toISOString().split("T")[0]);
       setShowAddExpense(false);
+      setEditingExpense(null);
     } catch (err) {
       console.error(err);
-      setFormError("Erreur lors de l'ajout");
+      setFormError("Erreur lors de l'enregistrement");
     } finally {
       setFormLoading(false);
     }
+  };
+
+  const startEditExpense = (expense: SharedExpense) => {
+    setEditingExpense(expense);
+    setLabel(expense.label);
+    setAmount(expense.amount.toString());
+    setDate(expense.date.toISOString().split("T")[0]);
+    setShowAddExpense(true);
   };
 
   const handleInvite = async () => {
@@ -250,8 +269,8 @@ export default function SharedBudgetDetailPage() {
               <button
                 onClick={() => setMultipleUse(false)}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${!multipleUse
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "text-gray-400 hover:text-white"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "text-gray-400 hover:text-white"
                   }`}
               >
                 🔒 Usage unique
@@ -259,8 +278,8 @@ export default function SharedBudgetDetailPage() {
               <button
                 onClick={() => setMultipleUse(true)}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${multipleUse
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "text-gray-400 hover:text-white"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "text-gray-400 hover:text-white"
                   }`}
               >
                 ♾️ Usages multiples
@@ -302,6 +321,8 @@ export default function SharedBudgetDetailPage() {
               <input
                 type="number"
                 value={amount}
+                min="0"
+                step="0.01"
                 onChange={e => setAmount(e.target.value)}
                 placeholder="Montant"
                 className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
@@ -316,14 +337,14 @@ export default function SharedBudgetDetailPage() {
             {formError && <p className="text-red-400 text-xs">{formError}</p>}
             <div className="flex gap-2">
               <button
-                onClick={handleAddExpense}
+                onClick={handleSubmitExpense}
                 disabled={formLoading}
                 className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
               >
-                {formLoading ? "..." : "Ajouter"}
+                {formLoading ? "..." : editingExpense ? "Modifier" : "Ajouter"}
               </button>
               <button
-                onClick={() => setShowAddExpense(false)}
+                onClick={() => { setShowAddExpense(false); setEditingExpense(null); setLabel(""); setAmount(""); }}
                 className="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-sm py-2.5 rounded-xl transition-colors"
               >
                 Annuler
@@ -347,12 +368,20 @@ export default function SharedBudgetDetailPage() {
                 <div className="flex items-center gap-3">
                   <p className="text-red-400 font-semibold text-sm">{formatCurrency(expense.amount)}</p>
                   {expense.addedBy === user?.uid && (
-                    <button
-                      onClick={() => deleteSharedExpense(budgetId, expense.id)}
-                      className="text-gray-600 hover:text-red-400 transition-colors text-sm"
-                    >
-                      ✕
-                    </button>
+                    <>
+                      <button
+                        onClick={() => startEditExpense(expense)}
+                        className="text-gray-600 hover:text-emerald-400 transition-colors text-sm"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => deleteSharedExpense(budgetId, expense.id)}
+                        className="text-gray-600 hover:text-red-400 transition-colors text-sm"
+                      >
+                        ✕
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

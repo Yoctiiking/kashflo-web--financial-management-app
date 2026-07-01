@@ -563,6 +563,17 @@ export const addSharedExpense = async (
   });
 };
 
+export const updateSharedExpense = async (
+  budgetId: string,
+  expenseId: string,
+  data: { amount: number; label: string; date: Date }
+) => {
+  await updateDoc(doc(db, "sharedBudgets", budgetId, "expenses", expenseId), {
+    ...data,
+    date: Timestamp.fromDate(data.date)
+  });
+};
+
 export const deleteSharedExpense = async (budgetId: string, expenseId: string) => {
   await deleteDoc(doc(db, "sharedBudgets", budgetId, "expenses", expenseId));
 };
