@@ -28,3 +28,22 @@ body {
 .recharts-wrapper :focus {
   outline: none;
 }
+
+/* Style cohérent pour tous les inputs date, y compris sur iOS */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  font-size: 14px;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  font-size: 14px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  filter: invert(0.6);
+}
