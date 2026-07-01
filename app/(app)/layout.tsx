@@ -18,7 +18,6 @@ const navItems = [
   { href: "/settings", label: "Paramètres", icon: "⚙️" },
 ];
 
-// Les 4 onglets principaux affichés directement dans la bottom nav
 const primaryMobileItems = ["/dashboard", "/transactions", "/budgets", "/recurrences"];
 
 export default function AppLayout({
@@ -33,13 +32,18 @@ export default function AppLayout({
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.push("/login");
+      return;
+    }
+    if (!user.emailVerified) {
+      router.push("/verify-email");
     }
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.emailVerified) return;
     const loadUpcoming = async () => {
       try {
         const profile = await getUserProfile(user.uid);
@@ -63,7 +67,7 @@ export default function AppLayout({
     setShowMoreMenu(false);
   }, [pathname]);
 
-  if (loading || !user) {
+  if (loading || !user || !user.emailVerified) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />

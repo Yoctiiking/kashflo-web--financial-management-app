@@ -4,6 +4,7 @@ import {
   deleteUser,
   EmailAuthProvider,
   reauthenticateWithCredential,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
@@ -41,6 +42,9 @@ export const registerUser = async (
     createdAt: serverTimestamp()
   });
 
+  // Envoie l'email de vérification
+  await sendEmailVerification(user);
+
   return user;
 };
 
@@ -51,6 +55,12 @@ export const loginUser = async (email: string, password: string) => {
 
 export const logoutUser = async () => {
   await signOut(auth);
+};
+
+export const resendVerificationEmail = async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+  await sendEmailVerification(user);
 };
 
 export const updateDisplayName = async (displayName: string) => {
@@ -67,7 +77,6 @@ export const updateUserPassword = async (
   const user = auth.currentUser;
   if (!user || !user.email) return;
 
-  // Réauthentification obligatoire avant de changer le mot de passe
   const credential = EmailAuthProvider.credential(user.email, currentPassword);
   await reauthenticateWithCredential(user, credential);
   await updatePassword(user, newPassword);
@@ -77,13 +86,10 @@ export const deleteAccount = async (currentPassword: string, groupId: string) =>
   const user = auth.currentUser;
   if (!user || !user.email) return;
 
-  // Réauthentification obligatoire avant suppression
   const credential = EmailAuthProvider.credential(user.email, currentPassword);
   await reauthenticateWithCredential(user, credential);
 
-  // Supprime les données Firestore
   await deleteDoc(doc(db, "users", user.uid));
 
-  // Supprime le compte Auth
   await deleteUser(user);
 };
