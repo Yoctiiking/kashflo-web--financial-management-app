@@ -95,7 +95,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
         </div>
 
         {/* Contenu scrollable */}
-        <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
+        <div className="overflow-y-auto flex-1 px-6 py-8 space-y-4">
           {step === 1 && (
             <>
               {/* Type */}

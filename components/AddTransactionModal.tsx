@@ -71,7 +71,7 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
+        <div className="overflow-y-auto flex-1 px-6 py-8 space-y-4">
           {/* Type toggle */}
           <div className="flex bg-gray-800 rounded-xl p-1">
             <button

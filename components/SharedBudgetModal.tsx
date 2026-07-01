@@ -63,7 +63,7 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
+        <div className="overflow-y-auto flex-1 px-6 py-8 space-y-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Nom du budget</label>
             <input
