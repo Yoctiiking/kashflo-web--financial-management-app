@@ -10,7 +10,7 @@ import {
   updatePassword,
   updateProfile
 } from "firebase/auth";
-import { doc, setDoc, serverTimestamp, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, updateDoc, deleteDoc, arrayRemove, collection, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "./config";
 
 export const registerUser = async (
@@ -86,10 +86,60 @@ export const deleteAccount = async (currentPassword: string, groupId: string) =>
   const user = auth.currentUser;
   if (!user || !user.email) return;
 
+  // Réauthentification obligatoire avant suppression
   const credential = EmailAuthProvider.credential(user.email, currentPassword);
   await reauthenticateWithCredential(user, credential);
 
+  // 1. Nettoyage du groupe personnel
+  const groupDoc = await getDoc(doc(db, "groups", groupId));
+
+  if (groupDoc.exists()) {
+    const groupData = groupDoc.data();
+    const isOnlyMember = groupData.members.length <= 1;
+
+    if (isOnlyMember) {
+      const collections = ["transactions", "budgets", "recurrences", "savingsGoals", "invites"];
+      for (const col of collections) {
+        const snapshot = await getDocs(collection(db, "groups", groupId, col));
+        await Promise.all(snapshot.docs.map(d => deleteDoc(d.ref)));
+      }
+      await deleteDoc(doc(db, "groups", groupId));
+    } else {
+      await updateDoc(doc(db, "groups", groupId), {
+        members: arrayRemove(user.uid)
+      });
+    }
+  }
+
+  // 2. Nettoyage des budgets partagés dont l'utilisateur est membre
+  const sharedBudgetsQuery = query(
+    collection(db, "sharedBudgets"),
+    where("members", "array-contains", user.uid)
+  );
+  const sharedBudgetsSnapshot = await getDocs(sharedBudgetsQuery);
+
+  for (const budgetDoc of sharedBudgetsSnapshot.docs) {
+    const budgetData = budgetDoc.data();
+    if (budgetData.createdBy === user.uid) {
+      // L'utilisateur est admin — supprime tout le budget partagé
+      const expensesSnapshot = await getDocs(collection(db, "sharedBudgets", budgetDoc.id, "expenses"));
+      await Promise.all(expensesSnapshot.docs.map(d => deleteDoc(d.ref)));
+
+      const invitesSnapshot = await getDocs(collection(db, "sharedBudgets", budgetDoc.id, "invites"));
+      await Promise.all(invitesSnapshot.docs.map(d => deleteDoc(d.ref)));
+
+      await deleteDoc(budgetDoc.ref);
+    } else {
+      // Simple membre — le retire juste du budget
+      await updateDoc(budgetDoc.ref, {
+        members: arrayRemove(user.uid)
+      });
+    }
+  }
+
+  // 3. Supprime le document utilisateur
   await deleteDoc(doc(db, "users", user.uid));
 
+  // 4. Supprime le compte Auth
   await deleteUser(user);
 };

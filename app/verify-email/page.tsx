@@ -1,16 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useRouter } from "next/navigation";
 import { resendVerificationEmail, logoutUser } from "@/lib/firebase/auth";
+import { auth } from "@/lib/firebase/config";
 
 export default function VerifyEmailPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-  const [checking, setChecking] = useState(false);
+
+  // Vérifie automatiquement toutes les 3 secondes si l'email a été confirmé
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(async () => {
+      try {
+        await user.reload();
+        if (auth.currentUser?.emailVerified) {
+          clearInterval(interval);
+          router.push("/dashboard");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [user, router]);
 
   const handleResend = async () => {
     setSending(true);
@@ -25,20 +44,6 @@ export default function VerifyEmailPage() {
     }
   };
 
-  const handleCheckVerification = async () => {
-    setChecking(true);
-    try {
-      await user?.reload();
-      if (user?.emailVerified) {
-        router.push("/dashboard");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setChecking(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-6">
       <div className="w-full max-w-md">
@@ -50,16 +55,13 @@ export default function VerifyEmailPage() {
           <div className="text-4xl mb-4">📧</div>
           <h2 className="text-white font-semibold text-xl mb-2">Vérifie ton email</h2>
           <p className="text-gray-400 text-sm mb-6">
-            On a envoyé un lien de confirmation à <strong className="text-white">{user?.email}</strong>. Clique sur le lien pour activer ton compte.
+            On a envoyé un lien de confirmation à <strong className="text-white">{user?.email}</strong>. Clique sur le lien dans l'email — tu seras redirigé automatiquement ici.
           </p>
 
-          <button
-            onClick={handleCheckVerification}
-            disabled={checking}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-colors mb-3"
-          >
-            {checking ? "Vérification..." : "J'ai vérifié mon email"}
-          </button>
+          <div className="flex items-center justify-center gap-2 mb-6 text-gray-500 text-sm">
+            <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            En attente de vérification...
+          </div>
 
           <button
             onClick={handleResend}
