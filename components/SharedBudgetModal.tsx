@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createSharedBudget, updateSharedBudget } from "@/lib/firebase/firestore";
 import { SharedBudget, BudgetPeriod } from "@/types";
 import { EXPENSE_CATEGORIES } from "@/lib/categories";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 interface Props {
   userId: string;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }: Props) {
+  const { symbol } = useCurrency();
   const [name, setName] = useState(budget?.name || "");
   const [category, setCategory] = useState(budget?.category || "");
   const [limit, setLimit] = useState(budget?.limit.toString() || "");
@@ -90,7 +92,7 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Limite ($)</label>
+            <label className="block text-sm text-gray-400 mb-1.5">Limite ({symbol})</label>
             <input
               type="number"
               value={limit}

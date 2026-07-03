@@ -4,6 +4,7 @@ import { useState } from "react";
 import { addRecurrence } from "@/lib/firebase/firestore";
 import { TransactionType, RecurrenceFrequency } from "@/types";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/categories";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 interface Props {
   groupId: string;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Props) {
+  const { symbol } = useCurrency();
   const [step, setStep] = useState<1 | 2>(1);
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
@@ -118,7 +120,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
 
               {/* Montant */}
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Montant ($)</label>
+                <label className="block text-sm text-gray-400 mb-1.5">Montant ({symbol})</label>
                 <input
                   type="number"
                   value={amount}

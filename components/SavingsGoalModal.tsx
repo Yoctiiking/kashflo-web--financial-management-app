@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { addSavingsGoal, updateSavingsGoal } from "@/lib/firebase/firestore";
 import { SavingsGoal } from "@/types";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 interface Props {
   groupId: string;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: Props) {
+  const { symbol } = useCurrency();
   const [name, setName] = useState(goal?.name || "");
   const [targetAmount, setTargetAmount] = useState(goal?.targetAmount.toString() || "");
   const [currentAmount, setCurrentAmount] = useState(goal?.currentAmount.toString() || "0");
@@ -88,7 +90,7 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Montant cible ($)</label>
+            <label className="block text-sm text-gray-400 mb-1.5">Montant cible ({symbol})</label>
             <input
               type="number"
               value={targetAmount}
@@ -101,7 +103,7 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Montant déjà épargné ($)</label>
+            <label className="block text-sm text-gray-400 mb-1.5">Montant déjà épargné ({symbol})</label>
             <input
               type="number"
               value={currentAmount}

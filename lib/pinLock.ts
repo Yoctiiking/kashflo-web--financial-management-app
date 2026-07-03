@@ -1,6 +1,6 @@
 const PIN_KEY = "kashflo_pin_data";
 const LAST_ACTIVE_KEY = "kashflo_last_active";
-export const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes d'inactivité
+export const LOCK_TIMEOUT_MS = 0.1 * 60 * 1000; // 5 minutes d'inactivité
 
 async function hashPin(pin: string, salt: string): Promise<string> {
   const enc = new TextEncoder();

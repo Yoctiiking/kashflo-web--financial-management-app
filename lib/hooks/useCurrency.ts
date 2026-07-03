@@ -3,10 +3,18 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { getUserProfile, getGroup } from "@/lib/firebase/firestore";
 import { convertFromBase } from "@/lib/currencyConverter";
 
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  CAD: "$ CA", USD: "$ US", EUR: "€", GBP: "£", CHF: "CHF", XOF: "FCFA"
+};
+
+export function getCurrencySymbol(currency: string): string {
+  return CURRENCY_SYMBOLS[currency] || currency;
+}
+
 export function useCurrency() {
   const { user } = useAuth();
   const [currency, setCurrency] = useState("CAD");
-  const [rate, setRate] = useState(1); // taux CAD → devise actuelle
+  const [rate, setRate] = useState(1);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -34,11 +42,10 @@ export function useCurrency() {
     load();
   }, [user]);
 
-  // amount est toujours en CAD (devise pivot stockée en base)
   const formatCurrency = useCallback((amount: number) => {
     const converted = amount * rate;
     return new Intl.NumberFormat("fr-CA", { style: "currency", currency }).format(converted);
   }, [currency, rate]);
 
-  return { currency, formatCurrency, ready };
+  return { currency, formatCurrency, ready, symbol: getCurrencySymbol(currency) };
 }

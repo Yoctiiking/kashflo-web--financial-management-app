@@ -47,23 +47,23 @@ export default function PinSetupModal({ onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-sm p-6 text-center">
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md p-8 text-center">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white font-semibold text-lg">
+          <h2 className="text-white font-semibold text-xl">
             {step === "enter" ? "Créer un code" : "Confirmer le code"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl">✕</button>
         </div>
 
-        <p className="text-gray-400 text-sm mb-6">
+        <p className="text-gray-400 text-sm mb-8">
           {step === "enter" ? "Choisis un code à 4 chiffres" : "Entre à nouveau ton code"}
         </p>
 
-        <div className="flex justify-center gap-3 mb-8">
+        <div className="flex justify-center gap-4 mb-10">
           {[0, 1, 2, 3].map(i => (
             <div
               key={i}
-              className={`w-3.5 h-3.5 rounded-full border-2 transition-colors ${
+              className={`w-4 h-4 rounded-full border-2 transition-colors ${
                 i < pin.length ? "bg-emerald-500 border-emerald-500" : "border-gray-700"
               }`}
             />
@@ -72,12 +72,12 @@ export default function PinSetupModal({ onClose, onSuccess }: Props) {
 
         {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-4">
           {["1","2","3","4","5","6","7","8","9"].map(d => (
             <button
               key={d}
               onClick={() => handleDigit(d)}
-              className="aspect-square bg-gray-800 hover:bg-gray-700 text-white text-xl font-medium rounded-2xl transition-colors"
+              className="aspect-square bg-gray-800 hover:bg-gray-700 active:bg-gray-700 text-white text-3xl font-medium rounded-2xl transition-colors"
             >
               {d}
             </button>
@@ -85,13 +85,13 @@ export default function PinSetupModal({ onClose, onSuccess }: Props) {
           <div />
           <button
             onClick={() => handleDigit("0")}
-            className="aspect-square bg-gray-800 hover:bg-gray-700 text-white text-xl font-medium rounded-2xl transition-colors"
+            className="aspect-square bg-gray-800 hover:bg-gray-700 active:bg-gray-700 text-white text-3xl font-medium rounded-2xl transition-colors"
           >
             0
           </button>
           <button
             onClick={handleDelete}
-            className="aspect-square bg-gray-800 hover:bg-gray-700 text-gray-400 text-lg font-medium rounded-2xl transition-colors"
+            className="aspect-square bg-gray-800 hover:bg-gray-700 active:bg-gray-700 text-gray-400 text-2xl font-medium rounded-2xl transition-colors"
           >
             ⌫
           </button>

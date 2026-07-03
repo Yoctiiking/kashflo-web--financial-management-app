@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { addTransaction } from "@/lib/firebase/firestore";
 import { TransactionType } from "@/types";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/categories";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 interface Props {
   groupId: string;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function AddTransactionModal({ groupId, onClose, onSuccess }: Props) {
+  const { symbol } = useCurrency();
   const { user } = useAuth();
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
@@ -96,7 +98,7 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
 
           {/* Montant */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Montant ($)</label>
+            <label className="block text-sm text-gray-400 mb-1.5">Montant ({symbol})</label>
             <input
               type="number"
               value={amount}

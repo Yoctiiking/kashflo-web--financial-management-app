@@ -4,6 +4,7 @@ import { useState } from "react";
 import { addBudget, updateBudget } from "@/lib/firebase/firestore";
 import { Budget, BudgetPeriod } from "@/types";
 import { EXPENSE_CATEGORIES } from "@/lib/categories";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 interface Props {
   groupId: string;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Props) {
+  const { symbol } = useCurrency();
   const [category, setCategory] = useState(budget?.category || "");
   const [limit, setLimit] = useState(budget?.limit.toString() || "");
   const [period, setPeriod] = useState<BudgetPeriod>(budget?.period || "monthly");
@@ -92,7 +94,7 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
 
           {/* Limite */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Limite ($)</label>
+<label className="block text-sm text-gray-400 mb-1.5">Montant ({symbol})</label>
             <input
               type="number"
               value={limit}
