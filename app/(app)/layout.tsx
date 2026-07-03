@@ -6,6 +6,9 @@ import { useEffect, useState } from "react";
 import { logoutUser } from "@/lib/firebase/auth";
 import { getUserProfile, getRecurrences } from "@/lib/firebase/firestore";
 import Link from "next/link";
+import { useInactivityLogout } from "@/lib/hooks/useInactivityLogout";
+import { useAppLock } from "@/lib/hooks/useAppLock";
+import LockScreen from "@/components/LockScreen";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
@@ -30,6 +33,9 @@ export default function AppLayout({
   const pathname = usePathname();
   const [upcomingCount, setUpcomingCount] = useState(0);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const { locked, unlock } = useAppLock();
+
+  useInactivityLogout(user);
 
   useEffect(() => {
     if (loading) return;
@@ -79,6 +85,9 @@ export default function AppLayout({
   const mobileMore = navItems.filter(item => !primaryMobileItems.includes(item.href));
   const isMoreActive = mobileMore.some(item => item.href === pathname);
 
+  if (locked) {
+    return <LockScreen onUnlock={unlock} />;
+  }
   return (
     <div className="min-h-screen bg-gray-950 flex">
       {/* Sidebar — desktop uniquement */}

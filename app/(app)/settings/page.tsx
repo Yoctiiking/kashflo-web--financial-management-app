@@ -13,6 +13,7 @@ import { getGroup, updateGroupCurrency } from "@/lib/firebase/firestore";
 import { getUserProfile } from "@/lib/firebase/firestore";
 import { useEffect } from "react";
 import FeedbackModal from "@/components/FeedbackModal";
+import { hasPinSet, removePin } from "@/lib/pinLock";
 
 const CURRENCIES = [
     { code: "CAD", label: "Dollar canadien (CAD)" },
@@ -54,12 +55,21 @@ export default function SettingsPage() {
     const [feedbackError, setFeedbackError] = useState("");
     const [showFeedback, setShowFeedback] = useState(false);
 
+    // Pin lock
+    const [showPinSetup, setShowPinSetup] = useState(false);
+    const [pinActive, setPinActive] = useState(false);
+
+
 
     // Suppression
     const [deletePassword, setDeletePassword] = useState("");
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState("");
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    useEffect(() => {
+        setPinActive(hasPinSet());
+    }, []);
 
     useEffect(() => {
         if (!user) return;
@@ -165,6 +175,12 @@ export default function SettingsPage() {
         } finally {
             setDeleteLoading(false);
         }
+    };
+
+    const handleRemovePin = () => {
+        if (!confirm("Désactiver le verrouillage par code ?")) return;
+        removePin();
+        setPinActive(false);
     };
 
     return (

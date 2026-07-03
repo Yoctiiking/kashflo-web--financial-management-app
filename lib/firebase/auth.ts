@@ -1,4 +1,7 @@
 import { auth } from "./config";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
 import {
   createUserWithEmailAndPassword,
   deleteUser,
@@ -23,7 +26,6 @@ export const registerUser = async (
 
   await updateProfile(user, { displayName });
 
-  // Créer le groupe solo par défaut
   const groupId = `group_${user.uid}`;
 
   await setDoc(doc(db, "users", user.uid), {
@@ -42,8 +44,10 @@ export const registerUser = async (
     createdAt: serverTimestamp()
   });
 
-  // Envoie l'email de vérification
-  await sendEmailVerification(user);
+  await sendEmailVerification(user, {
+    url: `${APP_URL}/verify-email-complete`,
+    handleCodeInApp: false
+  });
 
   return user;
 };
@@ -60,7 +64,10 @@ export const logoutUser = async () => {
 export const resendVerificationEmail = async () => {
   const user = auth.currentUser;
   if (!user) return;
-  await sendEmailVerification(user);
+  await sendEmailVerification(user, {
+  url: `${APP_URL}/verify-email-complete`,
+  handleCodeInApp: false
+});
 };
 
 export const updateDisplayName = async (displayName: string) => {
