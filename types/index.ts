@@ -52,4 +52,35 @@ export interface UserProfile {
   photoURL: string | null;
   groupId: string;
   createdAt: Date;
+  onboardingVersion?: number;
+}
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: Date;
+  createdAt: Date;
+}
+
+export interface SharedBudget {
+  id: string;
+  name: string;
+  limit: number;
+  period: BudgetPeriod;
+  category: string;
+  createdBy: string;
+  members: string[];
+  createdAt: Date;
+}
+
+export interface SharedExpense {
+  id: string;
+  amount: number;
+  label: string;
+  date: Date;
+  addedBy: string;
+  addedByName: string;
+  createdAt: Date;
 }

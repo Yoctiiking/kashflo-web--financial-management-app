@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getMonthTransactions, getRecentTransactions, getBudgets, getRecurrences } from "@/lib/firebase/firestore";
+import { getUserProfile, getMonthTransactions, getRecentTransactions, getBudgets, getRecurrences, updateOnboardingVersion } from "@/lib/firebase/firestore";
 import { Transaction, Budget, Recurrence } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import OnboardingCarousel from "@/components/OnboardingCarousel";
+import { ONBOARDING_SLIDES, ONBOARDING_VERSION } from "@/lib/onboardingSlides";
 
 const PIE_COLORS = [
-  "#10b981", "#3b82f6", "#f59e0b", "#ef4444",
-  "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"
+    "#10b981", "#3b82f6", "#f59e0b", "#ef4444",
+    "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"
 ];
 
 export default function DashboardPage() {
@@ -21,6 +23,7 @@ export default function DashboardPage() {
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
     const [loading, setLoading] = useState(true);
+    const [onboardingSlides, setOnboardingSlides] = useState<typeof ONBOARDING_SLIDES>([]);
 
     useEffect(() => {
         if (!user) return;
@@ -29,6 +32,14 @@ export default function DashboardPage() {
             try {
                 const userProfile = await getUserProfile(user.uid);
                 if (!userProfile) return;
+
+                const userVersion = userProfile.onboardingVersion ?? 0;
+                if (userVersion < ONBOARDING_VERSION) {
+                    const newSlides = ONBOARDING_SLIDES.filter(s => s.version > userVersion);
+                    if (newSlides.length > 0) {
+                        setOnboardingSlides(newSlides);
+                    }
+                }
 
                 const [monthTx, recentTx, userBudgets, userRecurrences] = await Promise.all([
                     getMonthTransactions(userProfile.groupId),
@@ -51,6 +62,17 @@ export default function DashboardPage() {
         loadData();
     }, [user]);
 
+    const handleOnboardingComplete = async () => {
+        setOnboardingSlides([]);
+        if (user) {
+            try {
+                await updateOnboardingVersion(user.uid, ONBOARDING_VERSION);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    };
+
     const totalIncome = transactions
         .filter(t => t.type === "income")
         .reduce((sum, t) => sum + t.amount, 0);
@@ -65,7 +87,6 @@ export default function DashboardPage() {
 
     const currentMonth = format(new Date(), "MMMM yyyy", { locale: fr });
 
-    // Récurrences du mois en cours
     const now = new Date();
     const monthRecurrences = recurrences.filter(r => {
         return r.isActive &&
@@ -73,7 +94,13 @@ export default function DashboardPage() {
             r.nextOccurrence.getFullYear() === now.getFullYear();
     });
 
-    // Pie chart — dépenses par catégorie ce mois
+    const upcomingRecurrences = recurrences.filter(r => {
+        if (!r.isActive) return false;
+        const diffMs = r.nextOccurrence.getTime() - now.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        return diffDays >= 0 && diffDays <= 3;
+    }).sort((a, b) => a.nextOccurrence.getTime() - b.nextOccurrence.getTime());
+
     const monthExpenses = transactions.filter(t => t.type === "expense");
     const pieData = Object.entries(
         monthExpenses.reduce((acc, t) => {
@@ -106,11 +133,43 @@ export default function DashboardPage() {
 
     return (
         <div className="p-4 sm:p-8">
+            {onboardingSlides.length > 0 && (
+                <OnboardingCarousel slides={onboardingSlides} onComplete={handleOnboardingComplete} />
+            )}
+
             {/* Header */}
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white capitalize">{currentMonth}</h2>
                 <p className="text-gray-400 mt-1">Bonjour, {user?.displayName} 👋</p>
             </div>
+
+            {/* Notification récurrences à venir */}
+            {upcomingRecurrences.length > 0 && (
+                <div className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+                    <div className="flex items-start gap-3">
+                        <span className="text-xl">⏰</span>
+                        <div className="flex-1">
+                            <p className="text-amber-400 font-medium text-sm mb-2">
+                                {upcomingRecurrences.length} paiement{upcomingRecurrences.length > 1 ? "s" : ""} à venir
+                            </p>
+                            <div className="space-y-1.5">
+                                {upcomingRecurrences.map(r => {
+                                    const diffDays = Math.ceil((r.nextOccurrence.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                                    const dayLabel = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Demain" : `Dans ${diffDays} jours`;
+                                    return (
+                                        <div key={r.id} className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-300">{r.label} · {dayLabel}</span>
+                                            <span className={r.type === "income" ? "text-emerald-400" : "text-red-400"}>
+                                                {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Cartes de stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -228,9 +287,8 @@ export default function DashboardPage() {
                             {monthRecurrences.map(r => (
                                 <div key={r.id} className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-                                            r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
-                                        }`}>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+                                            }`}>
                                             {r.type === "income" ? "💰" : "💸"}
                                         </div>
                                         <div>
