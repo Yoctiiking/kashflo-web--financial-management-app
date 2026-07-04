@@ -56,8 +56,13 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     email: data.email,
     photoURL: data.photoURL,
     groupId: data.groupId,
-    createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date()
+    createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
+    onboardingVersion: data.onboardingVersion ?? 0
   };
+};
+
+export const updateOnboardingVersion = async (userId: string, version: number) => {
+  await updateDoc(doc(db, "users", userId), { onboardingVersion: version });
 };
 
 // Groups

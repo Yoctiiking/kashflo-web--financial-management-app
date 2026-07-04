@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getMonthTransactions, getRecentTransactions, getBudgets, getRecurrences } from "@/lib/firebase/firestore";
+import { getUserProfile, getMonthTransactions, getRecentTransactions, getBudgets, getRecurrences, updateOnboardingVersion } from "@/lib/firebase/firestore";
 import { Transaction, Budget, Recurrence } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import OnboardingCarousel from "@/components/OnboardingCarousel";
+import { ONBOARDING_SLIDES, ONBOARDING_VERSION } from "@/lib/onboardingSlides";
 
 const PIE_COLORS = [
     "#10b981", "#3b82f6", "#f59e0b", "#ef4444",
@@ -21,6 +23,7 @@ export default function DashboardPage() {
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
     const [loading, setLoading] = useState(true);
+    const [onboardingSlides, setOnboardingSlides] = useState<typeof ONBOARDING_SLIDES>([]);
 
     useEffect(() => {
         if (!user) return;
@@ -29,6 +32,14 @@ export default function DashboardPage() {
             try {
                 const userProfile = await getUserProfile(user.uid);
                 if (!userProfile) return;
+
+                const userVersion = userProfile.onboardingVersion ?? 0;
+                if (userVersion < ONBOARDING_VERSION) {
+                    const newSlides = ONBOARDING_SLIDES.filter(s => s.version > userVersion);
+                    if (newSlides.length > 0) {
+                        setOnboardingSlides(newSlides);
+                    }
+                }
 
                 const [monthTx, recentTx, userBudgets, userRecurrences] = await Promise.all([
                     getMonthTransactions(userProfile.groupId),
@@ -51,6 +62,17 @@ export default function DashboardPage() {
         loadData();
     }, [user]);
 
+    const handleOnboardingComplete = async () => {
+        setOnboardingSlides([]);
+        if (user) {
+            try {
+                await updateOnboardingVersion(user.uid, ONBOARDING_VERSION);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    };
+
     const totalIncome = transactions
         .filter(t => t.type === "income")
         .reduce((sum, t) => sum + t.amount, 0);
@@ -65,7 +87,6 @@ export default function DashboardPage() {
 
     const currentMonth = format(new Date(), "MMMM yyyy", { locale: fr });
 
-    // Récurrences du mois en cours
     const now = new Date();
     const monthRecurrences = recurrences.filter(r => {
         return r.isActive &&
@@ -73,7 +94,6 @@ export default function DashboardPage() {
             r.nextOccurrence.getFullYear() === now.getFullYear();
     });
 
-    // Récurrences à venir dans les 3 prochains jours
     const upcomingRecurrences = recurrences.filter(r => {
         if (!r.isActive) return false;
         const diffMs = r.nextOccurrence.getTime() - now.getTime();
@@ -81,7 +101,6 @@ export default function DashboardPage() {
         return diffDays >= 0 && diffDays <= 3;
     }).sort((a, b) => a.nextOccurrence.getTime() - b.nextOccurrence.getTime());
 
-    // Pie chart — dépenses par catégorie ce mois
     const monthExpenses = transactions.filter(t => t.type === "expense");
     const pieData = Object.entries(
         monthExpenses.reduce((acc, t) => {
@@ -114,6 +133,10 @@ export default function DashboardPage() {
 
     return (
         <div className="p-4 sm:p-8">
+            {onboardingSlides.length > 0 && (
+                <OnboardingCarousel slides={onboardingSlides} onComplete={handleOnboardingComplete} />
+            )}
+
             {/* Header */}
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white capitalize">{currentMonth}</h2>

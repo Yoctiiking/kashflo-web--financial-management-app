@@ -94,7 +94,7 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
 
           {/* Limite */}
           <div>
-<label className="block text-sm text-gray-400 mb-1.5">Montant ({symbol})</label>
+            <label className="block text-sm text-gray-400 mb-1.5">Limite ({symbol})</label>
             <input
               type="number"
               value={limit}
@@ -114,11 +114,10 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    period === p
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${period === p
                       ? "bg-emerald-500/20 text-emerald-400"
                       : "text-gray-400 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {periodLabel[p]}
                 </button>

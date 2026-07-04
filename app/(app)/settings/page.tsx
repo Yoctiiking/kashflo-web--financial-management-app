@@ -207,7 +207,7 @@ export default function SettingsPage() {
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                     <h3 className="text-white font-semibold mb-1">Verrouillage par code</h3>
                     <p className="text-gray-500 text-sm mb-4">
-                        Protège l'accès à l'app après 5 minutes d'inactivité
+                        Protège l'accès à l'app après 15 minutes d'inactivité
                     </p>
                     {pinActive ? (
                         <button

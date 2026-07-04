@@ -52,6 +52,7 @@ export interface UserProfile {
   photoURL: string | null;
   groupId: string;
   createdAt: Date;
+  onboardingVersion?: number;
 }
 
 export interface SavingsGoal {
