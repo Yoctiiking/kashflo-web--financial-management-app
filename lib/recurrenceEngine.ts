@@ -3,7 +3,7 @@ import { addTransaction, updateRecurrenceNextOccurrence } from "./firebase/fires
 import { Timestamp } from "firebase/firestore";
 
 // Calcule la prochaine date selon la fréquence
-export const getNextOccurrence = (date: Date, frequency: RecurrenceFrequency): Date => {
+export const getNextOccurrence = (date: Date, frequency: RecurrenceFrequency, customDays?: number): Date => {
   const next = new Date(date);
 
   switch (frequency) {
@@ -19,6 +19,11 @@ export const getNextOccurrence = (date: Date, frequency: RecurrenceFrequency): D
     case "yearly":
       next.setFullYear(next.getFullYear() + 1);
       break;
+    case "custom":
+      next.setDate(next.getDate() + (customDays ?? 1));
+      break;
+    default:
+      throw new Error(`Unknown frequency: ${frequency}`);
   }
 
   return next;
@@ -49,7 +54,7 @@ export const processRecurrence = async (
       recurrenceId: recurrence.id
     });
 
-    nextOccurrence = getNextOccurrence(nextOccurrence, recurrence.frequency);
+    nextOccurrence = getNextOccurrence(nextOccurrence, recurrence.frequency, recurrence.customDays);
   }
 
   // Met à jour nextOccurrence dans Firestore

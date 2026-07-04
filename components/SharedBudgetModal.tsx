@@ -1,25 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { addBudget } from "@/lib/firebase/firestore";
-import { BudgetPeriod } from "@/types";
+import { createSharedBudget, updateSharedBudget } from "@/lib/firebase/firestore";
+import { SharedBudget, BudgetPeriod } from "@/types";
 import { EXPENSE_CATEGORIES } from "@/lib/categories";
+import { useCurrency } from "@/lib/hooks/useCurrency";
 
 interface Props {
-  groupId: string;
+  userId: string;
+  budget?: SharedBudget;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function AddBudgetModal({ groupId, onClose, onSuccess }: Props) {
-  const [category, setCategory] = useState("");
-  const [limit, setLimit] = useState("");
-  const [period, setPeriod] = useState<BudgetPeriod>("monthly");
+export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }: Props) {
+  const { symbol } = useCurrency();
+  const [name, setName] = useState(budget?.name || "");
+  const [category, setCategory] = useState(budget?.category || "");
+  const [limit, setLimit] = useState(budget?.limit.toString() || "");
+  const [period, setPeriod] = useState<BudgetPeriod>(budget?.period || "monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const isEditing = !!budget;
+
+  const periodLabel = { daily: "/ jour", weekly: "/ semaine", monthly: "/ mois" };
+
   const handleSubmit = async () => {
-    if (!category || !limit) {
+    if (!name || !category || !limit) {
       setError("Tous les champs sont obligatoires");
       return;
     }
@@ -32,40 +40,43 @@ export default function AddBudgetModal({ groupId, onClose, onSuccess }: Props) {
     setError("");
 
     try {
-      await addBudget(groupId, {
-        category,
-        limit: parseFloat(limit),
-        period
-      });
+      if (isEditing) {
+        await updateSharedBudget(budget.id, { name, category, limit: parseFloat(limit), period });
+      } else {
+        await createSharedBudget({ name, category, limit: parseFloat(limit), period, createdBy: userId });
+      }
       onSuccess();
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Erreur lors de la création");
+      setError("Erreur lors de l'enregistrement");
     } finally {
       setLoading(false);
     }
   };
 
-  const periodLabel = {
-    daily: "/ jour",
-    weekly: "/ semaine",
-    monthly: "/ mois"
-  };
-
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-md mx-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white font-semibold text-lg">Nouveau budget</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
-            ✕
-          </button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 pb-4 shrink-0">
+          <h2 className="text-white font-semibold text-lg">
+            {isEditing ? "Modifier le budget" : "Nouveau budget partagé"}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
         </div>
 
-        <div className="space-y-4">
-          {/* Catégorie */}
+        <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
+          <div>
+            <label className="block text-sm text-gray-400 mb-1.5">Nom du budget</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              placeholder="Ex: Courses de la semaine"
+            />
+          </div>
+
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Catégorie</label>
             <select
@@ -80,9 +91,8 @@ export default function AddBudgetModal({ groupId, onClose, onSuccess }: Props) {
             </select>
           </div>
 
-          {/* Limite */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Limite ($)</label>
+            <label className="block text-sm text-gray-400 mb-1.5">Limite ({symbol})</label>
             <input
               type="number"
               value={limit}
@@ -94,7 +104,6 @@ export default function AddBudgetModal({ groupId, onClose, onSuccess }: Props) {
             />
           </div>
 
-          {/* Période */}
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Période</label>
             <div className="flex bg-gray-800 rounded-xl p-1">
@@ -121,7 +130,7 @@ export default function AddBudgetModal({ groupId, onClose, onSuccess }: Props) {
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
           >
-            {loading ? "Création..." : "Créer le budget"}
+            {loading ? "..." : isEditing ? "Sauvegarder" : "Créer le budget"}
           </button>
         </div>
       </div>
