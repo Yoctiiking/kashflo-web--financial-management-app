@@ -4,7 +4,7 @@ import { getUserProfile, getGroup } from "@/lib/firebase/firestore";
 import { convertFromBase } from "@/lib/currencyConverter";
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
-  CAD: "$ CA", USD: "$ US", EUR: "€", GBP: "£", CHF: "CHF", XOF: "FCFA"
+  CAD: "$CA", USD: "$US", EUR: "€", GBP: "£", CHF: "CHF", XOF: "FCFA"
 };
 
 export function getCurrencySymbol(currency: string): string {
@@ -44,7 +44,7 @@ export function useCurrency() {
 
   const formatCurrency = useCallback((amount: number) => {
     const converted = amount * rate;
-    return new Intl.NumberFormat("fr-CA", { style: "currency", currency }).format(converted);
+    return new Intl.NumberFormat("fr-US", { style: "currency", currency }).format(converted);
   }, [currency, rate]);
 
   return { currency, formatCurrency, ready, symbol: getCurrencySymbol(currency) };
