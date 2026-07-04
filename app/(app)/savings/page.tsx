@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getSavingsGoals, deleteSavingsGoal, addToSavingsGoal } from "@/lib/firebase/firestore";
+import { getSavingsGoals, deleteSavingsGoal, addToSavingsGoal } from "@/lib/firebase/firestore";
 import { SavingsGoal } from "@/types";
 import SavingsGoalModal from "@/components/SavingsGoalModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
@@ -11,7 +11,6 @@ import { fr } from "date-fns/locale";
 
 export default function SavingsPage() {
   const { user } = useAuth();
-  const [groupId, setGroupId] = useState<string | null>(null);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -24,10 +23,7 @@ export default function SavingsPage() {
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await getUserProfile(user.uid);
-      if (!profile) return;
-      setGroupId(profile.groupId);
-      const data = await getSavingsGoals(profile.groupId);
+      const data = await getSavingsGoals(user.uid);
       setGoals(data);
     } catch (err) {
       console.error(err);
@@ -41,9 +37,9 @@ export default function SavingsPage() {
   }, [loadData]);
 
   const handleDelete = async (goalId: string) => {
-    if (!groupId) return;
+    if (!user) return;
     try {
-      await deleteSavingsGoal(groupId, goalId);
+      await deleteSavingsGoal(user.uid, goalId);
       await loadData();
     } catch (err) {
       console.error(err);
@@ -51,11 +47,11 @@ export default function SavingsPage() {
   };
 
   const handleAddAmount = async (goalId: string) => {
-    if (!groupId || !addAmount) return;
+    if (!user || !addAmount) return;
     const amount = parseFloat(addAmount);
     if (isNaN(amount) || amount <= 0) return;
     try {
-      await addToSavingsGoal(groupId, goalId, amount);
+      await addToSavingsGoal(user.uid, goalId, amount);
       setAddingTo(null);
       setAddAmount("");
       await loadData();
@@ -198,17 +194,17 @@ export default function SavingsPage() {
         +
       </button>
 
-      {showModal && groupId && (
+      {showModal && user && (
         <SavingsGoalModal
-          groupId={groupId}
+          groupId={user.uid}
           onClose={() => setShowModal(false)}
           onSuccess={loadData}
         />
       )}
 
-      {editingGoal && groupId && (
+      {editingGoal && user && (
         <SavingsGoalModal
-          groupId={groupId}
+          groupId={user.uid}
           goal={editingGoal}
           onClose={() => setEditingGoal(null)}
           onSuccess={loadData}

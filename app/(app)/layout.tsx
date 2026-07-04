@@ -52,9 +52,7 @@ export default function AppLayout({
     if (!user || !user.emailVerified) return;
     const loadUpcoming = async () => {
       try {
-        const profile = await getUserProfile(user.uid);
-        if (!profile) return;
-        const recurrences = await getRecurrences(profile.groupId);
+        const recurrences = await getRecurrences(user.uid);
         const now = new Date();
         const upcoming = recurrences.filter(r => {
           if (!r.isActive) return false;

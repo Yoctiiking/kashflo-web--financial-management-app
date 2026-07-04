@@ -2,14 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/firestore";
+import { getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/firestore";
 import { Budget, Transaction } from "@/types";
 import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 
 export default function BudgetsPage() {
   const { user } = useAuth();
-  const [groupId, setGroupId] = useState<string | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -19,13 +18,9 @@ export default function BudgetsPage() {
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await getUserProfile(user.uid);
-      if (!profile) return;
-      setGroupId(profile.groupId);
-
       const [userBudgets, monthTx] = await Promise.all([
-        getBudgets(profile.groupId),
-        getMonthTransactions(profile.groupId)
+        getBudgets(user.uid),
+        getMonthTransactions(user.uid)
       ]);
 
       setBudgets(userBudgets);
@@ -42,9 +37,9 @@ export default function BudgetsPage() {
   }, [loadData]);
 
   const handleDelete = async (budgetId: string) => {
-    if (!groupId) return;
+    if (!user) return;
     try {
-      await deleteBudget(groupId, budgetId);
+      await deleteBudget(user.uid, budgetId);
       await loadData();
     } catch (err) {
       console.error(err);
@@ -189,17 +184,17 @@ export default function BudgetsPage() {
       </button>
 
       {/* Modale */}
-      {showModal && groupId && (
+      {showModal && user && (
         <BudgetModal
-          groupId={groupId}
+          groupId={user.uid}
           onClose={() => setShowModal(false)}
           onSuccess={loadData}
         />
       )}
 
-      {editingBudget && groupId && (
+      {editingBudget && user && (
         <BudgetModal
-          groupId={groupId}
+          groupId={user.uid}
           budget={editingBudget}
           onClose={() => setEditingBudget(null)}
           onSuccess={loadData}

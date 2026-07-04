@@ -42,10 +42,10 @@ export default function DashboardPage() {
                 }
 
                 const [monthTx, recentTx, userBudgets, userRecurrences] = await Promise.all([
-                    getMonthTransactions(userProfile.groupId),
-                    getRecentTransactions(userProfile.groupId),
-                    getBudgets(userProfile.groupId),
-                    getRecurrences(userProfile.groupId)
+                    getMonthTransactions(user.uid),
+                    getRecentTransactions(user.uid),
+                    getBudgets(user.uid),
+                    getRecurrences(user.uid)
                 ]);
 
                 setTransactions(monthTx);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getMonthTransactions, migrateTransactionToSharedBudget } from "@/lib/firebase/firestore";
+import { getMonthTransactions, migrateTransactionToSharedBudget } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { format } from "date-fns";
@@ -45,7 +45,6 @@ function parseMonthSearch(search: string): { month: number; year: number | null;
 export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }: Props) {
     const { user } = useAuth();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [groupId, setGroupId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [migrating, setMigrating] = useState(false);
     const [search, setSearch] = useState("");
@@ -58,14 +57,13 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
     const [navYear, setNavYear] = useState(now.getFullYear());
     const [navMonth, setNavMonth] = useState(now.getMonth());
 
-    // Si la recherche détecte un mois, il prend le dessus sur la navigation manuelle
     const parsedSearch = parseMonthSearch(search);
     const targetYear = parsedSearch?.year ?? (parsedSearch ? navYear : navYear);
     const targetMonth = parsedSearch?.month ?? navMonth;
     const effectiveYear = parsedSearch ? (parsedSearch.year ?? navYear) : navYear;
 
     const goToPreviousMonth = () => {
-        setSearch(""); // on quitte le mode recherche par mois pour repasser en navigation manuelle
+        setSearch("");
         if (navMonth === 0) {
             setNavMonth(11);
             setNavYear(y => y - 1);
@@ -91,10 +89,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
         const load = async () => {
             setLoading(true);
             try {
-                const profile = await getUserProfile(user.uid);
-                if (!profile) return;
-                setGroupId(profile.groupId);
-                const tx = await getMonthTransactions(profile.groupId, effectiveYear, targetMonth);
+                const tx = await getMonthTransactions(user.uid, effectiveYear, targetMonth);
                 setTransactions(tx.filter(t => t.type === "expense"));
             } catch (err) {
                 console.error(err);
@@ -118,14 +113,14 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
         setDateFilter(value);
         if (value) {
             const [year, month] = value.split("-").map(Number);
-            setSearch(""); // on quitte le mode recherche par mois
+            setSearch("");
             setNavYear(year);
             setNavMonth(month - 1);
         }
     };
 
     const handleMigrateSelected = async () => {
-        if (!user || !groupId || selectedIds.size === 0) return;
+        if (!user || selectedIds.size === 0) return;
         const toMigrate = transactions.filter(t => selectedIds.has(t.id));
         if (!confirm(`Déplacer ${toMigrate.length} transaction${toMigrate.length > 1 ? "s" : ""} vers ce budget partagé ? Elles seront retirées de tes transactions personnelles.`)) return;
 
@@ -133,7 +128,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
         try {
             for (const tx of toMigrate) {
                 await migrateTransactionToSharedBudget(
-                    groupId,
+                    user.uid,
                     tx.id,
                     budgetId,
                     {
@@ -141,8 +136,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                         label: tx.label,
                         date: tx.date,
                         addedByName: user.displayName || "Utilisateur"
-                    },
-                    user.uid
+                    }
                 );
             }
             onSuccess();
@@ -181,7 +175,6 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                     <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
                 </div>
 
-                {/* Navigation mois */}
                 <div className="px-6 pb-3 shrink-0 flex items-center justify-center gap-3">
                     <button
                         onClick={goToPreviousMonth}

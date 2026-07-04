@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getMonthTransactions, deleteTransaction } from "@/lib/firebase/firestore";
+import { getMonthTransactions, deleteTransaction } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
 import AddTransactionModal from "@/components/AddTransactionModal";
 import { format } from "date-fns";
@@ -19,7 +19,6 @@ function normalize(str: string) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
-// Détecte un nom de mois (+ année optionnelle) au début de la recherche
 function parseMonthSearch(search: string): { month: number; year: number | null; remainder: string } | null {
   const normalized = normalize(search);
   for (let i = 0; i < MONTHS_FR.length; i++) {
@@ -42,7 +41,6 @@ function parseMonthSearch(search: string): { month: number; year: number | null;
 export default function TransactionsPage() {
   const { user } = useAuth();
   const now = new Date();
-  const [groupId, setGroupId] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -55,7 +53,6 @@ export default function TransactionsPage() {
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
 
-  // Détecte un nom de mois tapé dans la recherche et navigue automatiquement
   useEffect(() => {
     const parsed = parseMonthSearch(search);
     if (!parsed) return;
@@ -110,10 +107,7 @@ export default function TransactionsPage() {
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await getUserProfile(user.uid);
-      if (!profile) return;
-      setGroupId(profile.groupId);
-      const tx = await getMonthTransactions(profile.groupId, currentYear, currentMonth);
+      const tx = await getMonthTransactions(user.uid, currentYear, currentMonth);
       setTransactions(tx);
     } catch (err) {
       console.error(err);
@@ -123,10 +117,10 @@ export default function TransactionsPage() {
   }, [user, currentYear, currentMonth]);
 
   const handleDelete = async (transactionId: string) => {
-    if (!groupId) return;
+    if (!user) return;
     if (!confirm("Supprimer cette transaction ?")) return;
     try {
-      await deleteTransaction(groupId, transactionId);
+      await deleteTransaction(user.uid, transactionId);
       await loadData();
     } catch (err) {
       console.error(err);
@@ -139,7 +133,6 @@ export default function TransactionsPage() {
 
   const { formatCurrency } = useCurrency();
 
-  // Si la recherche commence par un nom de mois, on filtre avec le reste seulement
   const parsedSearch = parseMonthSearch(search);
   const effectiveSearch = parsedSearch !== null ? parsedSearch.remainder : search;
 
@@ -196,7 +189,6 @@ export default function TransactionsPage() {
 
             {showMonthPicker && (
               <>
-                {/* Overlay invisible pour fermer au clic extérieur */}
                 <div
                   className="fixed inset-0 z-10"
                   onClick={() => setShowMonthPicker(false)}
@@ -252,7 +244,6 @@ export default function TransactionsPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          {/* Recherche — icône mobile */}
           <button
             onClick={() => setShowSearch(s => !s)}
             className={`sm:hidden p-2.5 rounded-xl transition-colors ${showSearch ? "bg-emerald-500/20 text-emerald-400" : "bg-gray-800 text-gray-400 hover:text-white"}`}
@@ -263,7 +254,6 @@ export default function TransactionsPage() {
             </svg>
           </button>
 
-          {/* Export */}
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
@@ -318,7 +308,6 @@ export default function TransactionsPage() {
           ))}
         </div>
 
-        {/* Recherche — toujours visible sur desktop, toggle sur mobile */}
         <div className={`relative sm:ml-auto ${showSearch ? "block" : "hidden sm:block"}`}>
           <input
             type="text"
@@ -387,9 +376,9 @@ export default function TransactionsPage() {
       </button>
 
       {/* Modale */}
-      {showModal && groupId && (
+      {showModal && user && (
         <AddTransactionModal
-          groupId={groupId}
+          groupId={user.uid}
           onClose={() => setShowModal(false)}
           onSuccess={loadData}
         />

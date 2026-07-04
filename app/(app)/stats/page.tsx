@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getLastMonthsTransactions } from "@/lib/firebase/firestore";
+import { getLastMonthsTransactions } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -21,7 +21,6 @@ import {
 } from "recharts";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 
-// Couleurs pour le camembert
 const PIE_COLORS = [
   "#10b981", "#3b82f6", "#f59e0b", "#ef4444",
   "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"
@@ -35,9 +34,7 @@ export default function StatsPage() {
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await getUserProfile(user.uid);
-      if (!profile) return;
-      const tx = await getLastMonthsTransactions(profile.groupId, 6);
+      const tx = await getLastMonthsTransactions(user.uid, 6);
       setTransactions(tx);
     } catch (err) {
       console.error(err);
@@ -50,7 +47,6 @@ export default function StatsPage() {
     loadData();
   }, [loadData]);
 
-  // Données pour le BarChart — dépenses et revenus par mois
   const barData = Array.from({ length: 6 }, (_, i) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (5 - i));
@@ -74,7 +70,6 @@ export default function StatsPage() {
     return { month, expenses, income };
   });
 
-  // Données pour le PieChart — dépenses par catégorie ce mois
   const now = new Date();
   const monthExpenses = transactions.filter(t =>
     t.type === "expense" &&
@@ -93,7 +88,6 @@ export default function StatsPage() {
 
   const { formatCurrency } = useCurrency();
 
-  // Tooltip personnalisé pour le BarChart
   const CustomBarTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
@@ -108,7 +102,6 @@ export default function StatsPage() {
     );
   };
 
-  // Tooltip personnalisé pour le PieChart
   const CustomPieTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
     return (
@@ -131,14 +124,12 @@ export default function StatsPage() {
 
   return (
     <div className="p-4 sm:p-8">
-      {/* Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-white">Statistiques</h2>
         <p className="text-gray-400 mt-1 text-sm">Les 6 derniers mois</p>
       </div>
 
       <div className="space-y-6">
-        {/* BarChart — évolution mensuelle */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
           <h3 className="text-white font-semibold mb-6">Revenus vs Dépenses</h3>
           {transactions.length === 0 ? (
@@ -167,7 +158,6 @@ export default function StatsPage() {
           )}
         </div>
 
-        {/* PieChart — dépenses par catégorie */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
           <h3 className="text-white font-semibold mb-6">
             Dépenses par catégorie — {format(new Date(), "MMMM yyyy", { locale: fr })}
@@ -200,7 +190,6 @@ export default function StatsPage() {
                 </ResponsiveContainer>
               </div>
 
-              {/* Légende manuelle */}
               <div className="w-full md:flex-1 space-y-3">
                 {pieData.map((entry, index) => (
                   <div key={entry.name} className="flex items-center justify-between">
