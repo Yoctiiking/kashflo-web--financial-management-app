@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 const MONTHS_FR = [
   "janvier", "février", "mars", "avril", "mai", "juin",
@@ -52,6 +53,7 @@ export default function TransactionsPage() {
   const [pickerYear, setPickerYear] = useState(currentYear);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+  const confirm = useConfirm();
 
   useEffect(() => {
     const parsed = parseMonthSearch(search);
@@ -118,7 +120,13 @@ export default function TransactionsPage() {
 
   const handleDelete = async (transactionId: string) => {
     if (!user) return;
-    if (!confirm("Supprimer cette transaction ?")) return;
+    const ok = await confirm({
+      title: "Supprimer cette transaction ?",
+      message: "Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      danger: true
+    });
+    if (!ok) return;
     try {
       await deleteTransaction(user.uid, transactionId);
       await loadData();
@@ -229,8 +237,8 @@ export default function TransactionsPage() {
                             setShowMonthPicker(false);
                           }}
                           className={`py-2 rounded-lg text-xs font-medium capitalize transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isSelected
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "text-gray-300 hover:bg-gray-700"
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "text-gray-300 hover:bg-gray-700"
                             }`}
                         >
                           {m.slice(0, 3)}

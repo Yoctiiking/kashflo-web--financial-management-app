@@ -14,6 +14,8 @@ function LoginForm() {
 
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +63,10 @@ function LoginForm() {
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-sm text-gray-400">Mot de passe</label>
-            <Link href={`/forgot-password${email ? `?email=${encodeURIComponent(email)}` : ""}`} className="text-xs text-emerald-500 hover:text-emerald-400 transition-colors">
+            <Link
+              href={`/forgot-password${email && isValidEmail(email) ? `?email=${encodeURIComponent(email)}` : ""}`}
+              className="text-xs text-emerald-500 hover:text-emerald-400 transition-colors"
+            >
               Mot de passe oublié ?
             </Link>
           </div>
