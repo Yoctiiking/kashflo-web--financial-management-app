@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Props) {
-  const { symbol } = useCurrency();
+  const { symbol, toBase } = useCurrency();
   const [step, setStep] = useState<1 | 2>(1);
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
@@ -63,7 +63,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
     try {
       const [year, month, day] = startDate.split("-").map(Number);
       await addRecurrence(groupId, {
-        amount: parseFloat(amount),
+        amount: toBase(parseFloat(amount)),
         type,
         category,
         label,

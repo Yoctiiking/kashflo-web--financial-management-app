@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import FeedbackModal from "@/components/FeedbackModal";
 import { hasPinSet, removePin } from "@/lib/pinLock";
 import PinSetupModal from "@/components/PinSetupModal";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 const CURRENCIES = [
     { code: "CAD", label: "Dollar canadien (CAD)" },
@@ -27,6 +28,7 @@ const CURRENCIES = [
 export default function SettingsPage() {
     const { user } = useAuth();
     const router = useRouter();
+    const confirm = useConfirm();
 
     const [displayName, setDisplayName] = useState(user?.displayName || "");
     const [nameLoading, setNameLoading] = useState(false);
@@ -159,8 +161,14 @@ export default function SettingsPage() {
         }
     };
 
-    const handleRemovePin = () => {
-        if (!confirm("Désactiver le verrouillage par code ?")) return;
+    const handleRemovePin = async () => {
+        const ok = await confirm({
+            title: "Désactiver le verrouillage par code ?",
+            message: "L'application ne sera plus protégée par un code après une période d'inactivité.",
+            confirmLabel: "Désactiver",
+            danger: true
+        });
+        if (!ok) return;
         removePin();
         setPinActive(false);
     };

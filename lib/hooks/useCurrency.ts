@@ -45,5 +45,15 @@ export function useCurrency() {
     return new Intl.NumberFormat("fr-CA", { style: "currency", currency }).format(converted);
   }, [currency, rate]);
 
-  return { currency, formatCurrency, ready, symbol: getCurrencySymbol(currency) };
+  // Montant saisi dans la devise affichée → CAD à stocker
+  const toBase = useCallback((amount: number) => {
+    return amount / rate;
+  }, [rate]);
+
+  // CAD stocké → montant numérique dans la devise affichée (pour pré-remplir un formulaire d'édition)
+  const fromBase = useCallback((amount: number) => {
+    return amount * rate;
+  }, [rate]);
+
+  return { currency, formatCurrency, toBase, fromBase, ready, symbol: getCurrencySymbol(currency) };
 }

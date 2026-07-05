@@ -7,6 +7,7 @@ import { Transaction } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 interface Props {
     budgetId: string;
@@ -61,6 +62,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
     const targetYear = parsedSearch?.year ?? (parsedSearch ? navYear : navYear);
     const targetMonth = parsedSearch?.month ?? navMonth;
     const effectiveYear = parsedSearch ? (parsedSearch.year ?? navYear) : navYear;
+    const confirm = useConfirm();
 
     const goToPreviousMonth = () => {
         setSearch("");
@@ -118,11 +120,17 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
             setNavMonth(month - 1);
         }
     };
-
+    
     const handleMigrateSelected = async () => {
         if (!user || selectedIds.size === 0) return;
         const toMigrate = transactions.filter(t => selectedIds.has(t.id));
-        if (!confirm(`Déplacer ${toMigrate.length} transaction${toMigrate.length > 1 ? "s" : ""} vers ce budget partagé ? Elles seront retirées de tes transactions personnelles.`)) return;
+        const ok = await confirm({
+            title: `Déplacer ${toMigrate.length} transaction${toMigrate.length > 1 ? "s" : ""} ?`,
+            message: "Elles seront retirées de tes transactions personnelles et ajoutées à ce budget partagé.",
+            confirmLabel: "Déplacer",
+            danger: false
+        });
+        if (!ok) return;
 
         setMigrating(true);
         try {
@@ -205,8 +213,8 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                         <button
                             onClick={() => setShowDatePicker(!showDatePicker)}
                             className={`shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border transition-colors ${dateFilter || showDatePicker
-                                    ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400"
-                                    : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
+                                ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400"
+                                : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
                                 }`}
                             aria-label="Filtrer par date"
                         >
@@ -262,8 +270,8 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                                         onClick={() => toggleSelect(tx.id)}
                                         disabled={migrating}
                                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left border ${isSelected
-                                                ? "bg-emerald-500/10 border-emerald-500/40"
-                                                : "bg-gray-800 border-transparent hover:bg-gray-700"
+                                            ? "bg-emerald-500/10 border-emerald-500/40"
+                                            : "bg-gray-800 border-transparent hover:bg-gray-700"
                                             } disabled:opacity-50`}
                                     >
                                         <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-emerald-500 border-emerald-500" : "border-gray-600"

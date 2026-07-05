@@ -8,6 +8,7 @@ import SavingsGoalModal from "@/components/SavingsGoalModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 export default function SavingsPage() {
   const { user } = useAuth();
@@ -17,8 +18,9 @@ export default function SavingsPage() {
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [addAmount, setAddAmount] = useState("");
+  const confirm = useConfirm();
 
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, toBase } = useCurrency();
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -37,28 +39,35 @@ export default function SavingsPage() {
   }, [loadData]);
 
   const handleDelete = async (goalId: string) => {
-    if (!user) return;
-    try {
-      await deleteSavingsGoal(user.uid, goalId);
-      await loadData();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  if (!user) return;
+  const ok = await confirm({
+    title: "Supprimer cet objectif ?",
+    message: "Cette action est irréversible.",
+    confirmLabel: "Supprimer",
+    danger: true
+  });
+  if (!ok) return;
+  try {
+    await deleteSavingsGoal(user.uid, goalId);
+    await loadData();
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const handleAddAmount = async (goalId: string) => {
-    if (!user || !addAmount) return;
-    const amount = parseFloat(addAmount);
-    if (isNaN(amount) || amount <= 0) return;
-    try {
-      await addToSavingsGoal(user.uid, goalId, amount);
-      setAddingTo(null);
-      setAddAmount("");
-      await loadData();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  if (!user || !addAmount) return;
+  const amount = parseFloat(addAmount);
+  if (isNaN(amount) || amount <= 0) return;
+  try {
+    await addToSavingsGoal(user.uid, goalId, toBase(amount));
+    setAddingTo(null);
+    setAddAmount("");
+    await loadData();
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   if (loading) {
     return (

@@ -6,6 +6,7 @@ import { getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/f
 import { Budget, Transaction } from "@/types";
 import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 export default function BudgetsPage() {
   const { user } = useAuth();
@@ -14,6 +15,8 @@ export default function BudgetsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const confirm = useConfirm();
+
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -38,6 +41,13 @@ export default function BudgetsPage() {
 
   const handleDelete = async (budgetId: string) => {
     if (!user) return;
+    const ok = await confirm({
+      title: "Supprimer ce budget ?",
+      message: "Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      danger: true
+    });
+    if (!ok) return;
     try {
       await deleteBudget(user.uid, budgetId);
       await loadData();
@@ -45,6 +55,7 @@ export default function BudgetsPage() {
       console.error(err);
     }
   };
+
 
   const getSpent = (budget: Budget) => {
     return transactions
