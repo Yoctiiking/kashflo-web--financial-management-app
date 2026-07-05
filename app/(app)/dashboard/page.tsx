@@ -314,27 +314,29 @@ export default function DashboardPage() {
                         <p className="text-gray-500 text-sm">Aucune dépense ce mois-ci</p>
                     ) : (
                         <div className="flex items-center gap-4">
-                            <ResponsiveContainer width="50%" height={200}>
-                                <PieChart>
-                                    <Pie
-                                        data={pieData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={80}
-                                        paddingAngle={3}
-                                        dataKey="value"
-                                    >
-                                        {pieData.map((_, index) => (
-                                            <Cell
-                                                key={index}
-                                                fill={PIE_COLORS[index % PIE_COLORS.length]}
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip content={<CustomPieTooltip />} />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <div className="w-1/2 aspect-square max-w-[200px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={pieData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius="55%"
+                                            outerRadius="90%"
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                        >
+                                            {pieData.map((_, index) => (
+                                                <Cell
+                                                    key={index}
+                                                    fill={PIE_COLORS[index % PIE_COLORS.length]}
+                                                />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<CustomPieTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
                             <div className="flex-1 space-y-2">
                                 {pieData.slice(0, 5).map((entry, index) => (
                                     <div key={entry.name} className="flex items-center justify-between">
