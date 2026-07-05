@@ -19,6 +19,7 @@ import DeleteExpenseModal from "@/components/DeleteExpenseModal";
 import { unshareExpenseToPersonal } from "@/lib/firebase/firestore";
 import MigrateTransactionModal from "@/components/MigrateTransactionModal";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import SharedBudgetModal from "@/components/SharedBudgetModal";
 
 const EXPIRY_OPTIONS = [
   { label: "1 heure", minutes: 60 },
@@ -47,6 +48,7 @@ export default function SharedBudgetDetailPage() {
   const [visibleMembersCount, setVisibleMembersCount] = useState(5);
   const [memberSearch, setMemberSearch] = useState("");
   const [expenseSearch, setExpenseSearch] = useState("");
+  const [showEditBudget, setShowEditBudget] = useState(false);
 
   // Filtrage des membres et dépenses selon la recherche
   const filteredMembers = useMemo(() => {
@@ -355,11 +357,21 @@ export default function SharedBudgetDetailPage() {
   return (
     <div className="p-4 sm:p-8 max-w-2xl">
       {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white">{budget.name}</h2>
-        <p className="text-gray-400 mt-1 text-sm">
-          {budget.category} · {budget.members.length} membre{budget.members.length > 1 ? "s" : ""}
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">{budget.name}</h2>
+          <p className="text-gray-400 mt-1 text-sm">
+            {budget.category} · {budget.members.length} membre{budget.members.length > 1 ? "s" : ""}
+          </p>
+        </div>
+        {isAdmin && (
+  <button
+    onClick={() => setShowEditBudget(true)}
+    className="text-gray-400 hover:text-white text-sm border border-gray-800 hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
+  >
+    ✏️<span className="hidden sm:inline"> Modifier</span>
+  </button>
+)}
       </div>
 
       {/* Progression */}
@@ -614,6 +626,14 @@ export default function SharedBudgetDetailPage() {
           onDeletePermanently={handleDeletePermanently}
           onUnshare={handleUnshare}
           onCancel={() => setDeletingExpense(null)}
+        />
+      )}
+      {showEditBudget && (
+        <SharedBudgetModal
+          userId={user!.uid}
+          budget={budget}
+          onClose={() => setShowEditBudget(false)}
+          onSuccess={() => setShowEditBudget(false)}
         />
       )}
     </div>
