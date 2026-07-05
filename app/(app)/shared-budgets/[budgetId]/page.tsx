@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useParams } from "next/navigation";
 import {
@@ -43,6 +43,28 @@ export default function SharedBudgetDetailPage() {
   const [expiryMinutes, setExpiryMinutes] = useState(1440);
   const [copiedCode, setCopiedCode] = useState(false);
   const { formatCurrency, symbol, toBase, fromBase } = useCurrency(); const confirm = useConfirm();
+  const [visibleSpentCount, setVisibleSpentCount] = useState(10);
+  const [visibleMembersCount, setVisibleMembersCount] = useState(5);
+  const [memberSearch, setMemberSearch] = useState("");
+  const [expenseSearch, setExpenseSearch] = useState("");
+
+  // Filtrage des membres et dépenses selon la recherche
+  const filteredMembers = useMemo(() => {
+    if (!memberSearch.trim()) return budget?.members || [];
+    const term = memberSearch.toLowerCase();
+    return (budget?.members || []).filter(uid =>
+      (memberNames[uid] || uid).toLowerCase().includes(term)
+    );
+  }, [budget?.members, memberNames, memberSearch]);
+
+  const filteredExpenses = useMemo(() => {
+    if (!expenseSearch.trim()) return expenses;
+    const term = expenseSearch.toLowerCase();
+    return expenses.filter(e =>
+      e.label.toLowerCase().includes(term) ||
+      (e.addedByName || memberNames[e.addedBy] || "").toLowerCase().includes(term)
+    );
+  }, [expenses, expenseSearch, memberNames]);
 
   // Form état
   const [label, setLabel] = useState("");
@@ -168,7 +190,7 @@ export default function SharedBudgetDetailPage() {
     } finally {
       setFormLoading(false);
     }
-};
+  };
 
   const startEditExpense = (expense: SharedExpense) => {
     setShowAddExpense(false);
@@ -177,7 +199,7 @@ export default function SharedBudgetDetailPage() {
     setAmount(fromBase(expense.amount).toFixed(2));
     setDate(expense.date.toISOString().split("T")[0]);
     setFormError("");
-};
+  };
 
   const handleDeletePermanently = async () => {
     if (!deletingExpense) return;
@@ -246,6 +268,23 @@ export default function SharedBudgetDetailPage() {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    setVisibleMembersCount(5);
+  }, [memberSearch]);
+
+  useEffect(() => {
+    setVisibleSpentCount(10);
+    if (editingExpense) {
+      closeExpenseForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenseSearch]);
+
+  useEffect(() => {
+    setVisibleSpentCount(10);
+    setVisibleMembersCount(5);
+  }, [budgetId]);
 
   const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
   const percentage = budget ? Math.min((totalSpent / budget.limit) * 100, 100) : 0;
@@ -358,8 +397,19 @@ export default function SharedBudgetDetailPage() {
             </button>
           )}
         </div>
+
+        {budget.members.length > 5 && (
+          <input
+            type="text"
+            value={memberSearch}
+            onChange={e => setMemberSearch(e.target.value)}
+            placeholder="Rechercher un membre..."
+            className="w-full mb-3 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+          />
+        )}
+
         <div className="space-y-2">
-          {budget.members.map(uid => (
+          {filteredMembers.slice(0, visibleMembersCount).map(uid => (
             <div key={uid} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-semibold">
@@ -382,7 +432,28 @@ export default function SharedBudgetDetailPage() {
               )}
             </div>
           ))}
+          {filteredMembers.length === 0 && (
+            <p className="text-gray-500 text-sm">Aucun membre trouvé</p>
+          )}
         </div>
+
+        {filteredMembers.length > visibleMembersCount && (
+          <button
+            onClick={() => setVisibleMembersCount(c => c + 5)}
+            className="w-full mt-3 text-gray-400 hover:text-white text-sm py-2 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
+          >
+            Voir plus ({filteredMembers.length - visibleMembersCount} restants)
+          </button>
+        )}
+
+        {budget.members.length > visibleMembersCount && (
+          <button
+            onClick={() => setVisibleMembersCount(c => c + 5)}
+            className="w-full mt-3 text-gray-400 hover:text-white text-sm py-2 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
+          >
+            Voir plus ({budget.members.length - visibleMembersCount} restants)
+          </button>
+        )}
 
         {showInvite && (
           <div className="mt-4 pt-4 border-t border-gray-800 space-y-3">
@@ -460,50 +531,72 @@ export default function SharedBudgetDetailPage() {
           />
         )}
 
-        {/* Formulaire d'ajout — uniquement quand on ajoute une nouvelle dépense */}
         {showAddExpense && renderExpenseForm()}
 
         {expenses.length === 0 ? (
           <p className="text-gray-500 text-sm">Aucune dépense pour l'instant</p>
         ) : (
-          <div className="space-y-3">
-            {expenses.map(expense => (
-              editingExpense?.id === expense.id ? (
-                // Formulaire d'édition — apparaît à la place de la dépense concernée
-                <div key={expense.id}>
-                  {renderExpenseForm()}
-                </div>
-              ) : (
-                <div key={expense.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white text-sm font-medium">{expense.label}</p>
-                    <p className="text-gray-500 text-xs">
-                      {expense.addedByName || memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: fr })}
-                    </p>
+          <>
+            {expenses.length > 10 && (
+              <input
+                type="text"
+                value={expenseSearch}
+                onChange={e => setExpenseSearch(e.target.value)}
+                placeholder="Rechercher une dépense..."
+                className="w-full mb-4 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              />
+            )}
+
+            <div className="space-y-3">
+              {filteredExpenses.slice(0, visibleSpentCount).map(expense => (
+                editingExpense?.id === expense.id ? (
+                  <div key={expense.id}>
+                    {renderExpenseForm()}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-red-400 font-semibold text-sm">{formatCurrency(expense.amount)}</p>
-                    {expense.addedBy === user?.uid && (
-                      <>
-                        <button
-                          onClick={() => startEditExpense(expense)}
-                          className="text-gray-600 hover:text-emerald-400 transition-colors text-sm"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => setDeletingExpense(expense)}
-                          className="text-gray-600 hover:text-red-400 transition-colors text-sm"
-                        >
-                          ✕
-                        </button>
-                      </>
-                    )}
+                ) : (
+                  <div key={expense.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-white text-sm font-medium">{expense.label}</p>
+                      <p className="text-gray-500 text-xs">
+                        {expense.addedByName || memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: fr })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <p className="text-red-400 font-semibold text-sm">{formatCurrency(expense.amount)}</p>
+                      {expense.addedBy === user?.uid && (
+                        <>
+                          <button
+                            onClick={() => startEditExpense(expense)}
+                            className="text-gray-600 hover:text-emerald-400 transition-colors text-sm"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => setDeletingExpense(expense)}
+                            className="text-gray-600 hover:text-red-400 transition-colors text-sm"
+                          >
+                            ✕
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            ))}
-          </div>
+                )
+              ))}
+              {filteredExpenses.length === 0 && (
+                <p className="text-gray-500 text-sm">Aucune dépense trouvée</p>
+              )}
+            </div>
+
+            {filteredExpenses.length > visibleSpentCount && (
+              <button
+                onClick={() => setVisibleSpentCount(c => c + 10)}
+                className="w-full mt-4 text-gray-400 hover:text-white text-sm py-2.5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
+              >
+                Voir plus ({filteredExpenses.length - visibleSpentCount} restantes)
+              </button>
+            )}
+          </>
         )}
       </div>
       {!isAdmin && (
