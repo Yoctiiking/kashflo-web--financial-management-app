@@ -157,11 +157,11 @@ export default function BudgetsPage() {
 
                 {/* Montants */}
                 <div className="mb-3">
-                  <div className="flex justify-between text-sm mb-1.5">
-                    <span className={isOver ? "text-red-400" : "text-gray-300"}>
+                  <div className="flex justify-between items-baseline gap-2 text-sm mb-1.5">
+                    <span className={`truncate min-w-0 ${isOver ? "text-red-400" : "text-gray-300"}`}>
                       {formatCurrency(spent)} dépensé
                     </span>
-                    <span className="text-gray-500">
+                    <span className="text-gray-500 shrink-0">
                       {formatCurrency(budget.limit)}
                     </span>
                   </div>

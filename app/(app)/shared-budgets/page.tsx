@@ -84,13 +84,13 @@ export default function SharedBudgetsPage() {
               href={`/shared-budgets/${budget.id}`}
               className="bg-gray-900 border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-colors block"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="text-white font-semibold">{budget.name}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{budget.category} · {periodLabel[budget.period]}</p>
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="min-w-0">
+                  <p className="text-white font-semibold truncate">{budget.name}</p>
+                  <p className="text-gray-500 text-xs mt-0.5 truncate">{budget.category} · {periodLabel[budget.period]}</p>
                 </div>
                 {budget.createdBy === user?.uid && (
-                  <div className="flex items-center gap-2" onClick={e => e.preventDefault()}>
+                  <div className="flex items-center gap-2 shrink-0" onClick={e => e.preventDefault()}>
                     <button
                       onClick={() => setEditingBudget(budget)}
                       className="text-gray-600 hover:text-emerald-400 transition-colors text-sm"

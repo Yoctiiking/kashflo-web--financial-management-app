@@ -345,20 +345,20 @@ export default function TransactionsPage() {
         ) : (
           <div className="divide-y divide-gray-800">
             {filtered.map(tx => (
-              <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+              <div key={tx.id} className="flex items-center justify-between gap-4 p-4 hover:bg-gray-800/50 transition-colors">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
                     }`}>
                     {tx.type === "income" ? "💰" : "💸"}
                   </div>
-                  <div>
-                    <p className="text-white text-sm font-medium">{tx.label}</p>
-                    <p className="text-gray-500 text-xs mt-0.5">
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{tx.label}</p>
+                    <p className="text-gray-500 text-xs mt-0.5 truncate">
                       {tx.category} · {format(tx.date, "d MMM", { locale: fr })}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 shrink-0">
                   <p className={`font-semibold ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
                     {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
                   </p>

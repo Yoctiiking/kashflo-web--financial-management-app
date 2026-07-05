@@ -376,11 +376,11 @@ export default function SharedBudgetDetailPage() {
 
       {/* Progression */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
-        <div className="flex justify-between text-sm mb-2">
-          <span className={isOver ? "text-red-400 font-semibold" : "text-white font-semibold"}>
+        <div className="flex justify-between items-baseline gap-2 text-sm mb-2">
+          <span className={`truncate min-w-0 ${isOver ? "text-red-400 font-semibold" : "text-white font-semibold"}`}>
             {formatCurrency(totalSpent)} dépensé
           </span>
-          <span className="text-gray-400">{formatCurrency(budget.limit)}</span>
+          <span className="text-gray-400 shrink-0">{formatCurrency(budget.limit)}</span>
         </div>
         <div className="w-full bg-gray-800 rounded-full h-3 mb-2">
           <div
@@ -566,14 +566,14 @@ export default function SharedBudgetDetailPage() {
                     {renderExpenseForm()}
                   </div>
                 ) : (
-                  <div key={expense.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white text-sm font-medium">{expense.label}</p>
-                      <p className="text-gray-500 text-xs">
+                  <div key={expense.id} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{expense.label}</p>
+                      <p className="text-gray-500 text-xs truncate">
                         {expense.addedByName || memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: fr })}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                       <p className="text-red-400 font-semibold text-sm">{formatCurrency(expense.amount)}</p>
                       {expense.addedBy === user?.uid && (
                         <>
