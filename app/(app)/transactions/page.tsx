@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 const MONTHS_FR = [
   "janvier", "février", "mars", "avril", "mai", "juin",
@@ -52,6 +53,7 @@ export default function TransactionsPage() {
   const [pickerYear, setPickerYear] = useState(currentYear);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+  const confirm = useConfirm();
 
   useEffect(() => {
     const parsed = parseMonthSearch(search);
@@ -118,7 +120,13 @@ export default function TransactionsPage() {
 
   const handleDelete = async (transactionId: string) => {
     if (!user) return;
-    if (!confirm("Supprimer cette transaction ?")) return;
+    const ok = await confirm({
+      title: "Supprimer cette transaction ?",
+      message: "Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      danger: true
+    });
+    if (!ok) return;
     try {
       await deleteTransaction(user.uid, transactionId);
       await loadData();
@@ -229,8 +237,8 @@ export default function TransactionsPage() {
                             setShowMonthPicker(false);
                           }}
                           className={`py-2 rounded-lg text-xs font-medium capitalize transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isSelected
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "text-gray-300 hover:bg-gray-700"
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "text-gray-300 hover:bg-gray-700"
                             }`}
                         >
                           {m.slice(0, 3)}
@@ -337,20 +345,20 @@ export default function TransactionsPage() {
         ) : (
           <div className="divide-y divide-gray-800">
             {filtered.map(tx => (
-              <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+              <div key={tx.id} className="flex items-center justify-between gap-4 p-4 hover:bg-gray-800/50 transition-colors">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
                     }`}>
                     {tx.type === "income" ? "💰" : "💸"}
                   </div>
-                  <div>
-                    <p className="text-white text-sm font-medium">{tx.label}</p>
-                    <p className="text-gray-500 text-xs mt-0.5">
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{tx.label}</p>
+                    <p className="text-gray-500 text-xs mt-0.5 truncate">
                       {tx.category} · {format(tx.date, "d MMM", { locale: fr })}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 shrink-0">
                   <p className={`font-semibold ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
                     {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
                   </p>

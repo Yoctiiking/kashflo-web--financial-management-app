@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logoutUser } from "@/lib/firebase/auth";
-import { getUserProfile, getRecurrences } from "@/lib/firebase/firestore";
+import { getRecurrences } from "@/lib/firebase/firestore";
 import Link from "next/link";
 import { useInactivityLogout } from "@/lib/hooks/useInactivityLogout";
 import { useAppLock } from "@/lib/hooks/useAppLock";

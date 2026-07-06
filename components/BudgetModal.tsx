@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { addBudget, updateBudget } from "@/lib/firebase/firestore";
 import { Budget, BudgetPeriod } from "@/types";
 import { EXPENSE_CATEGORIES } from "@/lib/categories";
@@ -14,12 +14,20 @@ interface Props {
 }
 
 export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Props) {
-  const { symbol } = useCurrency();
-  const [category, setCategory] = useState(budget?.category || "");
-  const [limit, setLimit] = useState(budget?.limit.toString() || "");
   const [period, setPeriod] = useState<BudgetPeriod>(budget?.period || "monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { symbol, toBase, fromBase, ready } = useCurrency();
+  const [category, setCategory] = useState(budget?.category || "");
+  const [limit, setLimit] = useState(
+    budget && ready ? fromBase(budget.limit).toFixed(2) : ""
+  );
+
+  useEffect(() => {
+    if (budget && ready) {
+      setLimit(fromBase(budget.limit).toFixed(2));
+    }
+  }, [ready, budget, fromBase]);
 
   const isEditing = !!budget;
 
@@ -40,13 +48,13 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
       if (isEditing) {
         await updateBudget(groupId, budget.id, {
           category,
-          limit: parseFloat(limit),
+          limit: toBase(parseFloat(limit)),
           period
         });
       } else {
         await addBudget(groupId, {
           category,
-          limit: parseFloat(limit),
+          limit: toBase(parseFloat(limit)),
           period
         });
       }
@@ -115,8 +123,8 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
                   key={p}
                   onClick={() => setPeriod(p)}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${period === p
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "text-gray-400 hover:text-white"
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "text-gray-400 hover:text-white"
                     }`}
                 >
                   {periodLabel[p]}

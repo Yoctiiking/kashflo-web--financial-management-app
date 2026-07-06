@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useParams } from "next/navigation";
 import {
@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation";
 import DeleteExpenseModal from "@/components/DeleteExpenseModal";
 import { unshareExpenseToPersonal } from "@/lib/firebase/firestore";
 import MigrateTransactionModal from "@/components/MigrateTransactionModal";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import SharedBudgetModal from "@/components/SharedBudgetModal";
 
 const EXPIRY_OPTIONS = [
   { label: "1 heure", minutes: 60 },
@@ -41,7 +43,30 @@ export default function SharedBudgetDetailPage() {
   const [multipleUse, setMultipleUse] = useState(false);
   const [expiryMinutes, setExpiryMinutes] = useState(1440);
   const [copiedCode, setCopiedCode] = useState(false);
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, symbol, toBase, fromBase } = useCurrency(); const confirm = useConfirm();
+  const [visibleSpentCount, setVisibleSpentCount] = useState(10);
+  const [visibleMembersCount, setVisibleMembersCount] = useState(5);
+  const [memberSearch, setMemberSearch] = useState("");
+  const [expenseSearch, setExpenseSearch] = useState("");
+  const [showEditBudget, setShowEditBudget] = useState(false);
+
+  // Filtrage des membres et dépenses selon la recherche
+  const filteredMembers = useMemo(() => {
+    if (!memberSearch.trim()) return budget?.members || [];
+    const term = memberSearch.toLowerCase();
+    return (budget?.members || []).filter(uid =>
+      (memberNames[uid] || uid).toLowerCase().includes(term)
+    );
+  }, [budget?.members, memberNames, memberSearch]);
+
+  const filteredExpenses = useMemo(() => {
+    if (!expenseSearch.trim()) return expenses;
+    const term = expenseSearch.toLowerCase();
+    return expenses.filter(e =>
+      e.label.toLowerCase().includes(term) ||
+      (e.addedByName || memberNames[e.addedBy] || "").toLowerCase().includes(term)
+    );
+  }, [expenses, expenseSearch, memberNames]);
 
   // Form état
   const [label, setLabel] = useState("");
@@ -50,6 +75,9 @@ export default function SharedBudgetDetailPage() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
+
+  const formRef = useRef<HTMLDivElement>(null);
+  const isFormOpen = showAddExpense || !!editingExpense;
 
   // Écoute temps réel du budget
   useEffect(() => {
@@ -84,6 +112,51 @@ export default function SharedBudgetDetailPage() {
     loadNames();
   }, [budget]);
 
+  const closeExpenseForm = useCallback(() => {
+    setShowAddExpense(false);
+    setEditingExpense(null);
+    setLabel("");
+    setAmount("");
+    setDate(new Date().toISOString().split("T")[0]);
+    setFormError("");
+  }, []);
+
+  const handleToggleAddExpense = () => {
+    if (showAddExpense) {
+      closeExpenseForm();
+    } else {
+      setEditingExpense(null);
+      setLabel("");
+      setAmount("");
+      setDate(new Date().toISOString().split("T")[0]);
+      setFormError("");
+      setShowAddExpense(true);
+    }
+  };
+
+  // Fermeture (avec annulation) sur clic extérieur ou touche Échap
+  useEffect(() => {
+    if (!isFormOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (formRef.current && !formRef.current.contains(e.target as Node)) {
+        closeExpenseForm();
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeExpenseForm();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isFormOpen, closeExpenseForm]);
+
   const handleSubmitExpense = async () => {
     if (!user || !label || !amount) {
       setFormError("Tous les champs sont obligatoires");
@@ -99,22 +172,20 @@ export default function SharedBudgetDetailPage() {
       const [year, month, day] = date.split("-").map(Number);
       if (editingExpense) {
         await updateSharedExpense(budgetId, editingExpense.id, {
-          amount: parseFloat(amount),
+          amount: toBase(parseFloat(amount)),
           label,
           date: new Date(year, month - 1, day)
         });
       } else {
         await addSharedExpense(budgetId, {
-          amount: parseFloat(amount),
+          amount: toBase(parseFloat(amount)),
           label,
           date: new Date(year, month - 1, day),
           addedBy: user.uid,
           addedByName: user.displayName || "Utilisateur"
         });
       }
-      setLabel(""); setAmount(""); setDate(new Date().toISOString().split("T")[0]);
-      setShowAddExpense(false);
-      setEditingExpense(null);
+      closeExpenseForm();
     } catch (err) {
       console.error(err);
       setFormError("Erreur lors de l'enregistrement");
@@ -124,11 +195,12 @@ export default function SharedBudgetDetailPage() {
   };
 
   const startEditExpense = (expense: SharedExpense) => {
+    setShowAddExpense(false);
     setEditingExpense(expense);
     setLabel(expense.label);
-    setAmount(expense.amount.toString());
+    setAmount(fromBase(expense.amount).toFixed(2));
     setDate(expense.date.toISOString().split("T")[0]);
-    setShowAddExpense(true);
+    setFormError("");
   };
 
   const handleDeletePermanently = async () => {
@@ -168,10 +240,15 @@ export default function SharedBudgetDetailPage() {
   };
 
   const handleRemoveMember = async (uid: string) => {
-    if (!confirm("Retirer ce membre du budget ?")) return;
+    const ok = await confirm({
+      title: "Retirer ce membre ?",
+      message: "Ce membre n'aura plus accès à ce budget partagé.",
+      confirmLabel: "Retirer",
+      danger: true
+    });
+    if (!ok) return;
     try {
       await removeMemberFromSharedBudget(budgetId, uid);
-      // Plus besoin de loadData() — le listener met à jour automatiquement
     } catch (err) {
       console.error(err);
     }
@@ -179,7 +256,13 @@ export default function SharedBudgetDetailPage() {
 
   const handleLeave = async () => {
     if (!user) return;
-    if (!confirm("Quitter ce budget partagé ?")) return;
+    const ok = await confirm({
+      title: "Quitter ce budget partagé ?",
+      message: "Tu n'auras plus accès à ce budget partagé.",
+      confirmLabel: "Quitter",
+      danger: true
+    });
+    if (!ok) return;
     try {
       await leaveSharedBudget(budgetId, user.uid);
       router.push("/shared-budgets");
@@ -187,6 +270,23 @@ export default function SharedBudgetDetailPage() {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    setVisibleMembersCount(5);
+  }, [memberSearch]);
+
+  useEffect(() => {
+    setVisibleSpentCount(10);
+    if (editingExpense) {
+      closeExpenseForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenseSearch]);
+
+  useEffect(() => {
+    setVisibleSpentCount(10);
+    setVisibleMembersCount(5);
+  }, [budgetId]);
 
   const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
   const percentage = budget ? Math.min((totalSpent / budget.limit) * 100, 100) : 0;
@@ -209,23 +309,78 @@ export default function SharedBudgetDetailPage() {
     );
   }
 
+  const renderExpenseForm = () => (
+    <div ref={formRef} className="mb-4 p-4 bg-gray-800 rounded-xl space-y-3">
+      <input
+        type="text"
+        value={label}
+        onChange={e => setLabel(e.target.value)}
+        placeholder="Description"
+        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+      />
+      <div className="flex gap-2">
+        <input
+          type="number"
+          value={amount}
+          min="0"
+          step="0.01"
+          onChange={e => setAmount(e.target.value)}
+          placeholder="Montant"
+          className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+        />
+        <input
+          type="date"
+          value={date}
+          onChange={e => setDate(e.target.value)}
+          className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+        />
+      </div>
+      {formError && <p className="text-red-400 text-xs">{formError}</p>}
+      <div className="flex gap-2">
+        <button
+          onClick={handleSubmitExpense}
+          disabled={formLoading}
+          className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
+        >
+          {formLoading ? "..." : editingExpense ? "Modifier" : "Ajouter"}
+        </button>
+        <button
+          onClick={closeExpenseForm}
+          className="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-sm py-2.5 rounded-xl transition-colors"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-4 sm:p-8 max-w-2xl">
       {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white">{budget.name}</h2>
-        <p className="text-gray-400 mt-1 text-sm">
-          {budget.category} · {budget.members.length} membre{budget.members.length > 1 ? "s" : ""}
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">{budget.name}</h2>
+          <p className="text-gray-400 mt-1 text-sm">
+            {budget.category} · {budget.members.length} membre{budget.members.length > 1 ? "s" : ""}
+          </p>
+        </div>
+        {isAdmin && (
+  <button
+    onClick={() => setShowEditBudget(true)}
+    className="text-gray-400 hover:text-white text-sm border border-gray-800 hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
+  >
+    ✏️<span className="hidden sm:inline"> Modifier</span>
+  </button>
+)}
       </div>
 
       {/* Progression */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
-        <div className="flex justify-between text-sm mb-2">
-          <span className={isOver ? "text-red-400 font-semibold" : "text-white font-semibold"}>
+        <div className="flex justify-between items-baseline gap-2 text-sm mb-2">
+          <span className={`truncate min-w-0 ${isOver ? "text-red-400 font-semibold" : "text-white font-semibold"}`}>
             {formatCurrency(totalSpent)} dépensé
           </span>
-          <span className="text-gray-400">{formatCurrency(budget.limit)}</span>
+          <span className="text-gray-400 shrink-0">{formatCurrency(budget.limit)}</span>
         </div>
         <div className="w-full bg-gray-800 rounded-full h-3 mb-2">
           <div
@@ -254,8 +409,19 @@ export default function SharedBudgetDetailPage() {
             </button>
           )}
         </div>
+
+        {budget.members.length > 5 && (
+          <input
+            type="text"
+            value={memberSearch}
+            onChange={e => setMemberSearch(e.target.value)}
+            placeholder="Rechercher un membre..."
+            className="w-full mb-3 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+          />
+        )}
+
         <div className="space-y-2">
-          {budget.members.map(uid => (
+          {filteredMembers.slice(0, visibleMembersCount).map(uid => (
             <div key={uid} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-semibold">
@@ -278,7 +444,28 @@ export default function SharedBudgetDetailPage() {
               )}
             </div>
           ))}
+          {filteredMembers.length === 0 && (
+            <p className="text-gray-500 text-sm">Aucun membre trouvé</p>
+          )}
         </div>
+
+        {filteredMembers.length > visibleMembersCount && (
+          <button
+            onClick={() => setVisibleMembersCount(c => c + 5)}
+            className="w-full mt-3 text-gray-400 hover:text-white text-sm py-2 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
+          >
+            Voir plus ({filteredMembers.length - visibleMembersCount} restants)
+          </button>
+        )}
+
+        {budget.members.length > visibleMembersCount && (
+          <button
+            onClick={() => setVisibleMembersCount(c => c + 5)}
+            className="w-full mt-3 text-gray-400 hover:text-white text-sm py-2 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
+          >
+            Voir plus ({budget.members.length - visibleMembersCount} restants)
+          </button>
+        )}
 
         {showInvite && (
           <div className="mt-4 pt-4 border-t border-gray-800 space-y-3">
@@ -340,7 +527,7 @@ export default function SharedBudgetDetailPage() {
               📥 Depuis mes transactions
             </button>
             <button
-              onClick={() => setShowAddExpense(!showAddExpense)}
+              onClick={handleToggleAddExpense}
               className="text-emerald-500 text-sm hover:text-emerald-400 transition-colors"
             >
               + Ajouter
@@ -356,85 +543,72 @@ export default function SharedBudgetDetailPage() {
           />
         )}
 
-        {showAddExpense && (
-          <div className="mb-4 p-4 bg-gray-800 rounded-xl space-y-3">
-            <input
-              type="text"
-              value={label}
-              onChange={e => setLabel(e.target.value)}
-              placeholder="Description"
-              className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-            />
-            <div className="flex gap-2">
-              <input
-                type="number"
-                value={amount}
-                min="0"
-                step="0.01"
-                onChange={e => setAmount(e.target.value)}
-                placeholder="Montant"
-                className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-              />
-              <input
-                type="date"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-              />
-            </div>
-            {formError && <p className="text-red-400 text-xs">{formError}</p>}
-            <div className="flex gap-2">
-              <button
-                onClick={handleSubmitExpense}
-                disabled={formLoading}
-                className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
-              >
-                {formLoading ? "..." : editingExpense ? "Modifier" : "Ajouter"}
-              </button>
-              <button
-                onClick={() => { setShowAddExpense(false); setEditingExpense(null); setLabel(""); setAmount(""); }}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-sm py-2.5 rounded-xl transition-colors"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
-        )}
+        {showAddExpense && renderExpenseForm()}
 
         {expenses.length === 0 ? (
           <p className="text-gray-500 text-sm">Aucune dépense pour l'instant</p>
         ) : (
-          <div className="space-y-3">
-            {expenses.map(expense => (
-              <div key={expense.id} className="flex items-center justify-between">
-                <div>
-                  <p className="text-white text-sm font-medium">{expense.label}</p>
-                  <p className="text-gray-500 text-xs">
-                    {expense.addedByName || memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: fr })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <p className="text-red-400 font-semibold text-sm">{formatCurrency(expense.amount)}</p>
-                  {expense.addedBy === user?.uid && (
-                    <>
-                      <button
-                        onClick={() => startEditExpense(expense)}
-                        className="text-gray-600 hover:text-emerald-400 transition-colors text-sm"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => setDeletingExpense(expense)}
-                        className="text-gray-600 hover:text-red-400 transition-colors text-sm"
-                      >
-                        ✕
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <>
+            {expenses.length > 10 && (
+              <input
+                type="text"
+                value={expenseSearch}
+                onChange={e => setExpenseSearch(e.target.value)}
+                placeholder="Rechercher une dépense..."
+                className="w-full mb-4 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              />
+            )}
+
+            <div className="space-y-3">
+              {filteredExpenses.slice(0, visibleSpentCount).map(expense => (
+                editingExpense?.id === expense.id ? (
+                  <div key={expense.id}>
+                    {renderExpenseForm()}
+                  </div>
+                ) : (
+                  <div key={expense.id} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{expense.label}</p>
+                      <p className="text-gray-500 text-xs truncate">
+                        {expense.addedByName || memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: fr })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <p className="text-red-400 font-semibold text-sm">{formatCurrency(expense.amount)}</p>
+                      {expense.addedBy === user?.uid && (
+                        <>
+                          <button
+                            onClick={() => startEditExpense(expense)}
+                            className="text-gray-600 hover:text-emerald-400 transition-colors text-sm"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => setDeletingExpense(expense)}
+                            className="text-gray-600 hover:text-red-400 transition-colors text-sm"
+                          >
+                            ✕
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              ))}
+              {filteredExpenses.length === 0 && (
+                <p className="text-gray-500 text-sm">Aucune dépense trouvée</p>
+              )}
+            </div>
+
+            {filteredExpenses.length > visibleSpentCount && (
+              <button
+                onClick={() => setVisibleSpentCount(c => c + 10)}
+                className="w-full mt-4 text-gray-400 hover:text-white text-sm py-2.5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
+              >
+                Voir plus ({filteredExpenses.length - visibleSpentCount} restantes)
+              </button>
+            )}
+          </>
         )}
       </div>
       {!isAdmin && (
@@ -452,6 +626,14 @@ export default function SharedBudgetDetailPage() {
           onDeletePermanently={handleDeletePermanently}
           onUnshare={handleUnshare}
           onCancel={() => setDeletingExpense(null)}
+        />
+      )}
+      {showEditBudget && (
+        <SharedBudgetModal
+          userId={user!.uid}
+          budget={budget}
+          onClose={() => setShowEditBudget(false)}
+          onSuccess={() => setShowEditBudget(false)}
         />
       )}
     </div>

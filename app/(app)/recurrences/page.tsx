@@ -9,6 +9,7 @@ import AddRecurrenceModal from "@/components/AddRecurrenceModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 export default function RecurrencesPage() {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ export default function RecurrencesPage() {
   const [processing, setProcessing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [generated, setGenerated] = useState<number | null>(null);
+  const confirm = useConfirm();
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -61,6 +63,13 @@ export default function RecurrencesPage() {
 
   const handleDelete = async (recurrenceId: string) => {
     if (!user) return;
+    const ok = await confirm({
+    title: "Supprimer cette récurrence ?",
+    message: "Cette action est irréversible.",
+    confirmLabel: "Supprimer",
+    danger: true
+  });
+  if (!ok) return;
     try {
       await deleteRecurrence(user.uid, recurrenceId);
       await loadData();

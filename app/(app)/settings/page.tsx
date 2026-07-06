@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import FeedbackModal from "@/components/FeedbackModal";
 import { hasPinSet, removePin } from "@/lib/pinLock";
 import PinSetupModal from "@/components/PinSetupModal";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 const CURRENCIES = [
     { code: "CAD", label: "Dollar canadien (CAD)" },
@@ -27,6 +28,7 @@ const CURRENCIES = [
 export default function SettingsPage() {
     const { user } = useAuth();
     const router = useRouter();
+    const confirm = useConfirm();
 
     const [displayName, setDisplayName] = useState(user?.displayName || "");
     const [nameLoading, setNameLoading] = useState(false);
@@ -159,8 +161,14 @@ export default function SettingsPage() {
         }
     };
 
-    const handleRemovePin = () => {
-        if (!confirm("Désactiver le verrouillage par code ?")) return;
+    const handleRemovePin = async () => {
+        const ok = await confirm({
+            title: "Désactiver le verrouillage par code ?",
+            message: "L'application ne sera plus protégée par un code après une période d'inactivité.",
+            confirmLabel: "Désactiver",
+            danger: true
+        });
+        if (!ok) return;
         removePin();
         setPinActive(false);
     };
@@ -262,22 +270,16 @@ export default function SettingsPage() {
                     <p className="text-gray-500 text-sm mb-4">
                         Choisis la devise dans laquelle tes montants s'affichent. La conversion est automatique et basée sur les taux du jour.
                     </p>
-                    <div className="space-y-2">
+                    <select
+                        value={currency}
+                        onChange={(e) => handleUpdateCurrency(e.target.value)}
+                        disabled={currencyLoading}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+                    >
                         {CURRENCIES.map(c => (
-                            <button
-                                key={c.code}
-                                onClick={() => handleUpdateCurrency(c.code)}
-                                disabled={currencyLoading}
-                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${currency === c.code
-                                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
-                                    : "border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600"
-                                    }`}
-                            >
-                                <span className="text-sm">{c.label}</span>
-                                {currency === c.code && <span className="text-xs">✓</span>}
-                            </button>
+                            <option key={c.code} value={c.code}>{c.label}</option>
                         ))}
-                    </div>
+                    </select>
                     {currencySuccess && <p className="text-emerald-400 text-sm mt-3">✅ Devise mise à jour</p>}
                 </div>
 
