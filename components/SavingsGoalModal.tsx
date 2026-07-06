@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { addSavingsGoal, updateSavingsGoal } from "@/lib/firebase/firestore";
 import { SavingsGoal } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
@@ -13,15 +13,26 @@ interface Props {
 }
 
 export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: Props) {
-  const { symbol } = useCurrency();
+  const { symbol, toBase, fromBase, ready } = useCurrency();
   const [name, setName] = useState(goal?.name || "");
-  const [targetAmount, setTargetAmount] = useState(goal?.targetAmount.toString() || "");
-  const [currentAmount, setCurrentAmount] = useState(goal?.currentAmount.toString() || "0");
+  const [targetAmount, setTargetAmount] = useState(
+    goal && ready ? fromBase(goal.targetAmount).toFixed(2) : ""
+  );
+  const [currentAmount, setCurrentAmount] = useState(
+    goal && ready ? fromBase(goal.currentAmount).toFixed(2) : "0"
+  );
   const [targetDate, setTargetDate] = useState(
     goal?.targetDate ? goal.targetDate.toISOString().split("T")[0] : ""
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (goal && ready) {
+      setTargetAmount(fromBase(goal.targetAmount).toFixed(2));
+      setCurrentAmount(fromBase(goal.currentAmount).toFixed(2));
+    }
+  }, [ready, goal, fromBase]);
 
   const isEditing = !!goal;
 
@@ -47,8 +58,8 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
 
       const data = {
         name,
-        targetAmount: parseFloat(targetAmount),
-        currentAmount: parseFloat(currentAmount) || 0,
+        targetAmount: toBase(parseFloat(targetAmount)),
+        currentAmount: toBase(parseFloat(currentAmount) || 0),
         targetDate: parsedDate
       };
 

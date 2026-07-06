@@ -6,6 +6,7 @@ import { getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/f
 import { Budget, Transaction } from "@/types";
 import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 export default function BudgetsPage() {
   const { user } = useAuth();
@@ -14,6 +15,8 @@ export default function BudgetsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const confirm = useConfirm();
+
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -38,6 +41,13 @@ export default function BudgetsPage() {
 
   const handleDelete = async (budgetId: string) => {
     if (!user) return;
+    const ok = await confirm({
+      title: "Supprimer ce budget ?",
+      message: "Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      danger: true
+    });
+    if (!ok) return;
     try {
       await deleteBudget(user.uid, budgetId);
       await loadData();
@@ -45,6 +55,7 @@ export default function BudgetsPage() {
       console.error(err);
     }
   };
+
 
   const getSpent = (budget: Budget) => {
     return transactions
@@ -146,11 +157,11 @@ export default function BudgetsPage() {
 
                 {/* Montants */}
                 <div className="mb-3">
-                  <div className="flex justify-between text-sm mb-1.5">
-                    <span className={isOver ? "text-red-400" : "text-gray-300"}>
+                  <div className="flex justify-between items-baseline gap-2 text-sm mb-1.5">
+                    <span className={`truncate min-w-0 ${isOver ? "text-red-400" : "text-gray-300"}`}>
                       {formatCurrency(spent)} dépensé
                     </span>
-                    <span className="text-gray-500">
+                    <span className="text-gray-500 shrink-0">
                       {formatCurrency(budget.limit)}
                     </span>
                   </div>

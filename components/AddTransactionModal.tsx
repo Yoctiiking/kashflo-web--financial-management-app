@@ -14,8 +14,7 @@ interface Props {
 }
 
 export default function AddTransactionModal({ groupId, onClose, onSuccess }: Props) {
-  const { symbol } = useCurrency();
-  const { user } = useAuth();
+  const { symbol, toBase, formatCurrency } = useCurrency(); const { user } = useAuth();
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
   const [label, setLabel] = useState("");
@@ -42,7 +41,7 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
 
     try {
       await addTransaction(groupId, {
-        amount: parseFloat(amount),
+        amount: toBase(parseFloat(amount)),
         type,
         category,
         label,
@@ -79,8 +78,8 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
             <button
               onClick={() => { setType("expense"); setCategory(""); }}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "expense"
-                  ? "bg-red-500/20 text-red-400"
-                  : "text-gray-400 hover:text-white"
+                ? "bg-red-500/20 text-red-400"
+                : "text-gray-400 hover:text-white"
                 }`}
             >
               Dépense
@@ -88,8 +87,8 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
             <button
               onClick={() => { setType("income"); setCategory(""); }}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "income"
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "text-gray-400 hover:text-white"
+                ? "bg-emerald-500/20 text-emerald-400"
+                : "text-gray-400 hover:text-white"
                 }`}
             >
               Revenu

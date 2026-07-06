@@ -8,6 +8,7 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
@@ -59,6 +60,13 @@ export const loginUser = async (email: string, password: string) => {
 
 export const logoutUser = async () => {
   await signOut(auth);
+};
+
+export const forgotPassword = async (email: string) => {
+  await sendPasswordResetEmail(auth, email, {
+    url: `${APP_URL}/login`,
+    handleCodeInApp: false
+  });
 };
 
 export const resendVerificationEmail = async () => {
