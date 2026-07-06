@@ -340,15 +340,15 @@ export default function DashboardPage() {
                             </div>
                             <div className="flex-1 space-y-2">
                                 {pieData.slice(0, 5).map((entry, index) => (
-                                    <div key={entry.name} className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
+                                    <div key={entry.name} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-0">
+                                        <div className="flex items-center gap-2 min-w-0">
                                             <div
                                                 className="w-2.5 h-2.5 rounded-full shrink-0"
                                                 style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
                                             />
                                             <span className="text-gray-300 text-xs truncate">{entry.name}</span>
                                         </div>
-                                        <span className="text-gray-400 text-xs shrink-0 ml-2">{formatCurrency(entry.value)}</span>
+                                        <span className="text-gray-400 text-xs shrink-0 sm:ml-2">{formatCurrency(entry.value)}</span>
                                     </div>
                                 ))}
                             </div>
