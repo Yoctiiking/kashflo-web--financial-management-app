@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getMonthTransactions, deleteTransaction } from "@/lib/firebase/firestore";
+import { getMonthTransactions, deleteTransaction } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
 import AddTransactionModal from "@/components/AddTransactionModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 const MONTHS_FR = [
   "janvier", "février", "mars", "avril", "mai", "juin",
@@ -19,7 +20,6 @@ function normalize(str: string) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
-// Détecte un nom de mois (+ année optionnelle) au début de la recherche
 function parseMonthSearch(search: string): { month: number; year: number | null; remainder: string } | null {
   const normalized = normalize(search);
   for (let i = 0; i < MONTHS_FR.length; i++) {
@@ -42,7 +42,6 @@ function parseMonthSearch(search: string): { month: number; year: number | null;
 export default function TransactionsPage() {
   const { user } = useAuth();
   const now = new Date();
-  const [groupId, setGroupId] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -54,8 +53,8 @@ export default function TransactionsPage() {
   const [pickerYear, setPickerYear] = useState(currentYear);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+  const confirm = useConfirm();
 
-  // Détecte un nom de mois tapé dans la recherche et navigue automatiquement
   useEffect(() => {
     const parsed = parseMonthSearch(search);
     if (!parsed) return;
@@ -110,10 +109,7 @@ export default function TransactionsPage() {
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await getUserProfile(user.uid);
-      if (!profile) return;
-      setGroupId(profile.groupId);
-      const tx = await getMonthTransactions(profile.groupId, currentYear, currentMonth);
+      const tx = await getMonthTransactions(user.uid, currentYear, currentMonth);
       setTransactions(tx);
     } catch (err) {
       console.error(err);
@@ -123,10 +119,16 @@ export default function TransactionsPage() {
   }, [user, currentYear, currentMonth]);
 
   const handleDelete = async (transactionId: string) => {
-    if (!groupId) return;
-    if (!confirm("Supprimer cette transaction ?")) return;
+    if (!user) return;
+    const ok = await confirm({
+      title: "Supprimer cette transaction ?",
+      message: "Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      danger: true
+    });
+    if (!ok) return;
     try {
-      await deleteTransaction(groupId, transactionId);
+      await deleteTransaction(user.uid, transactionId);
       await loadData();
     } catch (err) {
       console.error(err);
@@ -139,7 +141,6 @@ export default function TransactionsPage() {
 
   const { formatCurrency } = useCurrency();
 
-  // Si la recherche commence par un nom de mois, on filtre avec le reste seulement
   const parsedSearch = parseMonthSearch(search);
   const effectiveSearch = parsedSearch !== null ? parsedSearch.remainder : search;
 
@@ -196,7 +197,6 @@ export default function TransactionsPage() {
 
             {showMonthPicker && (
               <>
-                {/* Overlay invisible pour fermer au clic extérieur */}
                 <div
                   className="fixed inset-0 z-10"
                   onClick={() => setShowMonthPicker(false)}
@@ -237,8 +237,8 @@ export default function TransactionsPage() {
                             setShowMonthPicker(false);
                           }}
                           className={`py-2 rounded-lg text-xs font-medium capitalize transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isSelected
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "text-gray-300 hover:bg-gray-700"
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "text-gray-300 hover:bg-gray-700"
                             }`}
                         >
                           {m.slice(0, 3)}
@@ -252,7 +252,6 @@ export default function TransactionsPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          {/* Recherche — icône mobile */}
           <button
             onClick={() => setShowSearch(s => !s)}
             className={`sm:hidden p-2.5 rounded-xl transition-colors ${showSearch ? "bg-emerald-500/20 text-emerald-400" : "bg-gray-800 text-gray-400 hover:text-white"}`}
@@ -263,7 +262,6 @@ export default function TransactionsPage() {
             </svg>
           </button>
 
-          {/* Export */}
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
@@ -318,7 +316,6 @@ export default function TransactionsPage() {
           ))}
         </div>
 
-        {/* Recherche — toujours visible sur desktop, toggle sur mobile */}
         <div className={`relative sm:ml-auto ${showSearch ? "block" : "hidden sm:block"}`}>
           <input
             type="text"
@@ -348,20 +345,20 @@ export default function TransactionsPage() {
         ) : (
           <div className="divide-y divide-gray-800">
             {filtered.map(tx => (
-              <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+              <div key={tx.id} className="flex items-center justify-between gap-4 p-4 hover:bg-gray-800/50 transition-colors">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
                     }`}>
                     {tx.type === "income" ? "💰" : "💸"}
                   </div>
-                  <div>
-                    <p className="text-white text-sm font-medium">{tx.label}</p>
-                    <p className="text-gray-500 text-xs mt-0.5">
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{tx.label}</p>
+                    <p className="text-gray-500 text-xs mt-0.5 truncate">
                       {tx.category} · {format(tx.date, "d MMM", { locale: fr })}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 shrink-0">
                   <p className={`font-semibold ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
                     {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
                   </p>
@@ -387,9 +384,9 @@ export default function TransactionsPage() {
       </button>
 
       {/* Modale */}
-      {showModal && groupId && (
+      {showModal && user && (
         <AddTransactionModal
-          groupId={groupId}
+          groupId={user.uid}
           onClose={() => setShowModal(false)}
           onSuccess={loadData}
         />

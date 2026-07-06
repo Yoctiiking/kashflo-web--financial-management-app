@@ -2,30 +2,28 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getRecurrences, deleteRecurrence, toggleRecurrence } from "@/lib/firebase/firestore";
+import { getRecurrences, deleteRecurrence, toggleRecurrence } from "@/lib/firebase/firestore";
 import { processAllRecurrences } from "@/lib/recurrenceEngine";
 import { Recurrence } from "@/types";
 import AddRecurrenceModal from "@/components/AddRecurrenceModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 export default function RecurrencesPage() {
   const { user } = useAuth();
-  const [groupId, setGroupId] = useState<string | null>(null);
   const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [generated, setGenerated] = useState<number | null>(null);
+  const confirm = useConfirm();
 
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await getUserProfile(user.uid);
-      if (!profile) return;
-      setGroupId(profile.groupId);
-      const data = await getRecurrences(profile.groupId);
+      const data = await getRecurrences(user.uid);
       setRecurrences(data);
     } catch (err) {
       console.error(err);
@@ -39,10 +37,10 @@ export default function RecurrencesPage() {
   }, [loadData]);
 
   const handleProcess = async () => {
-    if (!groupId || !user) return;
+    if (!user) return;
     setProcessing(true);
     try {
-      const count = await processAllRecurrences(groupId, recurrences, user.uid);
+      const count = await processAllRecurrences(user.uid, recurrences, user.uid);
       setGenerated(count);
       await loadData();
       setTimeout(() => setGenerated(null), 4000);
@@ -54,9 +52,9 @@ export default function RecurrencesPage() {
   };
 
   const handleToggle = async (recurrence: Recurrence) => {
-    if (!groupId) return;
+    if (!user) return;
     try {
-      await toggleRecurrence(groupId, recurrence.id, !recurrence.isActive);
+      await toggleRecurrence(user.uid, recurrence.id, !recurrence.isActive);
       await loadData();
     } catch (err) {
       console.error(err);
@@ -64,9 +62,16 @@ export default function RecurrencesPage() {
   };
 
   const handleDelete = async (recurrenceId: string) => {
-    if (!groupId) return;
+    if (!user) return;
+    const ok = await confirm({
+    title: "Supprimer cette récurrence ?",
+    message: "Cette action est irréversible.",
+    confirmLabel: "Supprimer",
+    danger: true
+  });
+  if (!ok) return;
     try {
-      await deleteRecurrence(groupId, recurrenceId);
+      await deleteRecurrence(user.uid, recurrenceId);
       await loadData();
     } catch (err) {
       console.error(err);
@@ -142,7 +147,6 @@ export default function RecurrencesPage() {
           <div className="divide-y divide-gray-800">
             {recurrences.map(r => (
               <div key={r.id} className="p-4 hover:bg-gray-800/50 transition-colors">
-                {/* Ligne principale : toggle + icône + label + montant */}
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleToggle(r)}
@@ -164,7 +168,6 @@ export default function RecurrencesPage() {
                   </p>
                 </div>
 
-                {/* Ligne secondaire : meta + bouton supprimer */}
                 <div className="flex items-center justify-between mt-1.5 pl-[6.5rem]">
                   <p className="text-gray-500 text-xs truncate mr-2">
                     {r.category} · {getFrequencyLabel(r)} · prochain: {format(r.nextOccurrence, "d MMM", { locale: fr })}
@@ -190,9 +193,9 @@ export default function RecurrencesPage() {
         +
       </button>
 
-      {showModal && groupId && (
+      {user && showModal && (
         <AddRecurrenceModal
-          groupId={groupId}
+          groupId={user.uid}
           onClose={() => setShowModal(false)}
           onSuccess={loadData}
         />

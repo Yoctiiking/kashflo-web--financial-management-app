@@ -2,30 +2,28 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/firestore";
+import { getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/firestore";
 import { Budget, Transaction } from "@/types";
 import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 export default function BudgetsPage() {
   const { user } = useAuth();
-  const [groupId, setGroupId] = useState<string | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const confirm = useConfirm();
+
 
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await getUserProfile(user.uid);
-      if (!profile) return;
-      setGroupId(profile.groupId);
-
       const [userBudgets, monthTx] = await Promise.all([
-        getBudgets(profile.groupId),
-        getMonthTransactions(profile.groupId)
+        getBudgets(user.uid),
+        getMonthTransactions(user.uid)
       ]);
 
       setBudgets(userBudgets);
@@ -42,14 +40,22 @@ export default function BudgetsPage() {
   }, [loadData]);
 
   const handleDelete = async (budgetId: string) => {
-    if (!groupId) return;
+    if (!user) return;
+    const ok = await confirm({
+      title: "Supprimer ce budget ?",
+      message: "Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      danger: true
+    });
+    if (!ok) return;
     try {
-      await deleteBudget(groupId, budgetId);
+      await deleteBudget(user.uid, budgetId);
       await loadData();
     } catch (err) {
       console.error(err);
     }
   };
+
 
   const getSpent = (budget: Budget) => {
     return transactions
@@ -151,11 +157,11 @@ export default function BudgetsPage() {
 
                 {/* Montants */}
                 <div className="mb-3">
-                  <div className="flex justify-between text-sm mb-1.5">
-                    <span className={isOver ? "text-red-400" : "text-gray-300"}>
+                  <div className="flex justify-between items-baseline gap-2 text-sm mb-1.5">
+                    <span className={`truncate min-w-0 ${isOver ? "text-red-400" : "text-gray-300"}`}>
                       {formatCurrency(spent)} dépensé
                     </span>
-                    <span className="text-gray-500">
+                    <span className="text-gray-500 shrink-0">
                       {formatCurrency(budget.limit)}
                     </span>
                   </div>
@@ -189,17 +195,17 @@ export default function BudgetsPage() {
       </button>
 
       {/* Modale */}
-      {showModal && groupId && (
+      {showModal && user && (
         <BudgetModal
-          groupId={groupId}
+          groupId={user.uid}
           onClose={() => setShowModal(false)}
           onSuccess={loadData}
         />
       )}
 
-      {editingBudget && groupId && (
+      {editingBudget && user && (
         <BudgetModal
-          groupId={groupId}
+          groupId={user.uid}
           budget={editingBudget}
           onClose={() => setEditingBudget(null)}
           onSuccess={loadData}

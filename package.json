@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tailwindcss/container-queries": "^0.1.1",
     "date-fns": "^4.4.0",
     "firebase": "^12.15.0",
     "jspdf": "^4.2.1",

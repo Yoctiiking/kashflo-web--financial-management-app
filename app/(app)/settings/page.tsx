@@ -9,12 +9,12 @@ import {
     deleteAccount,
     logoutUser
 } from "@/lib/firebase/auth";
-import { getGroup, updateGroupCurrency } from "@/lib/firebase/firestore";
-import { getUserProfile } from "@/lib/firebase/firestore";
+import { getUserProfile, updateUserCurrency } from "@/lib/firebase/firestore";
 import { useEffect } from "react";
 import FeedbackModal from "@/components/FeedbackModal";
 import { hasPinSet, removePin } from "@/lib/pinLock";
 import PinSetupModal from "@/components/PinSetupModal";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 const CURRENCIES = [
     { code: "CAD", label: "Dollar canadien (CAD)" },
@@ -28,6 +28,7 @@ const CURRENCIES = [
 export default function SettingsPage() {
     const { user } = useAuth();
     const router = useRouter();
+    const confirm = useConfirm();
 
     const [displayName, setDisplayName] = useState(user?.displayName || "");
     const [nameLoading, setNameLoading] = useState(false);
@@ -41,7 +42,6 @@ export default function SettingsPage() {
     const [passwordSuccess, setPasswordSuccess] = useState(false);
     const [passwordError, setPasswordError] = useState("");
 
-    const [groupId, setGroupId] = useState<string | null>(null);
     const [currency, setCurrency] = useState("CAD");
     const [currencyLoading, setCurrencyLoading] = useState(false);
     const [currencySuccess, setCurrencySuccess] = useState(false);
@@ -65,11 +65,7 @@ export default function SettingsPage() {
         const load = async () => {
             const profile = await getUserProfile(user.uid);
             if (!profile) return;
-            setGroupId(profile.groupId);
-
-            const group = await getGroup(profile.groupId);
-            if (!group) return;
-            setCurrency(group.currency);
+            setCurrency(profile.currency);
         };
         load();
     }, [user]);
@@ -128,10 +124,10 @@ export default function SettingsPage() {
     };
 
     const handleUpdateCurrency = async (newCurrency: string) => {
-        if (!groupId) return;
+        if (!user) return;
         setCurrencyLoading(true);
         try {
-            await updateGroupCurrency(groupId, newCurrency);
+            await updateUserCurrency(user.uid, newCurrency);
             setCurrency(newCurrency);
             setCurrencySuccess(true);
             setTimeout(() => setCurrencySuccess(false), 3000);
@@ -147,13 +143,12 @@ export default function SettingsPage() {
             setDeleteError("Entre ton mot de passe pour confirmer");
             return;
         }
-        if (!groupId) return;
 
         setDeleteLoading(true);
         setDeleteError("");
 
         try {
-            await deleteAccount(deletePassword, groupId);
+            await deleteAccount(deletePassword);
             router.push("/login");
         } catch (err: any) {
             if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
@@ -166,8 +161,14 @@ export default function SettingsPage() {
         }
     };
 
-    const handleRemovePin = () => {
-        if (!confirm("Désactiver le verrouillage par code ?")) return;
+    const handleRemovePin = async () => {
+        const ok = await confirm({
+            title: "Désactiver le verrouillage par code ?",
+            message: "L'application ne sera plus protégée par un code après une période d'inactivité.",
+            confirmLabel: "Désactiver",
+            danger: true
+        });
+        if (!ok) return;
         removePin();
         setPinActive(false);
     };
@@ -182,9 +183,9 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Nom */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 @container">
                     <h3 className="text-white font-semibold mb-4">Nom d'affichage</h3>
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex flex-col @sm:flex-row gap-2">
                         <input
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
@@ -207,7 +208,7 @@ export default function SettingsPage() {
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                     <h3 className="text-white font-semibold mb-1">Verrouillage par code</h3>
                     <p className="text-gray-500 text-sm mb-4">
-                        Protège l'accès à l'app après 15 minutes d'inactivité
+                        Protège l'accès à l'app après 5 minutes d'inactivité
                     </p>
                     {pinActive ? (
                         <button
@@ -267,24 +268,18 @@ export default function SettingsPage() {
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                     <h3 className="text-white font-semibold mb-1">Devise</h3>
                     <p className="text-gray-500 text-sm mb-4">
-                        Choisissez la devise dans laquelle vous saisissez vos montants. La conversion automatique entre devises sera disponible dans une prochaine version.
+                        Choisis la devise dans laquelle tes montants s'affichent. La conversion est automatique et basée sur les taux du jour.
                     </p>
-                    <div className="space-y-2">
+                    <select
+                        value={currency}
+                        onChange={(e) => handleUpdateCurrency(e.target.value)}
+                        disabled={currencyLoading}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+                    >
                         {CURRENCIES.map(c => (
-                            <button
-                                key={c.code}
-                                onClick={() => handleUpdateCurrency(c.code)}
-                                disabled={currencyLoading}
-                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${currency === c.code
-                                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
-                                    : "border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600"
-                                    }`}
-                            >
-                                <span className="text-sm">{c.label}</span>
-                                {currency === c.code && <span className="text-xs">✓</span>}
-                            </button>
+                            <option key={c.code} value={c.code}>{c.label}</option>
                         ))}
-                    </div>
+                    </select>
                     {currencySuccess && <p className="text-emerald-400 text-sm mt-3">✅ Devise mise à jour</p>}
                 </div>
 
@@ -313,7 +308,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Zone danger — pleine largeur */}
-                <div className="bg-gray-900 border border-red-500/20 rounded-2xl p-6 lg:col-span-2">
+                <div className="bg-gray-900 border border-red-500/20 rounded-2xl p-6 lg:col-span-2 text-center">
                     <h3 className="text-red-400 font-semibold mb-1">Zone dangereuse</h3>
                     <p className="text-gray-500 text-sm mb-4">
                         La suppression de ton compte est irréversible. Toutes tes données seront perdues.

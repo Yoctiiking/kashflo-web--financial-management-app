@@ -50,7 +50,7 @@ export interface UserProfile {
   displayName: string;
   email: string;
   photoURL: string | null;
-  groupId: string;
+  currency: string;
   createdAt: Date;
   onboardingVersion?: number;
 }

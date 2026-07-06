@@ -2,32 +2,30 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getSavingsGoals, deleteSavingsGoal, addToSavingsGoal } from "@/lib/firebase/firestore";
+import { getSavingsGoals, deleteSavingsGoal, addToSavingsGoal } from "@/lib/firebase/firestore";
 import { SavingsGoal } from "@/types";
 import SavingsGoalModal from "@/components/SavingsGoalModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 export default function SavingsPage() {
   const { user } = useAuth();
-  const [groupId, setGroupId] = useState<string | null>(null);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [addAmount, setAddAmount] = useState("");
+  const confirm = useConfirm();
 
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, toBase } = useCurrency();
 
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await getUserProfile(user.uid);
-      if (!profile) return;
-      setGroupId(profile.groupId);
-      const data = await getSavingsGoals(profile.groupId);
+      const data = await getSavingsGoals(user.uid);
       setGoals(data);
     } catch (err) {
       console.error(err);
@@ -41,28 +39,35 @@ export default function SavingsPage() {
   }, [loadData]);
 
   const handleDelete = async (goalId: string) => {
-    if (!groupId) return;
-    try {
-      await deleteSavingsGoal(groupId, goalId);
-      await loadData();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  if (!user) return;
+  const ok = await confirm({
+    title: "Supprimer cet objectif ?",
+    message: "Cette action est irréversible.",
+    confirmLabel: "Supprimer",
+    danger: true
+  });
+  if (!ok) return;
+  try {
+    await deleteSavingsGoal(user.uid, goalId);
+    await loadData();
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const handleAddAmount = async (goalId: string) => {
-    if (!groupId || !addAmount) return;
-    const amount = parseFloat(addAmount);
-    if (isNaN(amount) || amount <= 0) return;
-    try {
-      await addToSavingsGoal(groupId, goalId, amount);
-      setAddingTo(null);
-      setAddAmount("");
-      await loadData();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  if (!user || !addAmount) return;
+  const amount = parseFloat(addAmount);
+  if (isNaN(amount) || amount <= 0) return;
+  try {
+    await addToSavingsGoal(user.uid, goalId, toBase(amount));
+    setAddingTo(null);
+    setAddAmount("");
+    await loadData();
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   if (loading) {
     return (
@@ -198,17 +203,17 @@ export default function SavingsPage() {
         +
       </button>
 
-      {showModal && groupId && (
+      {showModal && user && (
         <SavingsGoalModal
-          groupId={groupId}
+          groupId={user.uid}
           onClose={() => setShowModal(false)}
           onSuccess={loadData}
         />
       )}
 
-      {editingGoal && groupId && (
+      {editingGoal && user && (
         <SavingsGoalModal
-          groupId={groupId}
+          groupId={user.uid}
           goal={editingGoal}
           onClose={() => setEditingGoal(null)}
           onSuccess={loadData}

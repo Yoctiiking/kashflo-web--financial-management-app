@@ -42,10 +42,10 @@ export default function DashboardPage() {
                 }
 
                 const [monthTx, recentTx, userBudgets, userRecurrences] = await Promise.all([
-                    getMonthTransactions(userProfile.groupId),
-                    getRecentTransactions(userProfile.groupId),
-                    getBudgets(userProfile.groupId),
-                    getRecurrences(userProfile.groupId)
+                    getMonthTransactions(user.uid),
+                    getRecentTransactions(user.uid),
+                    getBudgets(user.uid),
+                    getRecurrences(user.uid)
                 ]);
 
                 setTransactions(monthTx);
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                 <div className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
                     <div className="flex items-start gap-3">
                         <span className="text-xl">⏰</span>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <p className="text-amber-400 font-medium text-sm mb-2">
                                 {upcomingRecurrences.length} paiement{upcomingRecurrences.length > 1 ? "s" : ""} à venir
                             </p>
@@ -157,9 +157,9 @@ export default function DashboardPage() {
                                     const diffDays = Math.ceil((r.nextOccurrence.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                                     const dayLabel = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Demain" : `Dans ${diffDays} jours`;
                                     return (
-                                        <div key={r.id} className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-300">{r.label} · {dayLabel}</span>
-                                            <span className={r.type === "income" ? "text-emerald-400" : "text-red-400"}>
+                                        <div key={r.id} className="flex items-center justify-between gap-2 text-sm">
+                                            <span className="text-gray-300 truncate min-w-0">{r.label} · {dayLabel}</span>
+                                            <span className={`shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
                                                 {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
                                             </span>
                                         </div>
@@ -198,12 +198,12 @@ export default function DashboardPage() {
                     ) : (
                         <div className="space-y-3">
                             {recentTransactions.map(tx => (
-                                <div key={tx.id} className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-white text-sm font-medium">{tx.label}</p>
-                                        <p className="text-gray-500 text-xs">{tx.category}</p>
+                                <div key={tx.id} className="flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-white text-sm font-medium truncate">{tx.label}</p>
+                                        <p className="text-gray-500 text-xs truncate">{tx.category}</p>
                                     </div>
-                                    <p className={`font-semibold text-sm ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
+                                    <p className={`font-semibold text-sm shrink-0 ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
                                         {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
                                     </p>
                                 </div>
@@ -252,14 +252,14 @@ export default function DashboardPage() {
                                     const isOver = spent > budget.limit;
                                     return (
                                         <div key={budget.id}>
-                                            <div className="flex justify-between text-sm mb-1.5">
-                                                <div>
+                                            <div className="flex justify-between items-baseline gap-2 text-sm mb-1.5">
+                                                <div className="min-w-0 truncate">
                                                     <span className="text-gray-300">{budget.category}</span>
                                                     <span className="text-gray-600 text-xs ml-2">
                                                         {budget.period === "daily" ? "/ jour" : budget.period === "weekly" ? "/ semaine" : "/ mois"}
                                                     </span>
                                                 </div>
-                                                <span className={isOver ? "text-red-400" : "text-gray-400"}>
+                                                <span className={`shrink-0 ${isOver ? "text-red-400" : "text-gray-400"}`}>
                                                     {formatCurrency(spent)} / {formatCurrency(budget.limit)}
                                                 </span>
                                             </div>
@@ -285,20 +285,20 @@ export default function DashboardPage() {
                     ) : (
                         <div className="space-y-3">
                             {monthRecurrences.map(r => (
-                                <div key={r.id} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+                                <div key={r.id} className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
                                             }`}>
                                             {r.type === "income" ? "💰" : "💸"}
                                         </div>
-                                        <div>
-                                            <p className="text-white text-sm font-medium">{r.label}</p>
+                                        <div className="min-w-0">
+                                            <p className="text-white text-sm font-medium truncate">{r.label}</p>
                                             <p className="text-gray-500 text-xs">
                                                 {format(r.nextOccurrence, "d MMM", { locale: fr })}
                                             </p>
                                         </div>
                                     </div>
-                                    <p className={`font-semibold text-sm ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
+                                    <p className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
                                         {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
                                     </p>
                                 </div>
@@ -314,38 +314,41 @@ export default function DashboardPage() {
                         <p className="text-gray-500 text-sm">Aucune dépense ce mois-ci</p>
                     ) : (
                         <div className="flex items-center gap-4">
-                            <ResponsiveContainer width="50%" height={200}>
-                                <PieChart>
-                                    <Pie
-                                        data={pieData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={80}
-                                        paddingAngle={3}
-                                        dataKey="value"
-                                    >
-                                        {pieData.map((_, index) => (
-                                            <Cell
-                                                key={index}
-                                                fill={PIE_COLORS[index % PIE_COLORS.length]}
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip content={<CustomPieTooltip />} />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <div className="w-1/2 max-w-[200px] h-[200px]">
+                                <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 200, height: 200 }}>
+                                    <PieChart>
+                                        <Pie
+                                            data={pieData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius="55%"
+                                            outerRadius="90%"
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                            isAnimationActive={false}
+                                        >
+                                            {pieData.map((_, index) => (
+                                                <Cell
+                                                    key={index}
+                                                    fill={PIE_COLORS[index % PIE_COLORS.length]}
+                                                />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<CustomPieTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
                             <div className="flex-1 space-y-2">
                                 {pieData.slice(0, 5).map((entry, index) => (
-                                    <div key={entry.name} className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
+                                    <div key={entry.name} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-0">
+                                        <div className="flex items-center gap-2 min-w-0">
                                             <div
                                                 className="w-2.5 h-2.5 rounded-full shrink-0"
                                                 style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
                                             />
                                             <span className="text-gray-300 text-xs truncate">{entry.name}</span>
                                         </div>
-                                        <span className="text-gray-400 text-xs shrink-0 ml-2">{formatCurrency(entry.value)}</span>
+                                        <span className="text-gray-400 text-xs shrink-0 sm:ml-2">{formatCurrency(entry.value)}</span>
                                     </div>
                                 ))}
                             </div>

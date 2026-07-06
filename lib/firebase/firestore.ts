@@ -13,7 +13,6 @@ import {
   Timestamp,
   updateDoc,
   increment,
-  setDoc,
   arrayRemove,
   arrayUnion,
   writeBatch,
@@ -34,17 +33,7 @@ import {
   SharedBudget
 } from "@/types";
 
-export interface Invite {
-  code: string;
-  createdBy: string;
-  createdAt: Date;
-  expiresAt: Date;
-  multipleUse: boolean;
-  usedCount: number;
-  groupName: string;
-}
-
-// User Profiles
+// ─── USER PROFILE ───
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const docRef = doc(db, "users", userId);
@@ -55,7 +44,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     displayName: data.displayName,
     email: data.email,
     photoURL: data.photoURL,
-    groupId: data.groupId,
+    currency: data.currency ?? "CAD",
     createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
     onboardingVersion: data.onboardingVersion ?? 0
   };
@@ -65,66 +54,18 @@ export const updateOnboardingVersion = async (userId: string, version: number) =
   await updateDoc(doc(db, "users", userId), { onboardingVersion: version });
 };
 
-// Groups
-
-export const getGroup = async (groupId: string) => {
-  const docRef = doc(db, "groups", groupId);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return null;
-  const data = docSnap.data();
-  return {
-    id: docSnap.id,
-    name: data.name,
-    members: data.members,
-    createdBy: data.createdBy,
-    currency: data.currency,
-    createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date()
-  };
+export const resetOnboarding = async (userId: string) => {
+  await updateDoc(doc(db, "users", userId), { onboardingVersion: 0 });
 };
 
-export const addMemberToGroup = async (groupId: string, userId: string) => {
-  await updateDoc(doc(db, "groups", groupId), {
-    members: arrayUnion(userId)
-  });
-  await updateDoc(doc(db, "users", userId), { groupId });
+export const updateUserCurrency = async (userId: string, currency: string) => {
+  await updateDoc(doc(db, "users", userId), { currency });
 };
 
-export const removeMemberFromGroup = async (groupId: string, userId: string) => {
-  const batch = writeBatch(db);
-
-  // 1. Retirer le membre du groupe
-  batch.update(doc(db, "groups", groupId), {
-    members: arrayRemove(userId)
-  });
-
-  // 2. Créer le groupe solo
-  const newGroupId = `group_${userId}`;
-  batch.set(doc(db, "groups", newGroupId), {
-    name: "Mes finances",
-    members: [userId],
-    createdBy: userId,
-    currency: "CAD",
-    createdAt: serverTimestamp()
-  });
-
-  // 3. Mettre à jour le groupId du membre
-  batch.update(doc(db, "users", userId), { groupId: newGroupId });
-
-  await batch.commit();
-};
-
-export const updateGroupName = async (groupId: string, name: string) => {
-  await updateDoc(doc(db, "groups", groupId), { name });
-};
-
-export const updateGroupCurrency = async (groupId: string, currency: string) => {
-  await updateDoc(doc(db, "groups", groupId), { currency });
-};
-
-//Transactions
+// ─── TRANSACTIONS ───
 
 export const getMonthTransactions = async (
-  groupId: string,
+  userId: string,
   year?: number,
   month?: number
 ): Promise<Transaction[]> => {
@@ -136,7 +77,7 @@ export const getMonthTransactions = async (
   const endOfMonth = new Date(y, m + 1, 0, 23, 59, 59, 999);
 
   const q = query(
-    collection(db, "groups", groupId, "transactions"),
+    collection(db, "users", userId, "transactions"),
     where("date", ">=", Timestamp.fromDate(startOfMonth)),
     where("date", "<=", Timestamp.fromDate(endOfMonth)),
     orderBy("date", "desc"),
@@ -152,9 +93,9 @@ export const getMonthTransactions = async (
   })) as Transaction[];
 };
 
-export const getRecentTransactions = async (groupId: string): Promise<Transaction[]> => {
+export const getRecentTransactions = async (userId: string): Promise<Transaction[]> => {
   const q = query(
-    collection(db, "groups", groupId, "transactions"),
+    collection(db, "users", userId, "transactions"),
     orderBy("date", "desc"),
     orderBy("createdAt", "desc"),
     limit(5)
@@ -170,14 +111,14 @@ export const getRecentTransactions = async (groupId: string): Promise<Transactio
 };
 
 export const getLastMonthsTransactions = async (
-  groupId: string,
+  userId: string,
   months: number = 6
 ): Promise<Transaction[]> => {
   const now = new Date();
   const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
 
   const q = query(
-    collection(db, "groups", groupId, "transactions"),
+    collection(db, "users", userId, "transactions"),
     where("date", ">=", Timestamp.fromDate(startDate)),
     orderBy("date", "desc"),
     orderBy("createdAt", "desc")
@@ -193,7 +134,7 @@ export const getLastMonthsTransactions = async (
 };
 
 export const addTransaction = async (
-  groupId: string,
+  userId: string,
   data: {
     amount: number;
     type: TransactionType;
@@ -204,7 +145,7 @@ export const addTransaction = async (
     recurrenceId?: string;
   }
 ) => {
-  const ref = collection(db, "groups", groupId, "transactions");
+  const ref = collection(db, "users", userId, "transactions");
   await addDoc(ref, {
     ...data,
     date: Timestamp.fromDate(data.date),
@@ -213,14 +154,14 @@ export const addTransaction = async (
   });
 };
 
-export const deleteTransaction = async (groupId: string, transactionId: string) => {
-  await deleteDoc(doc(db, "groups", groupId, "transactions", transactionId));
+export const deleteTransaction = async (userId: string, transactionId: string) => {
+  await deleteDoc(doc(db, "users", userId, "transactions", transactionId));
 };
 
-//Budgets
+// ─── BUDGETS ───
 
-export const getBudgets = async (groupId: string): Promise<Budget[]> => {
-  const q = query(collection(db, "groups", groupId, "budgets"));
+export const getBudgets = async (userId: string): Promise<Budget[]> => {
+  const q = query(collection(db, "users", userId, "budgets"));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({
     id: doc.id,
@@ -230,29 +171,30 @@ export const getBudgets = async (groupId: string): Promise<Budget[]> => {
 };
 
 export const addBudget = async (
-  groupId: string,
+  userId: string,
   data: { category: string; limit: number; period: BudgetPeriod }
 ) => {
-  const ref = collection(db, "groups", groupId, "budgets");
+  const ref = collection(db, "users", userId, "budgets");
   await addDoc(ref, { ...data, createdAt: serverTimestamp() });
 };
 
 export const updateBudget = async (
-  groupId: string,
+  userId: string,
   budgetId: string,
   data: { category: string; limit: number; period: BudgetPeriod }
 ) => {
-  await updateDoc(doc(db, "groups", groupId, "budgets", budgetId), data);
+  await updateDoc(doc(db, "users", userId, "budgets", budgetId), data);
 };
 
-export const deleteBudget = async (groupId: string, budgetId: string) => {
-  await deleteDoc(doc(db, "groups", groupId, "budgets", budgetId));
+export const deleteBudget = async (userId: string, budgetId: string) => {
+  await deleteDoc(doc(db, "users", userId, "budgets", budgetId));
 };
 
-//Recurrences
-export const getRecurrences = async (groupId: string): Promise<Recurrence[]> => {
+// ─── RECURRENCES ───
+
+export const getRecurrences = async (userId: string): Promise<Recurrence[]> => {
   const q = query(
-    collection(db, "groups", groupId, "recurrences"),
+    collection(db, "users", userId, "recurrences"),
     orderBy("createdAt", "desc")
   );
   const snapshot = await getDocs(q);
@@ -265,7 +207,7 @@ export const getRecurrences = async (groupId: string): Promise<Recurrence[]> => 
 };
 
 export const addRecurrence = async (
-  groupId: string,
+  userId: string,
   data: {
     amount: number;
     type: TransactionType;
@@ -276,7 +218,7 @@ export const addRecurrence = async (
     customDays?: number;
   }
 ) => {
-  const ref = collection(db, "groups", groupId, "recurrences");
+  const ref = collection(db, "users", userId, "recurrences");
   const { customDays, ...rest } = data;
   await addDoc(ref, {
     ...rest,
@@ -287,32 +229,33 @@ export const addRecurrence = async (
   });
 };
 
-export const deleteRecurrence = async (groupId: string, recurrenceId: string) => {
-  await deleteDoc(doc(db, "groups", groupId, "recurrences", recurrenceId));
+export const deleteRecurrence = async (userId: string, recurrenceId: string) => {
+  await deleteDoc(doc(db, "users", userId, "recurrences", recurrenceId));
 };
 
 export const toggleRecurrence = async (
-  groupId: string,
+  userId: string,
   recurrenceId: string,
   isActive: boolean
 ) => {
-  await updateDoc(doc(db, "groups", groupId, "recurrences", recurrenceId), { isActive });
+  await updateDoc(doc(db, "users", userId, "recurrences", recurrenceId), { isActive });
 };
 
 export const updateRecurrenceNextOccurrence = async (
-  groupId: string,
+  userId: string,
   recurrenceId: string,
   nextOccurrence: Date
 ) => {
-  await updateDoc(doc(db, "groups", groupId, "recurrences", recurrenceId), {
+  await updateDoc(doc(db, "users", userId, "recurrences", recurrenceId), {
     nextOccurrence: Timestamp.fromDate(nextOccurrence)
   });
 };
 
-//Savings Goals
-export const getSavingsGoals = async (groupId: string): Promise<SavingsGoal[]> => {
+// ─── SAVINGS GOALS ───
+
+export const getSavingsGoals = async (userId: string): Promise<SavingsGoal[]> => {
   const q = query(
-    collection(db, "groups", groupId, "savingsGoals"),
+    collection(db, "users", userId, "savingsGoals"),
     orderBy("createdAt", "desc")
   );
   const snapshot = await getDocs(q);
@@ -325,10 +268,10 @@ export const getSavingsGoals = async (groupId: string): Promise<SavingsGoal[]> =
 };
 
 export const addSavingsGoal = async (
-  groupId: string,
+  userId: string,
   data: { name: string; targetAmount: number; currentAmount: number; targetDate?: Date }
 ) => {
-  const ref = collection(db, "groups", groupId, "savingsGoals");
+  const ref = collection(db, "users", userId, "savingsGoals");
   const { targetDate, ...rest } = data;
   await addDoc(ref, {
     ...rest,
@@ -338,107 +281,25 @@ export const addSavingsGoal = async (
 };
 
 export const updateSavingsGoal = async (
-  groupId: string,
+  userId: string,
   goalId: string,
   data: { name: string; targetAmount: number; currentAmount: number; targetDate?: Date }
 ) => {
   const { targetDate, ...rest } = data;
-  await updateDoc(doc(db, "groups", groupId, "savingsGoals", goalId), {
+  await updateDoc(doc(db, "users", userId, "savingsGoals", goalId), {
     ...rest,
     ...(targetDate !== undefined && { targetDate: Timestamp.fromDate(targetDate) })
   });
 };
 
-export const deleteSavingsGoal = async (groupId: string, goalId: string) => {
-  await deleteDoc(doc(db, "groups", groupId, "savingsGoals", goalId));
+export const deleteSavingsGoal = async (userId: string, goalId: string) => {
+  await deleteDoc(doc(db, "users", userId, "savingsGoals", goalId));
 };
 
-export const addToSavingsGoal = async (groupId: string, goalId: string, amount: number) => {
-  await updateDoc(doc(db, "groups", groupId, "savingsGoals", goalId), {
+export const addToSavingsGoal = async (userId: string, goalId: string, amount: number) => {
+  await updateDoc(doc(db, "users", userId, "savingsGoals", goalId), {
     currentAmount: increment(amount)
   });
-};
-
-//Invites
-export const createInvite = async (
-  groupId: string,
-  userId: string,
-  expiresInMinutes: number,
-  multipleUse: boolean
-): Promise<string> => {
-  const code = nanoid(10);
-  const expiresAt = new Date();
-  expiresAt.setMinutes(expiresAt.getMinutes() + expiresInMinutes);
-
-  const groupDoc = await getDoc(doc(db, "groups", groupId));
-  const groupName = groupDoc.exists() ? groupDoc.data().name : "Groupe";
-
-  await setDoc(doc(db, "groups", groupId, "invites", code), {
-    createdBy: userId,
-    createdAt: serverTimestamp(),
-    expiresAt: Timestamp.fromDate(expiresAt),
-    multipleUse,
-    usedCount: 0,
-    groupName
-  });
-
-  return code;
-};
-
-export const getInvite = async (groupId: string, code: string): Promise<Invite | null> => {
-  const docRef = doc(db, "groups", groupId, "invites", code);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return null;
-  const data = docSnap.data();
-  return {
-    code,
-    createdBy: data.createdBy,
-    createdAt: (data.createdAt as Timestamp).toDate(),
-    expiresAt: (data.expiresAt as Timestamp).toDate(),
-    multipleUse: data.multipleUse,
-    usedCount: data.usedCount,
-    groupName: data.groupName
-  };
-};
-
-export const useInvite = async (
-  groupId: string,
-  code: string,
-  userId: string
-): Promise<{ success: boolean; error?: string }> => {
-  const invite = await getInvite(groupId, code);
-
-  if (!invite) return { success: false, error: "Lien invalide" };
-  if (invite.expiresAt < new Date()) return { success: false, error: "Lien expiré" };
-  if (!invite.multipleUse && invite.usedCount >= 1) return { success: false, error: "Lien déjà utilisé" };
-
-  await updateDoc(doc(db, "groups", groupId), {
-    members: arrayUnion(userId)
-  });
-  await updateDoc(doc(db, "users", userId), { groupId });
-  await updateDoc(doc(db, "groups", groupId, "invites", code), {
-    usedCount: increment(1)
-  });
-
-  return { success: true };
-};
-
-export const getGroupInvites = async (groupId: string): Promise<Invite[]> => {
-  const q = query(
-    collection(db, "groups", groupId, "invites"),
-    orderBy("createdAt", "desc")
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    code: doc.id,
-    ...doc.data(),
-    createdAt: (doc.data().createdAt as Timestamp).toDate(),
-    expiresAt: (doc.data().expiresAt as Timestamp).toDate()
-  })) as Invite[];
-};
-
-export const deleteInvite = async (groupId: string, code: string) => {
-  await deleteDoc(doc(db, "groups", groupId, "invites", code));
 };
 
 // ─── SHARED BUDGETS ───
@@ -489,7 +350,7 @@ export const subscribeToSharedExpenses = (
     orderBy("date", "desc"),
     orderBy("createdAt", "desc")
   );
-  return onSnapshot(q, 
+  return onSnapshot(q,
     (snapshot) => {
       const expenses = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -516,7 +377,7 @@ export const subscribeToSharedBudget = (
   callback: (budget: SharedBudget | null) => void
 ) => {
   const ref = doc(db, "sharedBudgets", budgetId);
-  return onSnapshot(ref, 
+  return onSnapshot(ref,
     (snapshot) => {
       if (!snapshot.exists()) {
         callback(null);
@@ -530,7 +391,6 @@ export const subscribeToSharedBudget = (
       } as SharedBudget);
     },
     (error) => {
-      // Permission refusée = normal si l'utilisateur vient de quitter le budget
       if (error.code !== "permission-denied") {
         console.error("Erreur listener budget:", error);
       }
@@ -538,8 +398,6 @@ export const subscribeToSharedBudget = (
     }
   );
 };
-
-// ─── SHARED EXPENSES ───
 
 export const getSharedExpenses = async (budgetId: string): Promise<SharedExpense[]> => {
   const q = query(
@@ -598,6 +456,7 @@ export const createSharedBudgetInvite = async (
   const budgetDoc = await getDoc(doc(db, "sharedBudgets", budgetId));
   const budgetName = budgetDoc.exists() ? budgetDoc.data().name : "Budget partagé";
 
+  const { setDoc } = await import("firebase/firestore");
   await setDoc(doc(db, "sharedBudgets", budgetId, "invites", code), {
     createdBy,
     createdAt: serverTimestamp(),
@@ -657,20 +516,18 @@ export const leaveSharedBudget = async (budgetId: string, userId: string) => {
   });
 };
 
-// Migrate a personal transaction to a shared budget
+// ─── MIGRATION TRANSACTION ↔ SHARED BUDGET ───
+
 export const migrateTransactionToSharedBudget = async (
-  groupId: string,
+  userId: string,
   transactionId: string,
   budgetId: string,
-  transaction: { amount: number; label: string; date: Date; addedByName: string },
-  userId: string
+  transaction: { amount: number; label: string; date: Date; addedByName: string }
 ) => {
   const batch = writeBatch(db);
 
-  // 1. Supprimer la transaction personnelle
-  batch.delete(doc(db, "groups", groupId, "transactions", transactionId));
+  batch.delete(doc(db, "users", userId, "transactions", transactionId));
 
-  // 2. Créer la dépense partagée
   const expenseRef = doc(collection(db, "sharedBudgets", budgetId, "expenses"));
   batch.set(expenseRef, {
     amount: transaction.amount,
@@ -684,23 +541,16 @@ export const migrateTransactionToSharedBudget = async (
   await batch.commit();
 };
 
-// Unshare a shared expense back to personal transactions
 export const unshareExpenseToPersonal = async (
   budgetId: string,
   expenseId: string,
   expense: { amount: number; label: string; date: Date; addedBy: string }
 ) => {
-  // Récupérer le groupId de la personne qui a ajouté la dépense
-  const userProfile = await getUserProfile(expense.addedBy);
-  if (!userProfile) throw new Error("Utilisateur introuvable");
-
   const batch = writeBatch(db);
 
-  // 1. Supprimer la dépense partagée
   batch.delete(doc(db, "sharedBudgets", budgetId, "expenses", expenseId));
 
-  // 2. Recréer la transaction personnelle
-  const transactionRef = doc(collection(db, "groups", userProfile.groupId, "transactions"));
+  const transactionRef = doc(collection(db, "users", expense.addedBy, "transactions"));
   batch.set(transactionRef, {
     amount: expense.amount,
     type: "expense",
@@ -715,7 +565,8 @@ export const unshareExpenseToPersonal = async (
   await batch.commit();
 };
 
-// Feedback
+// ─── FEEDBACK ───
+
 export const saveFeedback = async (data: {
   name: string;
   email: string;
