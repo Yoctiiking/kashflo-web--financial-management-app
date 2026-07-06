@@ -42,6 +42,15 @@ export function useCurrency() {
 
   const formatCurrency = useCallback((amount: number) => {
     const converted = amount * rate;
+    if (Math.abs(converted) >= 1_000_000) {
+      return new Intl.NumberFormat("fr-CA", {
+        style: "currency",
+        currency,
+        notation: "compact",
+        compactDisplay: "short",
+        maximumFractionDigits: 3,
+      }).format(converted);
+    }
     return new Intl.NumberFormat("fr-CA", { style: "currency", currency }).format(converted);
   }, [currency, rate]);
 

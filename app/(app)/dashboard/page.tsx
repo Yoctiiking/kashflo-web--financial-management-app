@@ -148,7 +148,7 @@ export default function DashboardPage() {
                 <div className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
                     <div className="flex items-start gap-3">
                         <span className="text-xl">⏰</span>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <p className="text-amber-400 font-medium text-sm mb-2">
                                 {upcomingRecurrences.length} paiement{upcomingRecurrences.length > 1 ? "s" : ""} à venir
                             </p>
@@ -314,8 +314,8 @@ export default function DashboardPage() {
                         <p className="text-gray-500 text-sm">Aucune dépense ce mois-ci</p>
                     ) : (
                         <div className="flex items-center gap-4">
-                            <div className="w-1/2 aspect-square max-w-[200px]">
-                                <ResponsiveContainer width="100%" height="100%">
+                            <div className="w-1/2 max-w-[200px] h-[200px]">
+                                <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 200, height: 200 }}>
                                     <PieChart>
                                         <Pie
                                             data={pieData}
@@ -325,6 +325,7 @@ export default function DashboardPage() {
                                             outerRadius="90%"
                                             paddingAngle={3}
                                             dataKey="value"
+                                            isAnimationActive={false}
                                         >
                                             {pieData.map((_, index) => (
                                                 <Cell
