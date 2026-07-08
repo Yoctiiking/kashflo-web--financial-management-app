@@ -101,22 +101,22 @@ export default function SharedBudgetDetailPage() {
 
   // Charge les noms des membres à chaque changement du budget
   // Écoute temps réel des noms d'affichage des membres
-useEffect(() => {
-  if (!budget) return;
+  useEffect(() => {
+    if (!budget) return;
 
-  const unsubscribes = budget.members.map(uid =>
-    subscribeToUserProfile(uid, (profile) => {
-      setMemberNames(prev => ({
-        ...prev,
-        [uid]: profile?.displayName || uid
-      }));
-    })
-  );
+    const unsubscribes = budget.members.map(uid =>
+      subscribeToUserProfile(uid, (profile) => {
+        setMemberNames(prev => ({
+          ...prev,
+          [uid]: profile?.displayName || uid
+        }));
+      })
+    );
 
-  return () => {
-    unsubscribes.forEach(unsub => unsub());
-  };
-}, [budget?.members.join(",")]);
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+    };
+  }, [budget?.members.join(",")]);
 
   const closeExpenseForm = useCallback(() => {
     setShowAddExpense(false);
@@ -371,13 +371,13 @@ useEffect(() => {
           </p>
         </div>
         {isAdmin && (
-  <button
-    onClick={() => setShowEditBudget(true)}
-    className="text-gray-400 hover:text-white text-sm border border-gray-800 hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
-  >
-    ✏️<span className="hidden sm:inline"> Modifier</span>
-  </button>
-)}
+          <button
+            onClick={() => setShowEditBudget(true)}
+            className="text-gray-400 hover:text-white text-sm border border-gray-800 hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
+          >
+            ✏️<span className="hidden sm:inline"> Modifier</span>
+          </button>
+        )}
       </div>
 
       {/* Progression */}
