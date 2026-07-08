@@ -9,6 +9,7 @@ import AddRecurrenceModal from "@/components/AddRecurrenceModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import CurrencyValue from "@/components/CurrencyValue";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
 export default function RecurrencesPage() {
@@ -89,7 +90,7 @@ export default function RecurrencesPage() {
     }
   };
 
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, ready } = useCurrency();
 
   if (loading) {
     return (
@@ -163,9 +164,13 @@ export default function RecurrencesPage() {
                     {r.label}
                   </p>
 
-                  <p className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
-                    {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
-                  </p>
+                  <CurrencyValue
+                    amount={r.amount}
+                    ready={ready}
+                    formatCurrency={formatCurrency}
+                    prefix={r.type === "income" ? "+" : "-"}
+                    className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between mt-1.5 pl-[6.5rem]">

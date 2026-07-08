@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { getMonthTransactions, migrateTransactionToSharedBudget } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
@@ -52,7 +53,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
     const [dateFilter, setDateFilter] = useState("");
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const { formatCurrency } = useCurrency();
+    const { formatCurrency, ready } = useCurrency();
 
     const now = new Date();
     const [navYear, setNavYear] = useState(now.getFullYear());
@@ -288,7 +289,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                                                 {tx.category} · {format(tx.date, "d MMM yyyy", { locale: fr })}
                                             </p>
                                         </div>
-                                        <p className="text-red-400 font-semibold text-sm shrink-0">{formatCurrency(tx.amount)}</p>
+                                        <CurrencyValue amount={tx.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-400 font-semibold text-sm shrink-0" />
                                     </button>
                                 );
                             })}
@@ -300,7 +301,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                     <div className="p-6 pt-4 border-t border-gray-800 shrink-0 space-y-3">
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-400">{selectedIds.size} sélectionnée{selectedIds.size > 1 ? "s" : ""}</span>
-                            <span className="text-white font-semibold">{formatCurrency(selectedTotal)}</span>
+                            <CurrencyValue amount={selectedTotal} ready={ready} formatCurrency={formatCurrency} className="text-white font-semibold" />
                         </div>
                         <button
                             onClick={handleMigrateSelected}

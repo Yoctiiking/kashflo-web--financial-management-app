@@ -6,6 +6,7 @@ import { getSavingsGoals, deleteSavingsGoal, addToSavingsGoal } from "@/lib/fire
 import { SavingsGoal } from "@/types";
 import SavingsGoalModal from "@/components/SavingsGoalModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
@@ -20,7 +21,7 @@ export default function SavingsPage() {
   const [addAmount, setAddAmount] = useState("");
   const confirm = useConfirm();
 
-  const { formatCurrency, toBase } = useCurrency();
+  const { formatCurrency, ready, toBase } = useCurrency();
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -133,12 +134,8 @@ export default function SavingsPage() {
 
                 <div className="mb-3">
                   <div className="flex justify-between text-sm mb-1.5">
-                    <span className={isComplete ? "text-emerald-400" : "text-gray-300"}>
-                      {formatCurrency(goal.currentAmount)}
-                    </span>
-                    <span className="text-gray-500">
-                      {formatCurrency(goal.targetAmount)}
-                    </span>
+                    <CurrencyValue amount={goal.currentAmount} ready={ready} formatCurrency={formatCurrency} className={isComplete ? "text-emerald-400" : "text-gray-300"} />
+                    <CurrencyValue amount={goal.targetAmount} ready={ready} formatCurrency={formatCurrency} className="text-gray-500" />
                   </div>
                   <div className="w-full bg-gray-800 rounded-full h-2">
                     <div
@@ -151,7 +148,7 @@ export default function SavingsPage() {
                 <p className={`text-xs mb-3 ${isComplete ? "text-emerald-400" : "text-gray-500"}`}>
                   {isComplete
                     ? "🎉 Objectif atteint !"
-                    : `${formatCurrency(remaining)} restant · ${Math.round(percentage)}%`
+                    : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> restant · {Math.round(percentage)}%</>
                   }
                 </p>
 
