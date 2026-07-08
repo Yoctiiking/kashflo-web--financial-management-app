@@ -341,6 +341,23 @@ export const deleteSharedBudget = async (budgetId: string) => {
   await deleteDoc(doc(db, "sharedBudgets", budgetId));
 };
 
+export const subscribeToUserProfile = (
+  uid: string,
+  callback: (profile: { displayName?: string } | null) => void
+) => {
+  return onSnapshot(doc(db, "users", uid),
+    (snap) => {
+      callback(snap.exists() ? (snap.data() as any) : null);
+    },
+    (error) => {
+      if (error.code !== "permission-denied") {
+        console.error("Erreur listener profil:", error);
+      }
+      callback(null);
+    }
+  );
+};
+
 export const subscribeToSharedExpenses = (
   budgetId: string,
   callback: (expenses: SharedExpense[]) => void

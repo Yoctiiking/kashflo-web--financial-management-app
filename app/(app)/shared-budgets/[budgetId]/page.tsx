@@ -8,7 +8,8 @@ import {
   deleteSharedExpense, createSharedBudgetInvite, getUserProfile,
   removeMemberFromSharedBudget,
   leaveSharedBudget,
-  updateSharedExpense
+  updateSharedExpense,
+  subscribeToUserProfile
 } from "@/lib/firebase/firestore";
 import { SharedBudget, SharedExpense } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
@@ -99,18 +100,23 @@ export default function SharedBudgetDetailPage() {
   }, [budgetId]);
 
   // Charge les noms des membres à chaque changement du budget
+  // Écoute temps réel des noms d'affichage des membres
   useEffect(() => {
     if (!budget) return;
-    const loadNames = async () => {
-      const names: Record<string, string> = {};
-      await Promise.all(budget.members.map(async uid => {
-        const profile = await getUserProfile(uid);
-        names[uid] = profile?.displayName || uid;
-      }));
-      setMemberNames(names);
+
+    const unsubscribes = budget.members.map(uid =>
+      subscribeToUserProfile(uid, (profile) => {
+        setMemberNames(prev => ({
+          ...prev,
+          [uid]: profile?.displayName || uid
+        }));
+      })
+    );
+
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
     };
-    loadNames();
-  }, [budget]);
+  }, [budget?.members.join(",")]);
 
   const closeExpenseForm = useCallback(() => {
     setShowAddExpense(false);
@@ -365,13 +371,13 @@ export default function SharedBudgetDetailPage() {
           </p>
         </div>
         {isAdmin && (
-  <button
-    onClick={() => setShowEditBudget(true)}
-    className="text-gray-400 hover:text-white text-sm border border-gray-800 hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
-  >
-    ✏️<span className="hidden sm:inline"> Modifier</span>
-  </button>
-)}
+          <button
+            onClick={() => setShowEditBudget(true)}
+            className="text-gray-400 hover:text-white text-sm border border-gray-800 hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
+          >
+            ✏️<span className="hidden sm:inline"> Modifier</span>
+          </button>
+        )}
       </div>
 
       {/* Progression */}
