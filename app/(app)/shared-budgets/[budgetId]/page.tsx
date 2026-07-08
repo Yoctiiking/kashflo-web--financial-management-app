@@ -8,7 +8,8 @@ import {
   deleteSharedExpense, createSharedBudgetInvite, getUserProfile,
   removeMemberFromSharedBudget,
   leaveSharedBudget,
-  updateSharedExpense
+  updateSharedExpense,
+  subscribeToUserProfile
 } from "@/lib/firebase/firestore";
 import { SharedBudget, SharedExpense } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
@@ -99,18 +100,23 @@ export default function SharedBudgetDetailPage() {
   }, [budgetId]);
 
   // Charge les noms des membres à chaque changement du budget
-  useEffect(() => {
-    if (!budget) return;
-    const loadNames = async () => {
-      const names: Record<string, string> = {};
-      await Promise.all(budget.members.map(async uid => {
-        const profile = await getUserProfile(uid);
-        names[uid] = profile?.displayName || uid;
+  // Écoute temps réel des noms d'affichage des membres
+useEffect(() => {
+  if (!budget) return;
+
+  const unsubscribes = budget.members.map(uid =>
+    subscribeToUserProfile(uid, (profile) => {
+      setMemberNames(prev => ({
+        ...prev,
+        [uid]: profile?.displayName || uid
       }));
-      setMemberNames(names);
-    };
-    loadNames();
-  }, [budget]);
+    })
+  );
+
+  return () => {
+    unsubscribes.forEach(unsub => unsub());
+  };
+}, [budget?.members.join(",")]);
 
   const closeExpenseForm = useCallback(() => {
     setShowAddExpense(false);
