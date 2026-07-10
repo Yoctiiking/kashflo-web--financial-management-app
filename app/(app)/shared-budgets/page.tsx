@@ -6,6 +6,7 @@ import { getSharedBudgets, deleteSharedBudget } from "@/lib/firebase/firestore";
 import { SharedBudget } from "@/types";
 import SharedBudgetModal from "@/components/SharedBudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import CurrencyValue from "@/components/CurrencyValue";
 import Link from "next/link";
 
 const periodLabel: Record<string, string> = {
@@ -20,7 +21,7 @@ export default function SharedBudgetsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<SharedBudget | null>(null);
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, ready } = useCurrency();
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -106,7 +107,7 @@ export default function SharedBudgetsPage() {
                   </div>
                 )}
               </div>
-              <p className="text-emerald-400 font-semibold">{formatCurrency(budget.limit)}</p>
+              <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-emerald-400 font-semibold" />
               <p className="text-gray-600 text-xs mt-1">
                 {budget.members.length} membre{budget.members.length > 1 ? "s" : ""}
               </p>
