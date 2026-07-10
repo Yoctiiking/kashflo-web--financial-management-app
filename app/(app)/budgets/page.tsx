@@ -7,6 +7,7 @@ import { Budget, Transaction } from "@/types";
 import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import CurrencyValue from "@/components/CurrencyValue";
 
 export default function BudgetsPage() {
   const { user } = useAuth();
@@ -84,7 +85,7 @@ export default function BudgetsPage() {
       .reduce((sum, t) => sum + t.amount, 0);
   };
 
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, ready } = useCurrency();
 
   const periodLabel: Record<string, string> = {
     daily: "/ jour",
@@ -158,12 +159,11 @@ export default function BudgetsPage() {
                 {/* Montants */}
                 <div className="mb-3">
                   <div className="flex justify-between items-baseline gap-2 text-sm mb-1.5">
-                    <span className={`truncate min-w-0 ${isOver ? "text-red-400" : "text-gray-300"}`}>
-                      {formatCurrency(spent)} dépensé
+                    <span className={`inline-flex items-center gap-1 min-w-0 ${isOver ? "text-red-400" : "text-gray-300"}`}>
+                      <CurrencyValue amount={spent} ready={ready} formatCurrency={formatCurrency} />
+                      <span className="truncate">dépensé</span>
                     </span>
-                    <span className="text-gray-500 shrink-0">
-                      {formatCurrency(budget.limit)}
-                    </span>
+                    <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-500 shrink-0" />
                   </div>
                   <div className="w-full bg-gray-800 rounded-full h-2">
                     <div
@@ -176,8 +176,8 @@ export default function BudgetsPage() {
                 {/* Reste */}
                 <p className={`text-xs ${isOver ? "text-red-400" : "text-gray-500"}`}>
                   {isOver
-                    ? `⚠️ Dépassé de ${formatCurrency(Math.abs(remaining))}`
-                    : `${formatCurrency(remaining)} restant`
+                    ? <>⚠️ Dépassé de <CurrencyValue amount={Math.abs(remaining)} ready={ready} formatCurrency={formatCurrency} /></>
+                    : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> restant</>
                   }
                 </p>
               </div>

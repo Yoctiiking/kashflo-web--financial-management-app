@@ -15,6 +15,7 @@ import FeedbackModal from "@/components/FeedbackModal";
 import { hasPinSet, removePin } from "@/lib/pinLock";
 import PinSetupModal from "@/components/PinSetupModal";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 
 const CURRENCIES = [
     { code: "CAD", label: "Dollar canadien (CAD)" },
@@ -29,8 +30,8 @@ export default function SettingsPage() {
     const { user } = useAuth();
     const router = useRouter();
     const confirm = useConfirm();
-
-    const [displayName, setDisplayName] = useState(user?.displayName || "");
+    const { profile } = useUserProfile();
+    const [displayName, setDisplayName] = useState(profile?.displayName || user?.displayName || "");
     const [nameLoading, setNameLoading] = useState(false);
     const [nameSuccess, setNameSuccess] = useState(false);
     const [nameError, setNameError] = useState("");
@@ -59,6 +60,13 @@ export default function SettingsPage() {
     useEffect(() => {
         setPinActive(hasPinSet());
     }, []);
+
+    // Garde le champ synchronisé si le nom change depuis un autre appareil pendant que la page est ouverte
+    useEffect(() => {
+        if (profile?.displayName) {
+            setDisplayName(profile.displayName);
+        }
+    }, [profile?.displayName]);
 
     useEffect(() => {
         if (!user) return;

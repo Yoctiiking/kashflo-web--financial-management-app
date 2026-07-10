@@ -8,6 +8,7 @@ import AddTransactionModal from "@/components/AddTransactionModal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import CurrencyValue from "@/components/CurrencyValue";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 
@@ -139,7 +140,7 @@ export default function TransactionsPage() {
     loadData();
   }, [loadData]);
 
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, ready } = useCurrency();
 
   const parsedSearch = parseMonthSearch(search);
   const effectiveSearch = parsedSearch !== null ? parsedSearch.remainder : search;
@@ -359,9 +360,13 @@ export default function TransactionsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
-                  <p className={`font-semibold ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
-                    {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
-                  </p>
+                  <CurrencyValue
+                    amount={tx.amount}
+                    ready={ready}
+                    formatCurrency={formatCurrency}
+                    prefix={tx.type === "income" ? "+" : "-"}
+                    className={`font-semibold ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}
+                  />
                   <button
                     onClick={() => handleDelete(tx.id)}
                     className="text-gray-600 hover:text-red-400 transition-colors"

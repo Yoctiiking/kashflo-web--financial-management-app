@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useInactivityLogout } from "@/lib/hooks/useInactivityLogout";
 import { useAppLock } from "@/lib/hooks/useAppLock";
 import LockScreen from "@/components/LockScreen";
+import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
@@ -29,6 +30,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const { user, loading } = useAuth();
+  const { profile } = useUserProfile();
   const router = useRouter();
   const pathname = usePathname();
   const [upcomingCount, setUpcomingCount] = useState(0);
@@ -95,7 +97,7 @@ export default function AppLayout({
           <h1 className="text-xl font-bold text-white">
             Kash<span className="text-emerald-500">Flo</span>
           </h1>
-          <p className="text-xs text-gray-500 mt-0.5">{user.displayName}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{profile?.displayName || user.displayName}</p>
         </div>
 
         {/* Navigation */}
