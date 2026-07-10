@@ -13,6 +13,7 @@ import {
 } from "@/lib/firebase/firestore";
 import { SharedBudget, SharedExpense } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useRouter } from "next/navigation";
@@ -44,7 +45,7 @@ export default function SharedBudgetDetailPage() {
   const [multipleUse, setMultipleUse] = useState(false);
   const [expiryMinutes, setExpiryMinutes] = useState(1440);
   const [copiedCode, setCopiedCode] = useState(false);
-  const { formatCurrency, symbol, toBase, fromBase } = useCurrency(); const confirm = useConfirm();
+  const { formatCurrency, ready, symbol, toBase, fromBase } = useCurrency(); const confirm = useConfirm();
   const [visibleSpentCount, setVisibleSpentCount] = useState(10);
   const [visibleMembersCount, setVisibleMembersCount] = useState(5);
   const [memberSearch, setMemberSearch] = useState("");
@@ -383,10 +384,11 @@ export default function SharedBudgetDetailPage() {
       {/* Progression */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
         <div className="flex justify-between items-baseline gap-2 text-sm mb-2">
-          <span className={`truncate min-w-0 ${isOver ? "text-red-400 font-semibold" : "text-white font-semibold"}`}>
-            {formatCurrency(totalSpent)} dépensé
+          <span className={`inline-flex items-center gap-1 min-w-0 ${isOver ? "text-red-400 font-semibold" : "text-white font-semibold"}`}>
+            <CurrencyValue amount={totalSpent} ready={ready} formatCurrency={formatCurrency} />
+            <span className="truncate">dépensé</span>
           </span>
-          <span className="text-gray-400 shrink-0">{formatCurrency(budget.limit)}</span>
+          <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-400 shrink-0" />
         </div>
         <div className="w-full bg-gray-800 rounded-full h-3 mb-2">
           <div
@@ -396,8 +398,8 @@ export default function SharedBudgetDetailPage() {
         </div>
         <p className={`text-xs ${isOver ? "text-red-400" : "text-gray-500"}`}>
           {isOver
-            ? `⚠️ Dépassé de ${formatCurrency(totalSpent - budget.limit)}`
-            : `${formatCurrency(budget.limit - totalSpent)} restant · ${Math.round(percentage)}%`
+            ? <>⚠️ Dépassé de <CurrencyValue amount={totalSpent - budget.limit} ready={ready} formatCurrency={formatCurrency} /></>
+            : <><CurrencyValue amount={budget.limit - totalSpent} ready={ready} formatCurrency={formatCurrency} /> restant · {Math.round(percentage)}%</>
           }
         </p>
       </div>
@@ -580,7 +582,7 @@ export default function SharedBudgetDetailPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <p className="text-red-400 font-semibold text-sm">{formatCurrency(expense.amount)}</p>
+                      <CurrencyValue amount={expense.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-400 font-semibold text-sm" />
                       {expense.addedBy === user?.uid && (
                         <>
                           <button

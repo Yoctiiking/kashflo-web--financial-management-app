@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import CurrencyValue from "@/components/CurrencyValue";
 import OnboardingCarousel from "@/components/OnboardingCarousel";
 import { ONBOARDING_SLIDES, ONBOARDING_VERSION } from "@/lib/onboardingSlides";
 
@@ -83,7 +84,7 @@ export default function DashboardPage() {
 
     const balance = totalIncome - totalExpenses;
 
-    const { formatCurrency } = useCurrency();
+    const { formatCurrency, ready } = useCurrency();
 
     const currentMonth = format(new Date(), "MMMM yyyy", { locale: fr });
 
@@ -117,7 +118,7 @@ export default function DashboardPage() {
             <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm">
                 <p className="text-white font-medium">{payload[0].name}</p>
                 <p style={{ color: payload[0].payload.fill }}>
-                    {formatCurrency(payload[0].value)}
+                    <CurrencyValue amount={payload[0].value} ready={ready} formatCurrency={formatCurrency} />
                 </p>
             </div>
         );
@@ -159,9 +160,13 @@ export default function DashboardPage() {
                                     return (
                                         <div key={r.id} className="flex items-center justify-between gap-2 text-sm">
                                             <span className="text-gray-300 truncate min-w-0">{r.label} · {dayLabel}</span>
-                                            <span className={`shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
-                                                {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
-                                            </span>
+                                            <CurrencyValue
+                                                amount={r.amount}
+                                                ready={ready}
+                                                formatCurrency={formatCurrency}
+                                                prefix={r.type === "income" ? "+" : "-"}
+                                                className={`shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}
+                                            />
                                         </div>
                                     );
                                 })}
@@ -173,19 +178,22 @@ export default function DashboardPage() {
 
             {/* Cartes de stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 min-w-0">
                     <p className="text-gray-400 text-sm mb-1">Solde</p>
-                    <p className={`text-2xl font-bold ${balance >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                        {formatCurrency(balance)}
-                    </p>
+                    <CurrencyValue
+                        amount={balance}
+                        ready={ready}
+                        formatCurrency={formatCurrency}
+                        className={`text-2xl font-bold truncate ${balance >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                    />
                 </div>
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 min-w-0">
                     <p className="text-gray-400 text-sm mb-1">Revenus</p>
-                    <p className="text-2xl font-bold text-emerald-400">{formatCurrency(totalIncome)}</p>
+                    <CurrencyValue amount={totalIncome} ready={ready} formatCurrency={formatCurrency} className="text-2xl font-bold text-emerald-400 truncate" />
                 </div>
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 min-w-0">
                     <p className="text-gray-400 text-sm mb-1">Dépenses</p>
-                    <p className="text-2xl font-bold text-red-400">{formatCurrency(totalExpenses)}</p>
+                    <CurrencyValue amount={totalExpenses} ready={ready} formatCurrency={formatCurrency} className="text-2xl font-bold text-red-400 truncate" />
                 </div>
             </div>
 
@@ -203,9 +211,13 @@ export default function DashboardPage() {
                                         <p className="text-white text-sm font-medium truncate">{tx.label}</p>
                                         <p className="text-gray-500 text-xs truncate">{tx.category}</p>
                                     </div>
-                                    <p className={`font-semibold text-sm shrink-0 ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
-                                        {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
-                                    </p>
+                                    <CurrencyValue
+                                        amount={tx.amount}
+                                        ready={ready}
+                                        formatCurrency={formatCurrency}
+                                        prefix={tx.type === "income" ? "+" : "-"}
+                                        className={`font-semibold text-sm shrink-0 ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -259,8 +271,10 @@ export default function DashboardPage() {
                                                         {budget.period === "daily" ? "/ jour" : budget.period === "weekly" ? "/ semaine" : "/ mois"}
                                                     </span>
                                                 </div>
-                                                <span className={`shrink-0 ${isOver ? "text-red-400" : "text-gray-400"}`}>
-                                                    {formatCurrency(spent)} / {formatCurrency(budget.limit)}
+                                                <span className={`inline-flex items-center gap-1 shrink-0 ${isOver ? "text-red-400" : "text-gray-400"}`}>
+                                                    <CurrencyValue amount={spent} ready={ready} formatCurrency={formatCurrency} />
+                                                    <span>/</span>
+                                                    <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} />
                                                 </span>
                                             </div>
                                             <div className="w-full bg-gray-800 rounded-full h-1.5">
@@ -298,9 +312,13 @@ export default function DashboardPage() {
                                             </p>
                                         </div>
                                     </div>
-                                    <p className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
-                                        {r.type === "income" ? "+" : "-"}{formatCurrency(r.amount)}
-                                    </p>
+                                    <CurrencyValue
+                                        amount={r.amount}
+                                        ready={ready}
+                                        formatCurrency={formatCurrency}
+                                        prefix={r.type === "income" ? "+" : "-"}
+                                        className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -348,7 +366,12 @@ export default function DashboardPage() {
                                             />
                                             <span className="text-gray-300 text-xs truncate">{entry.name}</span>
                                         </div>
-                                        <span className="text-gray-400 text-xs shrink-0 sm:ml-2">{formatCurrency(entry.value)}</span>
+                                        <CurrencyValue
+                                            amount={entry.value}
+                                            ready={ready}
+                                            formatCurrency={formatCurrency}
+                                            className="text-gray-400 text-xs shrink-0 self-end sm:self-auto sm:ml-2"
+                                        />
                                     </div>
                                 ))}
                             </div>

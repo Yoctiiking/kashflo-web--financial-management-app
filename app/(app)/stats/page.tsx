@@ -20,6 +20,7 @@ import {
   Legend
 } from "recharts";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import CurrencyValue from "@/components/CurrencyValue";
 
 const PIE_COLORS = [
   "#10b981", "#3b82f6", "#f59e0b", "#ef4444",
@@ -30,6 +31,7 @@ export default function StatsPage() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const { formatCurrency, ready } = useCurrency();
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -86,8 +88,6 @@ export default function StatsPage() {
     .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
     .sort((a, b) => b.value - a.value);
 
-  const { formatCurrency } = useCurrency();
-
   const CustomBarTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
@@ -95,7 +95,7 @@ export default function StatsPage() {
         <p className="text-gray-400 mb-2 font-medium capitalize">{label}</p>
         {payload.map((entry: any) => (
           <p key={entry.name} style={{ color: entry.fill }}>
-            {entry.name === "income" ? "Revenus" : "Dépenses"} : {formatCurrency(entry.value)}
+            {entry.name === "income" ? "Revenus" : "Dépenses"} : <CurrencyValue amount={entry.value} ready={ready} formatCurrency={formatCurrency} />
           </p>
         ))}
       </div>
@@ -108,7 +108,7 @@ export default function StatsPage() {
       <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm">
         <p className="text-white font-medium">{payload[0].name}</p>
         <p style={{ color: payload[0].payload.fill }}>
-          {formatCurrency(payload[0].value)}
+          <CurrencyValue amount={payload[0].value} ready={ready} formatCurrency={formatCurrency} />
         </p>
       </div>
     );
@@ -148,7 +148,8 @@ export default function StatsPage() {
                   tick={{ fill: "#9ca3af", fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => `${v}$`}
+                  width={90}
+                  tickFormatter={(v) => formatCurrency(v)}
                 />
                 <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "#ffffff08" }} />
                 <Bar dataKey="income" fill="#10b981" radius={[6, 6, 0, 0]} />
@@ -200,7 +201,7 @@ export default function StatsPage() {
                       />
                       <span className="text-gray-300 text-sm">{entry.name}</span>
                     </div>
-                    <span className="text-gray-400 text-sm">{formatCurrency(entry.value)}</span>
+                    <CurrencyValue amount={entry.value} ready={ready} formatCurrency={formatCurrency} className="text-gray-400 text-sm" />
                   </div>
                 ))}
               </div>
