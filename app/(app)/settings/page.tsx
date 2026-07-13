@@ -12,6 +12,7 @@ import {
 import { getUserProfile, updateUserCurrency } from "@/lib/firebase/firestore";
 import { useEffect } from "react";
 import FeedbackModal from "@/components/FeedbackModal";
+import PasswordInput from "@/components/PasswordInput";
 import { hasPinSet, removePin } from "@/lib/pinLock";
 import PinSetupModal from "@/components/PinSetupModal";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
@@ -239,25 +240,19 @@ export default function SettingsPage() {
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                     <h3 className="text-white font-semibold mb-4">Mot de passe</h3>
                     <div className="space-y-3">
-                        <input
-                            type="password"
+                        <PasswordInput
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
                             placeholder="Mot de passe actuel"
                         />
-                        <input
-                            type="password"
+                        <PasswordInput
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
                             placeholder="Nouveau mot de passe"
                         />
-                        <input
-                            type="password"
+                        <PasswordInput
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
                             placeholder="Confirmer le nouveau mot de passe"
                         />
                         {passwordError && <p className="text-red-400 text-sm">{passwordError}</p>}
@@ -334,11 +329,10 @@ export default function SettingsPage() {
                             <p className="text-gray-300 text-sm">
                                 Entre ton mot de passe pour confirmer la suppression :
                             </p>
-                            <input
-                                type="password"
+                            <PasswordInput
+                                variant="danger"
                                 value={deletePassword}
                                 onChange={(e) => setDeletePassword(e.target.value)}
-                                className="w-full bg-gray-800 border border-red-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-red-500 transition-colors"
                                 placeholder="Ton mot de passe"
                             />
                             {deleteError && <p className="text-red-400 text-sm">{deleteError}</p>}
