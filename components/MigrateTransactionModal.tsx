@@ -95,7 +95,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                 const tx = await getMonthTransactions(user.uid, effectiveYear, targetMonth);
                 setTransactions(tx.filter(t => t.type === "expense"));
             } catch (err) {
-                console.error(err);
+                 console.error(err);
             } finally {
                 setLoading(false);
             }
