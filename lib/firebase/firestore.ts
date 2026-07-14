@@ -32,6 +32,7 @@ import {
   SharedExpense,
   SharedBudget
 } from "@/types";
+import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/categories";
 
 // ─── USER PROFILE ───
 
@@ -46,7 +47,9 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     photoURL: data.photoURL,
     currency: data.currency ?? "CAD",
     createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
-    onboardingVersion: data.onboardingVersion ?? 0
+    onboardingVersion: data.onboardingVersion ?? 0,
+    expenseCategories: data.expenseCategories ?? DEFAULT_EXPENSE_CATEGORIES,
+    incomeCategories: data.incomeCategories ?? DEFAULT_INCOME_CATEGORIES
   };
 };
 
@@ -60,6 +63,15 @@ export const resetOnboarding = async (userId: string) => {
 
 export const updateUserCurrency = async (userId: string, currency: string) => {
   await updateDoc(doc(db, "users", userId), { currency });
+};
+
+export const updateUserCategories = async (
+  userId: string,
+  type: TransactionType,
+  categories: string[]
+) => {
+  const field = type === "expense" ? "expenseCategories" : "incomeCategories";
+  await updateDoc(doc(db, "users", userId), { [field]: categories });
 };
 
 // ─── TRANSACTIONS ───

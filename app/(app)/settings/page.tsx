@@ -13,6 +13,7 @@ import { getUserProfile, updateUserCurrency } from "@/lib/firebase/firestore";
 import { useEffect } from "react";
 import FeedbackModal from "@/components/FeedbackModal";
 import PasswordInput from "@/components/PasswordInput";
+import CategoriesModal from "@/components/CategoriesModal";
 import { hasPinSet, removePin } from "@/lib/pinLock";
 import PinSetupModal from "@/components/PinSetupModal";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
@@ -52,6 +53,8 @@ export default function SettingsPage() {
 
     const [showPinSetup, setShowPinSetup] = useState(false);
     const [pinActive, setPinActive] = useState(false);
+
+    const [showCategories, setShowCategories] = useState(false);
 
     const [deletePassword, setDeletePassword] = useState("");
     const [deleteLoading, setDeleteLoading] = useState(false);
@@ -236,6 +239,20 @@ export default function SettingsPage() {
                     )}
                 </div>
 
+                {/* Catégories */}
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-white font-semibold mb-1">Catégories</h3>
+                    <p className="text-gray-500 text-sm mb-4">
+                        Ajoute, renomme ou supprime tes catégories de dépenses et revenus
+                    </p>
+                    <button
+                        onClick={() => setShowCategories(true)}
+                        className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors"
+                    >
+                        Gérer les catégories
+                    </button>
+                </div>
+
                 {/* Mot de passe */}
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                     <h3 className="text-white font-semibold mb-4">Mot de passe</h3>
@@ -368,6 +385,8 @@ export default function SettingsPage() {
             )}
 
             {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
+
+            {showCategories && <CategoriesModal onClose={() => setShowCategories(false)} />}
         </div>
     );
 }

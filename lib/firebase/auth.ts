@@ -16,6 +16,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp, updateDoc, deleteDoc, arrayRemove, collection, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "./config";
+import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/categories";
 
 export const registerUser = async (
   email: string,
@@ -34,6 +35,8 @@ export const registerUser = async (
     email,
     photoURL: null,
     groupId,
+    expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
+    incomeCategories: DEFAULT_INCOME_CATEGORIES,
     createdAt: serverTimestamp()
   });
 
