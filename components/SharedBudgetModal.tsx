@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { createSharedBudget, updateSharedBudget } from "@/lib/firebase/firestore";
 import { SharedBudget, BudgetPeriod } from "@/types";
-import { EXPENSE_CATEGORIES } from "@/lib/categories";
+import { DEFAULT_EXPENSE_CATEGORIES } from "@/lib/categories";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { useUserProfile } from "@/lib/providers/UserProfileProvider";
+import CategorySelect from "@/components/CategorySelect";
 
 interface Props {
   userId: string;
@@ -14,12 +16,14 @@ interface Props {
 }
 
 export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }: Props) {
+  const { profile } = useUserProfile();
   const [period, setPeriod] = useState<BudgetPeriod>(budget?.period || "monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { symbol, toBase, fromBase, ready } = useCurrency();
   const [name, setName] = useState(budget?.name || "");
   const [category, setCategory] = useState(budget?.category || "");
+  const categories = profile?.expenseCategories ?? DEFAULT_EXPENSE_CATEGORIES;
   const [limit, setLimit] = useState(
     budget && ready ? fromBase(budget.limit).toFixed(2) : ""
   );
@@ -85,19 +89,7 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
             />
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Catégorie</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
-            >
-              <option value="">Sélectionner...</option>
-              {EXPENSE_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
+          <CategorySelect categories={categories} value={category} onChange={setCategory} />
 
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Limite ({symbol})</label>

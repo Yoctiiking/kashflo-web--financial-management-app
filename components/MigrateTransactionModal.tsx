@@ -121,7 +121,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
             setNavMonth(month - 1);
         }
     };
-    
+
     const handleMigrateSelected = async () => {
         if (!user || selectedIds.size === 0) return;
         const toMigrate = transactions.filter(t => selectedIds.has(t.id));
