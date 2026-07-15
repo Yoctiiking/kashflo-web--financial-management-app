@@ -71,14 +71,15 @@ export default function TransactionsPage() {
   }, [search]);
 
   const handleExportCSV = () => {
-    const monthLabel = format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: fr });
-    exportTransactionsToCSV(filtered, `transactions-${monthLabel}`);
+    const filenameSuffix = format(new Date(currentYear, currentMonth), "yyyy-MM");
+    exportTransactionsToCSV(filtered, `transactions_${filenameSuffix}`, fromBase, currency);
     setShowExportMenu(false);
   };
 
   const handleExportPDF = () => {
     const monthLabel = format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: fr });
-    exportTransactionsToPDF(filtered, `transactions-${monthLabel}`, monthLabel, formatCurrency);
+    const filenameSuffix = format(new Date(currentYear, currentMonth), "yyyy-MM");
+    exportTransactionsToPDF(filtered, `transactions_${filenameSuffix}`, monthLabel, formatCurrency, fromBase, currency);
     setShowExportMenu(false);
   };
 
@@ -140,7 +141,7 @@ export default function TransactionsPage() {
     loadData();
   }, [loadData]);
 
-  const { formatCurrency, ready } = useCurrency();
+  const { formatCurrency, fromBase, currency, ready } = useCurrency();
 
   const parsedSearch = parseMonthSearch(search);
   const effectiveSearch = parsedSearch !== null ? parsedSearch.remainder : search;
