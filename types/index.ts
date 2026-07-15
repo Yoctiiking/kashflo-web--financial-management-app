@@ -53,6 +53,8 @@ export interface UserProfile {
   currency: string;
   createdAt: Date;
   onboardingVersion?: number;
+  expenseCategories: string[];
+  incomeCategories: string[];
 }
 
 export interface SavingsGoal {

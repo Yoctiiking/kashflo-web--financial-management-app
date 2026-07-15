@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { addRecurrence } from "@/lib/firebase/firestore";
 import { TransactionType, RecurrenceFrequency } from "@/types";
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/categories";
+import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/categories";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { useUserProfile } from "@/lib/providers/UserProfileProvider";
+import CategorySelect from "@/components/CategorySelect";
 
 interface Props {
   groupId: string;
@@ -13,6 +15,7 @@ interface Props {
 }
 
 export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Props) {
+  const { profile } = useUserProfile();
   const { symbol, toBase } = useCurrency();
   const [step, setStep] = useState<1 | 2>(1);
   const [type, setType] = useState<TransactionType>("expense");
@@ -25,7 +28,9 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const categories = type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const categories = type === "expense"
+    ? (profile?.expenseCategories ?? DEFAULT_EXPENSE_CATEGORIES)
+    : (profile?.incomeCategories ?? DEFAULT_INCOME_CATEGORIES);
 
   const frequencyLabel: Record<RecurrenceFrequency, string> = {
     daily: "Quotidien",
@@ -145,19 +150,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
               </div>
 
               {/* Catégorie */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Catégorie</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                >
-                  <option value="">Sélectionner...</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
+              <CategorySelect categories={categories} value={category} onChange={setCategory} />
 
               {error && <p className="text-red-400 text-sm">{error}</p>}
 

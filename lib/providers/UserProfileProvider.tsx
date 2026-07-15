@@ -10,6 +10,8 @@ interface UserProfile {
   email?: string;
   photoURL?: string | null;
   currency?: string;
+  expenseCategories?: string[];
+  incomeCategories?: string[];
 }
 
 interface UserProfileContextType {
