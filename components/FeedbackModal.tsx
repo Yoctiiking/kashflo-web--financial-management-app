@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { saveFeedback } from "@/lib/firebase/firestore";
+import { X } from "lucide-react";
 
 interface Props {
     onClose: () => void;
@@ -56,7 +57,7 @@ export default function FeedbackModal({ onClose }: Props) {
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
                 <div className="flex items-center justify-between p-6 pb-4 shrink-0">
                     <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Nous contacter</h2>
-                    <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">✕</button>
+                    <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
                 </div>
 
                 <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">

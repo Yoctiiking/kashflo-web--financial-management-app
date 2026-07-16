@@ -7,6 +7,7 @@ import { DEFAULT_EXPENSE_CATEGORIES } from "@/lib/categories";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 import CategorySelect from "@/components/CategorySelect";
+import { X } from "lucide-react";
 
 interface Props {
   userId: string;
@@ -74,7 +75,7 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
           <h2 className="text-gray-900 dark:text-white font-semibold text-lg">
             {isEditing ? "Modifier le budget" : "Nouveau budget partagé"}
           </h2>
-          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">✕</button>
+          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">

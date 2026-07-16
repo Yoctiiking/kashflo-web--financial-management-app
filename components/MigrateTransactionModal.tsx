@@ -9,6 +9,7 @@ import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import { X } from "lucide-react";
 
 interface Props {
     budgetId: string;
@@ -181,7 +182,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
                 <div className="flex items-center justify-between p-6 pb-4 shrink-0">
                     <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Ajouter depuis mes transactions</h2>
-                    <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">✕</button>
+                    <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
                 </div>
 
                 <div className="px-6 pb-3 shrink-0 flex items-center justify-center gap-3">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { setPin, removePin, hasPinSet } from "@/lib/pinLock";
+import { X } from "lucide-react";
 
 interface Props {
   onClose: () => void;
@@ -52,7 +53,7 @@ export default function PinSetupModal({ onClose, onSuccess }: Props) {
           <h2 className="text-gray-900 dark:text-white font-semibold text-xl">
             {step === "enter" ? "Créer un code" : "Confirmer le code"}
           </h2>
-          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-xl">✕</button>
+          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-8">

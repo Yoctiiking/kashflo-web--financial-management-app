@@ -12,6 +12,7 @@ import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 import CurrencyValue from "@/components/CurrencyValue";
 import OnboardingCarousel from "@/components/OnboardingCarousel";
 import { ONBOARDING_SLIDES, ONBOARDING_VERSION } from "@/lib/onboardingSlides";
+import { ArrowDownLeft, ArrowUpRight, Clock } from "lucide-react";
 
 const PIE_COLORS = [
     "#10b981", "#3b82f6", "#f59e0b", "#ef4444",
@@ -150,7 +151,7 @@ export default function DashboardPage() {
             {upcomingRecurrences.length > 0 && (
                 <div className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
                     <div className="flex items-start gap-3">
-                        <span className="text-xl">⏰</span>
+                        <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" strokeWidth={2} />
                         <div className="flex-1 min-w-0">
                             <p className="text-amber-600 dark:text-amber-400 font-medium text-sm mb-2">
                                 {upcomingRecurrences.length} paiement{upcomingRecurrences.length > 1 ? "s" : ""} à venir
@@ -303,9 +304,12 @@ export default function DashboardPage() {
                             {monthRecurrences.map(r => (
                                 <div key={r.id} className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
                                             }`}>
-                                            {r.type === "income" ? "💰" : "💸"}
+                                            {r.type === "income"
+                                                ? <ArrowDownLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
+                                                : <ArrowUpRight className="w-4 h-4 text-red-600 dark:text-red-400" strokeWidth={2} />
+                                            }
                                         </div>
                                         <div className="min-w-0">
                                             <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{r.label}</p>

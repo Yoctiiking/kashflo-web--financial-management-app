@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { getSharedBudgetInvite, useSharedBudgetInvite } from "@/lib/firebase/firestore";
 import Link from "next/link";
+import { Loader2, XCircle, Clock, Lock, Users, CheckCircle2 } from "lucide-react";
 
 type Status = "loading" | "valid" | "expired" | "used" | "invalid" | "joining" | "success" | "error";
 
@@ -52,13 +53,13 @@ export default function JoinBudgetPage() {
     }
   };
 
-  const states: Record<Status, { icon: string; title: React.ReactNode; message: string; action?: React.ReactNode }> = {
-    loading: { icon: "⏳", title: "Vérification...", message: "On vérifie ton invitation" },
-    invalid: { icon: "❌", title: "Lien invalide", message: "Ce lien n'existe pas ou a été supprimé" },
-    expired: { icon: "⏰", title: "Lien expiré", message: "Ce lien a expiré" },
-    used: { icon: "🔒", title: "Lien déjà utilisé", message: "Ce lien à usage unique a déjà été utilisé" },
+  const states: Record<Status, { icon: React.ReactNode; title: React.ReactNode; message: string; action?: React.ReactNode }> = {
+    loading: { icon: <Loader2 className="w-10 h-10 animate-spin" strokeWidth={2} />, title: "Vérification...", message: "On vérifie ton invitation" },
+    invalid: { icon: <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" strokeWidth={2} />, title: "Lien invalide", message: "Ce lien n'existe pas ou a été supprimé" },
+    expired: { icon: <Clock className="w-10 h-10 text-amber-600 dark:text-amber-400" strokeWidth={2} />, title: "Lien expiré", message: "Ce lien a expiré" },
+    used: { icon: <Lock className="w-10 h-10 text-gray-500" strokeWidth={2} />, title: "Lien déjà utilisé", message: "Ce lien à usage unique a déjà été utilisé" },
     valid: {
-      icon: "👥",
+      icon: <Users className="w-10 h-10 text-emerald-600 dark:text-emerald-500" strokeWidth={2} />,
       title: budgetName ? (
         <>
           Rejoindre le budget
@@ -78,9 +79,9 @@ export default function JoinBudgetPage() {
         </div>
       )
     },
-    joining: { icon: "⏳", title: "Rejoindre...", message: "On t'ajoute au budget" },
-    success: { icon: "✅", title: "Bienvenue !", message: "Tu as rejoint le budget. Redirection..." },
-    error: { icon: "❌", title: "Erreur", message: errorMessage }
+    joining: { icon: <Loader2 className="w-10 h-10 animate-spin" strokeWidth={2} />, title: "Rejoindre...", message: "On t'ajoute au budget" },
+    success: { icon: <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />, title: "Bienvenue !", message: "Tu as rejoint le budget. Redirection..." },
+    error: { icon: <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" strokeWidth={2} />, title: "Erreur", message: errorMessage }
   };
 
   const current = states[status];
@@ -92,7 +93,7 @@ export default function JoinBudgetPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Kash<span className="text-emerald-600 dark:text-emerald-500">Flo</span></h1>
         </div>
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center">
-          <div className="text-4xl mb-4">{current.icon}</div>
+          <div className="flex justify-center mb-4">{current.icon}</div>
           <h2 className="text-gray-900 dark:text-white font-semibold text-xl mb-2">{current.title}</h2>
           <p className="text-gray-600 dark:text-gray-400 text-sm">{current.message}</p>
           {current.action}

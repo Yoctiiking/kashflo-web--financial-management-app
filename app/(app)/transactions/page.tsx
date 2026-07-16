@@ -11,6 +11,7 @@ import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import { ArrowDownLeft, ArrowUpRight, X } from "lucide-react";
 
 const MONTHS_FR = [
   "janvier", "février", "mars", "avril", "mai", "juin",
@@ -332,7 +333,7 @@ export default function TransactionsPage() {
               onClick={() => setSearch("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
-              ✕
+              <X className="w-4 h-4" strokeWidth={2} />
             </button>
           )}
         </div>
@@ -349,9 +350,12 @@ export default function TransactionsPage() {
             {filtered.map(tx => (
               <div key={tx.id} className="flex items-center justify-between gap-4 p-4 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors">
                 <div className="flex items-center gap-4 min-w-0">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
                     }`}>
-                    {tx.type === "income" ? "💰" : "💸"}
+                    {tx.type === "income"
+                      ? <ArrowDownLeft className="w-5 h-5 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
+                      : <ArrowUpRight className="w-5 h-5 text-red-600 dark:text-red-400" strokeWidth={2} />
+                    }
                   </div>
                   <div className="min-w-0">
                     <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{tx.label}</p>
@@ -372,7 +376,7 @@ export default function TransactionsPage() {
                     onClick={() => handleDelete(tx.id)}
                     className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                   >
-                    ✕
+                    <X className="w-4 h-4" strokeWidth={2} />
                   </button>
                 </div>
               </div>

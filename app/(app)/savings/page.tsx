@@ -10,6 +10,7 @@ import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import { Pencil, X, PartyPopper } from "lucide-react";
 
 export default function SavingsPage() {
   const { user } = useAuth();
@@ -119,15 +120,15 @@ export default function SavingsPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setEditingGoal(goal)}
-                      className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-sm"
+                      className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                     >
-                      ✏️
+                      <Pencil className="w-4 h-4" strokeWidth={2} />
                     </button>
                     <button
                       onClick={() => handleDelete(goal.id)}
-                      className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors text-sm"
+                      className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     >
-                      ✕
+                      <X className="w-4 h-4" strokeWidth={2} />
                     </button>
                   </div>
                 </div>
@@ -147,7 +148,7 @@ export default function SavingsPage() {
 
                 <p className={`text-xs mb-3 ${isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500"}`}>
                   {isComplete
-                    ? "🎉 Objectif atteint !"
+                    ? <><PartyPopper className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />Objectif atteint !</>
                     : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> restant · {Math.round(percentage)}%</>
                   }
                 </p>

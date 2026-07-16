@@ -7,6 +7,7 @@ import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/cat
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 import CategorySelect from "@/components/CategorySelect";
+import { X } from "lucide-react";
 
 interface Props {
   groupId: string;
@@ -98,7 +99,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
               <div className={`h-1.5 rounded-full transition-all ${step === 2 ? "w-6 bg-emerald-500" : "w-6 bg-gray-200 dark:bg-gray-700"}`} />
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">✕</button>
+          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
         {/* Contenu scrollable */}

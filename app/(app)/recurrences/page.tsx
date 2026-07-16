@@ -11,6 +11,7 @@ import { fr } from "date-fns/locale";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import { ArrowDownLeft, ArrowUpRight, RefreshCw, X } from "lucide-react";
 
 export default function RecurrencesPage() {
   const { user } = useAuth();
@@ -112,9 +113,10 @@ export default function RecurrencesPage() {
           <button
             onClick={handleProcess}
             disabled={processing}
-            className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-900 dark:text-white font-medium px-3 sm:px-4 py-2.5 rounded-xl transition-colors text-sm"
+            className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-900 dark:text-white font-medium px-3 sm:px-4 py-2.5 rounded-xl transition-colors text-sm"
           >
-            {processing ? "..." : "🔄 Générer"}
+            <RefreshCw className={`w-4 h-4 ${processing ? "animate-spin" : ""}`} strokeWidth={2} />
+            Générer
           </button>
           <button
             onClick={() => setShowModal(true)}
@@ -156,8 +158,11 @@ export default function RecurrencesPage() {
                     <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${r.isActive ? "left-5" : "left-1"}`} />
                   </button>
 
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"}`}>
-                    {r.type === "income" ? "💰" : "💸"}
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"}`}>
+                    {r.type === "income"
+                      ? <ArrowDownLeft className="w-5 h-5 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
+                      : <ArrowUpRight className="w-5 h-5 text-red-600 dark:text-red-400" strokeWidth={2} />
+                    }
                   </div>
 
                   <p className={`flex-1 text-sm font-medium truncate min-w-0 ${r.isActive ? "text-gray-900 dark:text-white" : "text-gray-500"}`}>
@@ -179,9 +184,9 @@ export default function RecurrencesPage() {
                   </p>
                   <button
                     onClick={() => handleDelete(r.id)}
-                    className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors shrink-0 text-sm"
+                    className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors shrink-0"
                   >
-                    ✕
+                    <X className="w-4 h-4" strokeWidth={2} />
                   </button>
                 </div>
               </div>

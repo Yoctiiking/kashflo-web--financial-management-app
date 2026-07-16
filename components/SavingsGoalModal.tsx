@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { addSavingsGoal, updateSavingsGoal } from "@/lib/firebase/firestore";
 import { SavingsGoal } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { X } from "lucide-react";
 
 interface Props {
   groupId: string;
@@ -85,7 +86,7 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
           <h2 className="text-gray-900 dark:text-white font-semibold text-lg">
             {isEditing ? "Modifier l'objectif" : "Nouvel objectif d'épargne"}
           </h2>
-          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">✕</button>
+          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">

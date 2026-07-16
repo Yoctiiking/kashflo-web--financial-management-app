@@ -6,6 +6,7 @@ import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/cat
 import { updateUserCategories } from "@/lib/firebase/firestore";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
+import { X, Pencil } from "lucide-react";
 
 interface Props {
   onClose: () => void;
@@ -89,7 +90,7 @@ export default function CategoriesModal({ onClose }: Props) {
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Catégories</h2>
-          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">✕</button>
+          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
         <div className="px-6 shrink-0">
@@ -129,11 +130,11 @@ export default function CategoriesModal({ onClose }: Props) {
               ) : (
                 <span className="flex-1 text-gray-900 dark:text-white text-sm truncate">{cat}</span>
               )}
-              <button onClick={() => startEditing(index)} className="text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-sm shrink-0">
-                ✏️
+              <button onClick={() => startEditing(index)} className="text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shrink-0">
+                <Pencil className="w-4 h-4" strokeWidth={2} />
               </button>
-              <button onClick={() => handleDelete(index)} className="text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors text-sm shrink-0">
-                ✕
+              <button onClick={() => handleDelete(index)} className="text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors shrink-0">
+                <X className="w-4 h-4" strokeWidth={2} />
               </button>
             </div>
           ))}

@@ -8,6 +8,7 @@ import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/cat
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 import CategorySelect from "@/components/CategorySelect";
+import { X } from "lucide-react";
 
 interface Props {
   groupId: string;
@@ -73,7 +74,7 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
             onClick={onClose}
             className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
-            ✕
+            <X className="w-5 h-5" strokeWidth={2} />
           </button>
         </div>
 

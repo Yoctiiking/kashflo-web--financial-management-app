@@ -8,6 +8,7 @@ import SharedBudgetModal from "@/components/SharedBudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import Link from "next/link";
+import { Pencil, X } from "lucide-react";
 
 const periodLabel: Record<string, string> = {
   daily: "/ jour",
@@ -94,15 +95,15 @@ export default function SharedBudgetsPage() {
                   <div className="flex items-center gap-2 shrink-0" onClick={e => e.preventDefault()}>
                     <button
                       onClick={() => setEditingBudget(budget)}
-                      className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-sm"
+                      className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                     >
-                      ✏️
+                      <Pencil className="w-4 h-4" strokeWidth={2} />
                     </button>
                     <button
                       onClick={() => handleDelete(budget.id)}
-                      className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors text-sm"
+                      className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     >
-                      ✕
+                      <X className="w-4 h-4" strokeWidth={2} />
                     </button>
                   </div>
                 )}

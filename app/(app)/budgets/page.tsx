@@ -8,6 +8,7 @@ import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import CurrencyValue from "@/components/CurrencyValue";
+import { Pencil, X, AlertTriangle } from "lucide-react";
 
 export default function BudgetsPage() {
   const { user } = useAuth();
@@ -142,16 +143,15 @@ export default function BudgetsPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setEditingBudget(budget)}
-                      className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-sm"
+                      className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                     >
-                      ✏️
+                      <Pencil className="w-4 h-4" strokeWidth={2} />
                     </button>
-                    |
                     <button
                       onClick={() => handleDelete(budget.id)}
-                      className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors text-sm"
+                      className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     >
-                      ✕
+                      <X className="w-4 h-4" strokeWidth={2} />
                     </button>
                   </div>
                 </div>
@@ -176,7 +176,7 @@ export default function BudgetsPage() {
                 {/* Reste */}
                 <p className={`text-xs ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-500"}`}>
                   {isOver
-                    ? <>⚠️ Dépassé de <CurrencyValue amount={Math.abs(remaining)} ready={ready} formatCurrency={formatCurrency} /></>
+                    ? <><AlertTriangle className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />Dépassé de <CurrencyValue amount={Math.abs(remaining)} ready={ready} formatCurrency={formatCurrency} /></>
                     : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> restant</>
                   }
                 </p>
