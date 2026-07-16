@@ -10,16 +10,28 @@ import { useInactivityLogout } from "@/lib/hooks/useInactivityLogout";
 import { useAppLock } from "@/lib/hooks/useAppLock";
 import LockScreen from "@/components/LockScreen";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Target,
+  Users,
+  PiggyBank,
+  Repeat,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu
+} from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/transactions", label: "Transactions", icon: "💸" },
-  { href: "/budgets", label: "Budgets", icon: "🎯" },
-  { href: "/shared-budgets", label: "Partagés", icon: "🤝" },
-  { href: "/savings", label: "Épargne", icon: "🏦" },
-  { href: "/recurrences", label: "Récurrences", icon: "🔄" },
-  { href: "/stats", label: "Statistiques", icon: "📈" },
-  { href: "/settings", label: "Paramètres", icon: "⚙️" },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/budgets", label: "Budgets", icon: Target },
+  { href: "/shared-budgets", label: "Partagés", icon: Users },
+  { href: "/savings", label: "Épargne", icon: PiggyBank },
+  { href: "/recurrences", label: "Récurrences", icon: Repeat },
+  { href: "/stats", label: "Statistiques", icon: BarChart3 },
+  { href: "/settings", label: "Paramètres", icon: Settings },
 ];
 
 const primaryMobileItems = ["/dashboard", "/transactions", "/budgets", "/recurrences"];
@@ -114,7 +126,7 @@ export default function AppLayout({
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                   }`}
               >
-                <span>{item.icon}</span>
+                <item.icon className="w-5 h-5" strokeWidth={2} />
                 {item.label}
                 {showBadge && (
                   <span className="ml-auto bg-amber-500 text-gray-950 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
@@ -130,9 +142,10 @@ export default function AppLayout({
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={() => logoutUser().then(() => router.push("/login"))}
-            className="w-full text-left px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
           >
-            🚪 Déconnexion
+            <LogOut className="w-5 h-5" strokeWidth={2} />
+            Déconnexion
           </button>
         </div>
       </aside>
@@ -162,7 +175,7 @@ export default function AppLayout({
                   className={`flex items-center gap-4 px-6 py-4 text-base border-b border-gray-200 dark:border-gray-800 last:border-0 transition-colors ${isActive ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10" : "text-gray-700 dark:text-gray-300"
                     }`}
                 >
-                  <span className="text-xl">{item.icon}</span>
+                  <item.icon className="w-5 h-5" strokeWidth={2} />
                   {item.label}
                   {showBadge && (
                     <span className="ml-auto bg-amber-500 text-gray-950 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
@@ -176,7 +189,8 @@ export default function AppLayout({
               onClick={() => logoutUser().then(() => router.push("/login"))}
               className="w-full flex items-center gap-4 px-6 py-4 text-base text-red-600 dark:text-red-400 border-t border-gray-200 dark:border-gray-800"
             >
-              🚪 Déconnexion
+              <LogOut className="w-5 h-5" strokeWidth={2} />
+              Déconnexion
             </button>
           </div>
         </div>
@@ -194,8 +208,8 @@ export default function AppLayout({
               className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors relative ${isActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500"
                 }`}
             >
-              <span className="relative text-lg leading-none">
-                {item.icon}
+              <span className="relative">
+                <item.icon className="w-5 h-5" strokeWidth={2} />
                 {showBadge && (
                   <span className="absolute -top-1 -right-2 bg-amber-500 text-gray-950 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                     {upcomingCount}
@@ -213,7 +227,7 @@ export default function AppLayout({
           className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors ${isMoreActive || showMoreMenu ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500"
             }`}
         >
-          <span className="text-lg leading-none">☰</span>
+          <Menu className="w-5 h-5" strokeWidth={2} />
           <span>Plus</span>
         </button>
       </nav>
