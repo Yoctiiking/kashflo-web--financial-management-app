@@ -91,8 +91,8 @@ export default function StatsPage() {
   const CustomBarTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm">
-        <p className="text-gray-400 mb-2 font-medium capitalize">{label}</p>
+      <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl p-3 text-sm">
+        <p className="text-gray-600 dark:text-gray-400 mb-2 font-medium capitalize">{label}</p>
         {payload.map((entry: any) => (
           <p key={entry.name} style={{ color: entry.fill }}>
             {entry.name === "income" ? "Revenus" : "Dépenses"} : <CurrencyValue amount={entry.value} ready={ready} formatCurrency={formatCurrency} />
@@ -105,8 +105,8 @@ export default function StatsPage() {
   const CustomPieTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm">
-        <p className="text-white font-medium">{payload[0].name}</p>
+      <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl p-3 text-sm">
+        <p className="text-gray-900 dark:text-white font-medium">{payload[0].name}</p>
         <p style={{ color: payload[0].payload.fill }}>
           <CurrencyValue amount={payload[0].value} ready={ready} formatCurrency={formatCurrency} />
         </p>
@@ -125,13 +125,13 @@ export default function StatsPage() {
   return (
     <div className="p-4 sm:p-8">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white">Statistiques</h2>
-        <p className="text-gray-400 mt-1 text-sm">Les 6 derniers mois</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Statistiques</h2>
+        <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">Les 6 derniers mois</p>
       </div>
 
       <div className="space-y-6">
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-          <h3 className="text-white font-semibold mb-6">Revenus vs Dépenses</h3>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+          <h3 className="text-gray-900 dark:text-white font-semibold mb-6">Revenus vs Dépenses</h3>
           {transactions.length === 0 ? (
             <p className="text-gray-500 text-sm text-center py-8">Aucune donnée disponible</p>
           ) : (
@@ -159,8 +159,8 @@ export default function StatsPage() {
           )}
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-          <h3 className="text-white font-semibold mb-6">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+          <h3 className="text-gray-900 dark:text-white font-semibold mb-6">
             Dépenses par catégorie — {format(new Date(), "MMMM yyyy", { locale: fr })}
           </h3>
           {pieData.length === 0 ? (
@@ -199,9 +199,9 @@ export default function StatsPage() {
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
                       />
-                      <span className="text-gray-300 text-sm">{entry.name}</span>
+                      <span className="text-gray-700 dark:text-gray-300 text-sm">{entry.name}</span>
                     </div>
-                    <CurrencyValue amount={entry.value} ready={ready} formatCurrency={formatCurrency} className="text-gray-400 text-sm" />
+                    <CurrencyValue amount={entry.value} ready={ready} formatCurrency={formatCurrency} className="text-gray-600 dark:text-gray-400 text-sm" />
                   </div>
                 ))}
               </div>

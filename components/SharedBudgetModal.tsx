@@ -69,22 +69,22 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
-          <h2 className="text-white font-semibold text-lg">
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">
             {isEditing ? "Modifier le budget" : "Nouveau budget partagé"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
+          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">✕</button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Nom du budget</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nom du budget</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               placeholder="Ex: Courses de la semaine"
             />
           </div>
@@ -92,12 +92,12 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
           <CategorySelect categories={categories} value={category} onChange={setCategory} />
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Limite ({symbol})</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Limite ({symbol})</label>
             <input
               type="number"
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               placeholder="0.00"
               min="0"
               step="0.01"
@@ -105,15 +105,15 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Période</label>
-            <div className="flex bg-gray-800 rounded-xl p-1">
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Période</label>
+            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
               {(["daily", "weekly", "monthly"] as BudgetPeriod[]).map(p => (
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${period === p
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                 >
                   {periodLabel[p]}
@@ -122,12 +122,12 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
             </div>
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
 
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
             {loading ? "..." : isEditing ? "Sauvegarder" : "Créer le budget"}
           </button>

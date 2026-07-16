@@ -80,33 +80,33 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
-          <h2 className="text-white font-semibold text-lg">
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">
             {isEditing ? "Modifier l'objectif" : "Nouvel objectif d'épargne"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
+          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">✕</button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Nom de l'objectif</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nom de l'objectif</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               placeholder="Ex: Vacances, Fonds d'urgence..."
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Montant cible ({symbol})</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Montant cible ({symbol})</label>
             <input
               type="number"
               value={targetAmount}
               onChange={(e) => setTargetAmount(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               placeholder="0.00"
               min="0"
               step="0.01"
@@ -114,12 +114,12 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Montant déjà épargné ({symbol})</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Montant déjà épargné ({symbol})</label>
             <input
               type="number"
               value={currentAmount}
               onChange={(e) => setCurrentAmount(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               placeholder="0.00"
               min="0"
               step="0.01"
@@ -127,21 +127,21 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Date cible (optionnel)</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Date cible (optionnel)</label>
             <input
               type="date"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
             />
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
 
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
             {loading ? "..." : isEditing ? "Sauvegarder" : "Créer l'objectif"}
           </button>

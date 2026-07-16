@@ -63,18 +63,18 @@ export default function JoinBudgetPage() {
         <>
           Rejoindre le budget
           <br />
-          <span className="text-emerald-500">{budgetName}</span>
+          <span className="text-emerald-600 dark:text-emerald-500">{budgetName}</span>
         </>
       ) : "Rejoindre le budget partagé",
       message: user ? "Tu es invité à rejoindre ce budget partagé" : "Connecte-toi pour rejoindre ce budget",
       action: user ? (
-        <button onClick={handleJoin} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 rounded-xl transition-colors mt-4">
+        <button onClick={handleJoin} className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors mt-4">
           Rejoindre
         </button>
       ) : (
         <div className="flex flex-col gap-2 mt-4">
-          <Link href={`/login?redirect=/join-budget/${code}`} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 rounded-xl transition-colors text-center">Se connecter</Link>
-          <Link href={`/register?redirect=/join-budget/${code}`} className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors text-center">Créer un compte</Link>
+          <Link href={`/login?redirect=/join-budget/${code}`} className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors text-center">Se connecter</Link>
+          <Link href={`/register?redirect=/join-budget/${code}`} className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors text-center">Créer un compte</Link>
         </div>
       )
     },
@@ -86,15 +86,15 @@ export default function JoinBudgetPage() {
   const current = states[status];
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
       <div className="w-full max-w-md px-6">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Kash<span className="text-emerald-500">Flo</span></h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Kash<span className="text-emerald-600 dark:text-emerald-500">Flo</span></h1>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center">
           <div className="text-4xl mb-4">{current.icon}</div>
-          <h2 className="text-white font-semibold text-xl mb-2">{current.title}</h2>
-          <p className="text-gray-400 text-sm">{current.message}</p>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-xl mb-2">{current.title}</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{current.message}</p>
           {current.action}
         </div>
       </div>

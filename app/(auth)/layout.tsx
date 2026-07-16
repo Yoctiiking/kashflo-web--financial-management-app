@@ -28,22 +28,22 @@ export default function AuthLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
       <Suspense>
         <AuthRedirect />
       </Suspense>
       <div className="w-full max-w-md px-6">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Kash<span className="text-emerald-500">Flo</span></h1>
-          <p className="text-gray-400 mt-2 text-sm">Know where your money flows</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Kash<span className="text-emerald-600 dark:text-emerald-500">Flo</span></h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm">Know where your money flows</p>
         </div>
         {children}
       </div>

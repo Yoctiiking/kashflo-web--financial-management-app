@@ -45,17 +45,17 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center px-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Kash<span className="text-emerald-500">Flo</span></h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Kash<span className="text-emerald-600 dark:text-emerald-500">Flo</span></h1>
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center">
           <div className="text-4xl mb-4">📧</div>
-          <h2 className="text-white font-semibold text-xl mb-2">Vérifie ton email</h2>
-          <p className="text-gray-400 text-sm mb-6">
-            On a envoyé un lien de confirmation à <strong className="text-white">{user?.email}</strong>. Clique sur le lien dans l'email — tu seras redirigé automatiquement ici.
+          <h2 className="text-gray-900 dark:text-white font-semibold text-xl mb-2">Vérifie ton email</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+            On a envoyé un lien de confirmation à <strong className="text-gray-900 dark:text-white">{user?.email}</strong>. Clique sur le lien dans l'email — tu seras redirigé automatiquement ici.
           </p>
 
           <div className="flex items-center justify-center gap-2 mb-6 text-gray-500 text-sm">
@@ -66,14 +66,14 @@ export default function VerifyEmailPage() {
           <button
             onClick={handleResend}
             disabled={sending}
-            className="w-full bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-colors mb-3"
+            className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors mb-3"
           >
             {sending ? "Envoi..." : sent ? "✅ Email renvoyé" : "Renvoyer l'email"}
           </button>
 
           <button
             onClick={() => logoutUser().then(() => router.push("/login"))}
-            className="text-gray-500 hover:text-gray-400 text-sm transition-colors"
+            className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-sm transition-colors"
           >
             Se déconnecter
           </button>

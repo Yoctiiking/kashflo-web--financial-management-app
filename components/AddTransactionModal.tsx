@@ -65,13 +65,13 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
-          <h2 className="text-white font-semibold text-lg">Nouvelle transaction</h2>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Nouvelle transaction</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             ✕
           </button>
@@ -79,12 +79,12 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
 
         <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
           {/* Type toggle */}
-          <div className="flex bg-gray-800 rounded-xl p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
             <button
               onClick={() => { setType("expense"); setCategory(""); }}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "expense"
-                ? "bg-red-500/20 text-red-400"
-                : "text-gray-400 hover:text-white"
+                ? "bg-red-500/20 text-red-600 dark:text-red-400"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 }`}
             >
               Dépense
@@ -92,8 +92,8 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
             <button
               onClick={() => { setType("income"); setCategory(""); }}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "income"
-                ? "bg-emerald-500/20 text-emerald-400"
-                : "text-gray-400 hover:text-white"
+                ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 }`}
             >
               Revenu
@@ -102,12 +102,12 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
 
           {/* Montant */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Montant ({symbol})</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Montant ({symbol})</label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               placeholder="0.00"
               min="0"
               step="0.01"
@@ -116,12 +116,12 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
 
           {/* Label */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Description</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Description</label>
             <input
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               placeholder="Ex: Épicerie Metro"
             />
           </div>
@@ -131,22 +131,22 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
 
           {/* Date */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Date</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
             />
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
 
           {/* Bouton */}
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
             {loading ? "Ajout en cours..." : "Ajouter"}
           </button>
