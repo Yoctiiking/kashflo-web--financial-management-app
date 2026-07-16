@@ -11,6 +11,7 @@ export default function VerifyEmailPage() {
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
   // Vérifie automatiquement toutes les 3 secondes si l'email a été confirmé
   useEffect(() => {
@@ -33,11 +34,17 @@ export default function VerifyEmailPage() {
 
   const handleResend = async () => {
     setSending(true);
+    setError("");
     try {
       await resendVerificationEmail();
       setSent(true);
       setTimeout(() => setSent(false), 5000);
-    } catch (err) {
+    } catch (err: any) {
+      if (err.code === "auth/too-many-requests") {
+        setError("Trop de tentatives — réessaie dans quelques minutes.");
+      } else {
+        setError("Erreur lors de l'envoi. Réessaie dans un instant.");
+      }
       console.error(err);
     } finally {
       setSending(false);
@@ -70,6 +77,8 @@ export default function VerifyEmailPage() {
           >
             {sending ? "Envoi..." : sent ? "✅ Email renvoyé" : "Renvoyer l'email"}
           </button>
+
+          {error && <p className="text-red-600 dark:text-red-400 text-sm mb-3">{error}</p>}
 
           <button
             onClick={() => logoutUser().then(() => router.push("/login"))}

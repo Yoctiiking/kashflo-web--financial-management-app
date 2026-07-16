@@ -12,11 +12,16 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
-  updateProfile
+  updateProfile,
+  User
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp, updateDoc, deleteDoc, arrayRemove, collection, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "./config";
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/categories";
+
+const sendVerificationEmail = async (user: User) => {
+  await sendEmailVerification(user, { url: `${APP_URL}/verify-email-complete`, handleCodeInApp: false });
+};
 
 export const registerUser = async (
   email: string,
@@ -25,6 +30,18 @@ export const registerUser = async (
 ) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
+
+  // Envoyé tout de suite après la création du compte, avant les autres appels Auth
+  // (updateProfile) : Firebase compte les appels rapprochés à son API contre sa
+  // protection anti-abus, et un envoi précédé de plusieurs autres requêtes se fait
+  // parfois rejeter silencieusement (auth/too-many-requests) sans qu'aucune erreur ne
+  // remonte à l'écran d'inscription. Un échec ici ne bloque pas le reste de
+  // l'inscription : le bouton "Renvoyer" sur l'écran suivant reste un filet de sécurité.
+  try {
+    await sendVerificationEmail(user);
+  } catch (err) {
+    console.error("Échec de l'envoi automatique de l'email de vérification :", err);
+  }
 
   await updateProfile(user, { displayName });
 
@@ -46,11 +63,6 @@ export const registerUser = async (
     createdBy: user.uid,
     currency: "CAD",
     createdAt: serverTimestamp()
-  });
-
-  await sendEmailVerification(user, {
-    url: `${APP_URL}/verify-email-complete`,
-    handleCodeInApp: false
   });
 
   return user;
@@ -75,10 +87,7 @@ export const forgotPassword = async (email: string) => {
 export const resendVerificationEmail = async () => {
   const user = auth.currentUser;
   if (!user) return;
-  await sendEmailVerification(user, {
-  url: `${APP_URL}/verify-email-complete`,
-  handleCodeInApp: false
-});
+  await sendVerificationEmail(user);
 };
 
 export const updateDisplayName = async (displayName: string) => {

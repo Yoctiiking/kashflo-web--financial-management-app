@@ -10,6 +10,7 @@ import { useInactivityLogout } from "@/lib/hooks/useInactivityLogout";
 import { useAppLock } from "@/lib/hooks/useAppLock";
 import LockScreen from "@/components/LockScreen";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
+import { isAdmin } from "@/lib/admin";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -20,7 +21,8 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Menu
+  Menu,
+  ShieldCheck
 } from "lucide-react";
 
 const navItems = [
@@ -33,6 +35,8 @@ const navItems = [
   { href: "/stats", label: "Statistiques", icon: BarChart3 },
   { href: "/settings", label: "Paramètres", icon: Settings },
 ];
+
+const adminNavItem = { href: "/admin", label: "Admin", icon: ShieldCheck };
 
 const primaryMobileItems = ["/dashboard", "/transactions", "/budgets", "/recurrences"];
 
@@ -93,8 +97,9 @@ export default function AppLayout({
     );
   }
 
-  const mobilePrimary = navItems.filter(item => primaryMobileItems.includes(item.href));
-  const mobileMore = navItems.filter(item => !primaryMobileItems.includes(item.href));
+  const items = isAdmin(user.email, profile?.isAdmin) ? [...navItems, adminNavItem] : navItems;
+  const mobilePrimary = items.filter(item => primaryMobileItems.includes(item.href));
+  const mobileMore = items.filter(item => !primaryMobileItems.includes(item.href));
   const isMoreActive = mobileMore.some(item => item.href === pathname);
 
   if (locked) {
@@ -114,7 +119,7 @@ export default function AppLayout({
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => {
+          {items.map((item) => {
             const isActive = pathname === item.href;
             const showBadge = item.href === "/recurrences" && upcomingCount > 0;
             return (
