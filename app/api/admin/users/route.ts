@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { requireAdmin, getAdminEmails } from "@/lib/firebase/adminAuthCheck";
 
-const ONLINE_THRESHOLD_MS = 2 * 60 * 1000;
-
 export async function GET(req: NextRequest) {
   const check = await requireAdmin(req);
   if ("error" in check) {
@@ -31,7 +29,6 @@ export async function GET(req: NextRequest) {
   const profiles = new Map(profilesSnap.docs.map(d => [d.id, d.data()]));
   const adminEmails = getAdminEmails();
 
-  const now = Date.now();
   const users = authUsers.map(u => {
     const profile = profiles.get(u.uid);
     const lastActiveAt = profile?.lastActiveAt?.toDate?.() ?? null;
@@ -44,7 +41,6 @@ export async function GET(req: NextRequest) {
       createdAt: (profile?.createdAt?.toDate?.() ?? new Date(u.creationTime)).toISOString(),
       lastSignInTime: u.lastSignInTime,
       lastActiveAt: lastActiveAt ? lastActiveAt.toISOString() : null,
-      online: lastActiveAt ? now - lastActiveAt.getTime() < ONLINE_THRESHOLD_MS : false,
       isAdmin: isEnvAdmin || !!profile?.isAdmin,
       isEnvAdmin
     };

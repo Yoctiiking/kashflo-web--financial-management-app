@@ -11,7 +11,7 @@ import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
-import { ArrowDownLeft, ArrowUpRight, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Pencil, X } from "lucide-react";
 
 const MONTHS_FR = [
   "janvier", "février", "mars", "avril", "mai", "juin",
@@ -47,6 +47,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [filter, setFilter] = useState<"all" | "expense" | "income">("all");
   const [search, setSearch] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -373,6 +374,12 @@ export default function TransactionsPage() {
                     className={`font-semibold ${tx.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                   />
                   <button
+                    onClick={() => setEditingTransaction(tx)}
+                    className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                  <button
                     onClick={() => handleDelete(tx.id)}
                     className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                   >
@@ -398,6 +405,15 @@ export default function TransactionsPage() {
         <AddTransactionModal
           groupId={user.uid}
           onClose={() => setShowModal(false)}
+          onSuccess={loadData}
+        />
+      )}
+
+      {editingTransaction && user && (
+        <AddTransactionModal
+          groupId={user.uid}
+          transaction={editingTransaction}
+          onClose={() => setEditingTransaction(null)}
           onSuccess={loadData}
         />
       )}

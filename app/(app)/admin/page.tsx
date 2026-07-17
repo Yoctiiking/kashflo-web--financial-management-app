@@ -1,12 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { collection, onSnapshot, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
-import { isAdmin } from "@/lib/admin";
+import { isAdmin, isEnvAdminEmail } from "@/lib/admin";
 import StatusPage from "@/components/StatusPage";
-import { Search, RefreshCw, Trash2, ShieldAlert, ShieldPlus, ShieldMinus, ShieldCheck, ShieldOff } from "lucide-react";
+import {
+  Search,
+  RefreshCw,
+  Trash2,
+  ShieldAlert,
+  ShieldPlus,
+  ShieldMinus,
+  ShieldCheck,
+  ShieldOff,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown
+} from "lucide-react";
 
 interface AdminUser {
   uid: string;
@@ -16,10 +30,34 @@ interface AdminUser {
   createdAt: string;
   lastSignInTime: string | null;
   lastActiveAt: string | null;
-  online: boolean;
   isAdmin: boolean;
   isEnvAdmin: boolean;
 }
+
+const ONLINE_THRESHOLD_MS = 2 * 60 * 1000;
+const NOW_TICK_MS = 15 * 1000;
+
+const isUserOnline = (lastActiveAt: string | null, now: number) =>
+  !!lastActiveAt && now - new Date(lastActiveAt).getTime() < ONLINE_THRESHOLD_MS;
+
+type SortKey = "name" | "status" | "role" | "createdAt" | "lastSignInTime";
+type SortDir = "asc" | "desc";
+
+const DEFAULT_SORT_DIR: Record<SortKey, SortDir> = {
+  name: "asc",
+  status: "desc",
+  role: "desc",
+  createdAt: "desc",
+  lastSignInTime: "desc"
+};
+
+const COLUMN_LABELS: Record<SortKey, string> = {
+  name: "Utilisateur",
+  status: "Statut",
+  role: "Rôle",
+  createdAt: "Inscription",
+  lastSignInTime: "Dernière connexion"
+};
 
 const formatDateTime = (value: string | null) => {
   if (!value) return "—";
@@ -41,9 +79,29 @@ export default function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [error, setError] = useState("");
   const [deletingUid, setDeletingUid] = useState<string | null>(null);
   const [togglingUid, setTogglingUid] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  const handleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir(d => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(DEFAULT_SORT_DIR[key]);
+    }
+  };
+
+  // Ne fait vieillir le statut "en ligne" que via un tick local : Firestore ne pousse
+  // pas de mise à jour du simple fait que le temps passe sans nouvelle écriture.
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), NOW_TICK_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   const loadUsers = useCallback(async () => {
     if (!user || !hasAccess) return;
@@ -64,6 +122,7 @@ export default function AdminPage() {
       setError(err.message || "Erreur lors du chargement");
     } finally {
       setLoading(false);
+      setInitialLoadDone(true);
     }
   }, [user, hasAccess]);
 
@@ -71,13 +130,89 @@ export default function AdminPage() {
     loadUsers();
   }, [loadUsers]);
 
+  // Écoute temps réel Firestore (nom, statut admin, présence) : les champs propres à
+  // Firebase Auth (dernière connexion, compte désactivé) ne sont pas "poussables" et
+  // restent rafraîchis via l'API /api/admin/users (bouton "Actualiser").
+  useEffect(() => {
+    if (!hasAccess || !initialLoadDone) return;
+
+    const unsubscribe = onSnapshot(
+      collection(db, "users"),
+      snapshot => {
+        setUsers(prev => {
+          const byUid = new Map(prev.map(u => [u.uid, u]));
+          for (const change of snapshot.docChanges()) {
+            const uid = change.doc.id;
+            if (change.type === "removed") {
+              byUid.delete(uid);
+              continue;
+            }
+            const data = change.doc.data();
+            const existing = byUid.get(uid);
+            const email = (data.email as string | undefined) ?? existing?.email ?? null;
+            const isEnvAdmin = isEnvAdminEmail(email);
+            const createdAt = data.createdAt instanceof Timestamp
+              ? data.createdAt.toDate().toISOString()
+              : existing?.createdAt ?? new Date().toISOString();
+            const lastActiveAt = data.lastActiveAt instanceof Timestamp
+              ? data.lastActiveAt.toDate().toISOString()
+              : null;
+            byUid.set(uid, {
+              uid,
+              email,
+              displayName: (data.displayName as string | undefined) ?? existing?.displayName ?? null,
+              disabled: existing?.disabled ?? false,
+              createdAt,
+              lastSignInTime: existing?.lastSignInTime ?? null,
+              lastActiveAt,
+              isAdmin: isEnvAdmin || !!data.isAdmin,
+              isEnvAdmin
+            });
+          }
+          return Array.from(byUid.values()).sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        });
+      },
+      err => console.error("Erreur d'écoute temps réel des utilisateurs :", err)
+    );
+
+    return () => unsubscribe();
+  }, [hasAccess, initialLoadDone]);
+
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter(
-      u => u.email?.toLowerCase().includes(q) || u.displayName?.toLowerCase().includes(q)
-    );
-  }, [users, search]);
+    const matching = !q
+      ? users
+      : users.filter(
+          u => u.email?.toLowerCase().includes(q) || u.displayName?.toLowerCase().includes(q)
+        );
+
+    const sign = sortDir === "asc" ? 1 : -1;
+    return [...matching].sort((a, b) => {
+      switch (sortKey) {
+        case "name": {
+          const an = (a.displayName || a.email || "").toLowerCase();
+          const bn = (b.displayName || b.email || "").toLowerCase();
+          return sign * an.localeCompare(bn);
+        }
+        case "status":
+          return sign * (Number(isUserOnline(a.lastActiveAt, now)) - Number(isUserOnline(b.lastActiveAt, now)));
+        case "role":
+          return sign * (Number(a.isAdmin) - Number(b.isAdmin));
+        case "createdAt":
+          return sign * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        case "lastSignInTime": {
+          // Les comptes sans connexion enregistrée restent toujours en fin de liste,
+          // quel que soit le sens du tri (sinon ils "polluent" le haut du tableau en tri croissant).
+          if (!a.lastSignInTime && !b.lastSignInTime) return 0;
+          if (!a.lastSignInTime) return 1;
+          if (!b.lastSignInTime) return -1;
+          return sign * (new Date(a.lastSignInTime).getTime() - new Date(b.lastSignInTime).getTime());
+        }
+      }
+    });
+  }, [users, search, sortKey, sortDir, now]);
 
   const handleDelete = async (target: AdminUser) => {
     if (!user) return;
@@ -154,6 +289,24 @@ export default function AdminPage() {
     </span>
   );
 
+  const SortableHeader = ({ sortableKey, align }: { sortableKey: SortKey; align?: "right" }) => (
+    <th className={`px-5 py-3 font-medium ${align === "right" ? "text-right" : ""}`}>
+      <button
+        onClick={() => handleSort(sortableKey)}
+        className={`inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors ${
+          align === "right" ? "flex-row-reverse" : ""
+        }`}
+      >
+        {COLUMN_LABELS[sortableKey]}
+        {sortKey === sortableKey ? (
+          sortDir === "asc" ? <ChevronUp className="w-3.5 h-3.5" strokeWidth={2} /> : <ChevronDown className="w-3.5 h-3.5" strokeWidth={2} />
+        ) : (
+          <ChevronsUpDown className="w-3.5 h-3.5 opacity-40" strokeWidth={2} />
+        )}
+      </button>
+    </th>
+  );
+
   const RoleBadge = ({ u }: { u: AdminUser }) =>
     u.isAdmin ? (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 whitespace-nowrap">
@@ -222,8 +375,14 @@ export default function AdminPage() {
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Administration</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm flex items-center gap-2">
             {users.length} utilisateur{users.length > 1 ? "s" : ""} inscrit{users.length > 1 ? "s" : ""}
+            {initialLoadDone && (
+              <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Temps réel
+              </span>
+            )}
           </p>
         </div>
         <button
@@ -273,11 +432,11 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-800 text-left text-gray-500">
-                    <th className="px-5 py-3 font-medium">Utilisateur</th>
-                    <th className="px-5 py-3 font-medium">Statut</th>
-                    <th className="px-5 py-3 font-medium">Rôle</th>
-                    <th className="px-5 py-3 font-medium">Inscription</th>
-                    <th className="px-5 py-3 font-medium">Dernière connexion</th>
+                    <SortableHeader sortableKey="name" />
+                    <SortableHeader sortableKey="status" />
+                    <SortableHeader sortableKey="role" />
+                    <SortableHeader sortableKey="createdAt" />
+                    <SortableHeader sortableKey="lastSignInTime" />
                     <th className="px-5 py-3 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
@@ -291,7 +450,7 @@ export default function AdminPage() {
                         <div className="text-gray-500 text-xs">{u.email || "—"}</div>
                       </td>
                       <td className="px-5 py-3">
-                        <StatusBadge online={u.online} />
+                        <StatusBadge online={isUserOnline(u.lastActiveAt, now)} />
                       </td>
                       <td className="px-5 py-3">
                         <RoleBadge u={u} />
@@ -329,7 +488,7 @@ export default function AdminPage() {
                     </div>
                     <div className="text-gray-500 text-xs truncate">{u.email || "—"}</div>
                   </div>
-                  <StatusBadge online={u.online} />
+                  <StatusBadge online={isUserOnline(u.lastActiveAt, now)} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs mb-3">

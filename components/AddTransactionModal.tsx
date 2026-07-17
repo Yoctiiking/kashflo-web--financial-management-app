@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { addTransaction } from "@/lib/firebase/firestore";
-import { TransactionType } from "@/types";
+import { addTransaction, updateTransaction } from "@/lib/firebase/firestore";
+import { Transaction, TransactionType } from "@/types";
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/categories";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
@@ -12,20 +12,32 @@ import { X } from "lucide-react";
 
 interface Props {
   groupId: string;
+  transaction?: Transaction; // si fourni, mode édition
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function AddTransactionModal({ groupId, onClose, onSuccess }: Props) {
-  const { symbol, toBase, formatCurrency } = useCurrency(); const { user } = useAuth();
+export default function AddTransactionModal({ groupId, transaction, onClose, onSuccess }: Props) {
+  const { symbol, toBase, fromBase, formatCurrency, ready } = useCurrency(); const { user } = useAuth();
   const { profile } = useUserProfile();
-  const [type, setType] = useState<TransactionType>("expense");
-  const [amount, setAmount] = useState("");
-  const [label, setLabel] = useState("");
-  const [category, setCategory] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const isEditing = !!transaction;
+  const [type, setType] = useState<TransactionType>(transaction?.type || "expense");
+  const [amount, setAmount] = useState(
+    transaction && ready ? fromBase(transaction.amount).toFixed(2) : ""
+  );
+  const [label, setLabel] = useState(transaction?.label || "");
+  const [category, setCategory] = useState(transaction?.category || "");
+  const [date, setDate] = useState(
+    transaction ? transaction.date.toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (transaction && ready) {
+      setAmount(fromBase(transaction.amount).toFixed(2));
+    }
+  }, [ready, transaction, fromBase]);
 
   const categories = type === "expense"
     ? (profile?.expenseCategories ?? DEFAULT_EXPENSE_CATEGORIES)
@@ -46,19 +58,29 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
     setError("");
 
     try {
-      await addTransaction(groupId, {
-        amount: toBase(parseFloat(amount)),
-        type,
-        category,
-        label,
-        date: new Date(`${date}T00:00:00`),
-        addedBy: user.uid
-      });
+      if (isEditing) {
+        await updateTransaction(groupId, transaction.id, {
+          amount: toBase(parseFloat(amount)),
+          type,
+          category,
+          label,
+          date: new Date(`${date}T00:00:00`)
+        });
+      } else {
+        await addTransaction(groupId, {
+          amount: toBase(parseFloat(amount)),
+          type,
+          category,
+          label,
+          date: new Date(`${date}T00:00:00`),
+          addedBy: user.uid
+        });
+      }
       onSuccess();
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Erreur lors de l'ajout");
+      setError(isEditing ? "Erreur lors de la modification" : "Erreur lors de l'ajout");
     } finally {
       setLoading(false);
     }
@@ -69,7 +91,9 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
-          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Nouvelle transaction</h2>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">
+            {isEditing ? "Modifier la transaction" : "Nouvelle transaction"}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -149,7 +173,9 @@ export default function AddTransactionModal({ groupId, onClose, onSuccess }: Pro
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
-            {loading ? "Ajout en cours..." : "Ajouter"}
+            {loading
+              ? (isEditing ? "Sauvegarde..." : "Ajout en cours...")
+              : (isEditing ? "Sauvegarder" : "Ajouter")}
           </button>
         </div>
       </div>
