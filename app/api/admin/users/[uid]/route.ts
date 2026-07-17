@@ -21,41 +21,46 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ u
     return NextResponse.json({ error: "Impossible de supprimer son propre compte depuis l'admin" }, { status: 400 });
   }
 
-  const adminDb = getAdminDb();
-
-  for (const col of SUBCOLLECTIONS) {
-    await deleteCollection(adminDb.collection("users").doc(uid).collection(col));
-  }
-
-  const sharedBudgetsSnap = await adminDb
-    .collection("sharedBudgets")
-    .where("members", "array-contains", uid)
-    .get();
-
-  for (const budgetDoc of sharedBudgetsSnap.docs) {
-    const data = budgetDoc.data();
-    if (data.createdBy === uid) {
-      await deleteCollection(budgetDoc.ref.collection("expenses"));
-      await deleteCollection(budgetDoc.ref.collection("invites"));
-      await budgetDoc.ref.delete();
-    } else {
-      await budgetDoc.ref.update({
-        members: data.members.filter((m: string) => m !== uid)
-      });
-    }
-  }
-
-  await adminDb.collection("users").doc(uid).delete();
-
   try {
-    await getAdminAuth().deleteUser(uid);
-  } catch (err: any) {
-    if (err?.code !== "auth/user-not-found") {
-      throw err;
-    }
-  }
+    const adminDb = getAdminDb();
 
-  return NextResponse.json({ success: true });
+    for (const col of SUBCOLLECTIONS) {
+      await deleteCollection(adminDb.collection("users").doc(uid).collection(col));
+    }
+
+    const sharedBudgetsSnap = await adminDb
+      .collection("sharedBudgets")
+      .where("members", "array-contains", uid)
+      .get();
+
+    for (const budgetDoc of sharedBudgetsSnap.docs) {
+      const data = budgetDoc.data();
+      if (data.createdBy === uid) {
+        await deleteCollection(budgetDoc.ref.collection("expenses"));
+        await deleteCollection(budgetDoc.ref.collection("invites"));
+        await budgetDoc.ref.delete();
+      } else {
+        await budgetDoc.ref.update({
+          members: data.members.filter((m: string) => m !== uid)
+        });
+      }
+    }
+
+    await adminDb.collection("users").doc(uid).delete();
+
+    try {
+      await getAdminAuth().deleteUser(uid);
+    } catch (err: any) {
+      if (err?.code !== "auth/user-not-found") {
+        throw err;
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("Erreur DELETE /api/admin/users/[uid] :", err);
+    return NextResponse.json({ error: err?.message || "Erreur serveur" }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
@@ -75,7 +80,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ui
     return NextResponse.json({ error: "Impossible de modifier son propre statut administrateur" }, { status: 400 });
   }
 
-  await getAdminDb().collection("users").doc(uid).set({ isAdmin: body.isAdmin }, { merge: true });
-
-  return NextResponse.json({ success: true });
+  try {
+    await getAdminDb().collection("users").doc(uid).set({ isAdmin: body.isAdmin }, { merge: true });
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("Erreur PATCH /api/admin/users/[uid] :", err);
+    return NextResponse.json({ error: err?.message || "Erreur serveur" }, { status: 500 });
+  }
 }

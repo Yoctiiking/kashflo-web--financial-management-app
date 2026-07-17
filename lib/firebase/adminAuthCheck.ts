@@ -15,7 +15,8 @@ export const requireAdmin = async (req: NextRequest) => {
   let decoded;
   try {
     decoded = await getAdminAuth().verifyIdToken(token);
-  } catch {
+  } catch (err: any) {
+    console.error("Erreur de vérification du token admin :", err);
     return { error: "Token invalide", status: 401 } as const;
   }
 
@@ -23,9 +24,14 @@ export const requireAdmin = async (req: NextRequest) => {
   const isEnvAdmin = !!email && getAdminEmails().includes(email);
 
   if (!isEnvAdmin) {
-    const profileSnap = await getAdminDb().collection("users").doc(decoded.uid).get();
-    if (!profileSnap.data()?.isAdmin) {
-      return { error: "Accès refusé", status: 403 } as const;
+    try {
+      const profileSnap = await getAdminDb().collection("users").doc(decoded.uid).get();
+      if (!profileSnap.data()?.isAdmin) {
+        return { error: "Accès refusé", status: 403 } as const;
+      }
+    } catch (err: any) {
+      console.error("Erreur de vérification du statut admin :", err);
+      return { error: err?.message || "Erreur serveur", status: 500 } as const;
     }
   }
 
