@@ -13,20 +13,22 @@ import { X } from "lucide-react";
 interface Props {
   groupId: string;
   transaction?: Transaction; // si fourni, mode édition
+  defaultCategory?: string; // ex: ouvert depuis un budget — verrouille type "dépense" + cette catégorie
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function AddTransactionModal({ groupId, transaction, onClose, onSuccess }: Props) {
+export default function AddTransactionModal({ groupId, transaction, defaultCategory, onClose, onSuccess }: Props) {
   const { symbol, toBase, fromBase, formatCurrency, ready } = useCurrency(); const { user } = useAuth();
   const { profile } = useUserProfile();
   const isEditing = !!transaction;
+  const lockCategory = !isEditing && !!defaultCategory;
   const [type, setType] = useState<TransactionType>(transaction?.type || "expense");
   const [amount, setAmount] = useState(
     transaction && ready ? fromBase(transaction.amount).toFixed(2) : ""
   );
   const [label, setLabel] = useState(transaction?.label || "");
-  const [category, setCategory] = useState(transaction?.category || "");
+  const [category, setCategory] = useState(transaction?.category || defaultCategory || "");
   const [date, setDate] = useState(
     transaction ? transaction.date.toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
   );
@@ -104,26 +106,32 @@ export default function AddTransactionModal({ groupId, transaction, onClose, onS
 
         <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
           {/* Type toggle */}
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-            <button
-              onClick={() => { setType("expense"); setCategory(""); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "expense"
-                ? "bg-red-500/20 text-red-600 dark:text-red-400"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-            >
-              Dépense
-            </button>
-            <button
-              onClick={() => { setType("income"); setCategory(""); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "income"
-                ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-            >
-              Revenu
-            </button>
-          </div>
+          {lockCategory ? (
+            <div className="flex items-center gap-2 bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium px-4 py-2.5 rounded-xl">
+              Dépense · {defaultCategory}
+            </div>
+          ) : (
+            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+              <button
+                onClick={() => { setType("expense"); setCategory(""); }}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "expense"
+                  ? "bg-red-500/20 text-red-600 dark:text-red-400"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+              >
+                Dépense
+              </button>
+              <button
+                onClick={() => { setType("income"); setCategory(""); }}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "income"
+                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+              >
+                Revenu
+              </button>
+            </div>
+          )}
 
           {/* Montant */}
           <div>
@@ -152,7 +160,7 @@ export default function AddTransactionModal({ groupId, transaction, onClose, onS
           </div>
 
           {/* Catégorie */}
-          <CategorySelect categories={categories} value={category} onChange={setCategory} />
+          {!lockCategory && <CategorySelect categories={categories} value={category} onChange={setCategory} />}
 
           {/* Date */}
           <div>

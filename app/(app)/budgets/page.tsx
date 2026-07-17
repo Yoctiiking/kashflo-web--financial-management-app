@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/firestore";
 import { Budget, Transaction } from "@/types";
@@ -8,6 +9,7 @@ import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import CurrencyValue from "@/components/CurrencyValue";
+import { getBudgetSpent } from "@/lib/utils/budgetUtils";
 import { Pencil, X, AlertTriangle } from "lucide-react";
 
 export default function BudgetsPage() {
@@ -58,33 +60,7 @@ export default function BudgetsPage() {
     }
   };
 
-
-  const getSpent = (budget: Budget) => {
-    return transactions
-      .filter(t => {
-        if (t.type !== "expense" || t.category !== budget.category) return false;
-
-        if (budget.period === "daily") {
-          const today = new Date();
-          return (
-            t.date.getDate() === today.getDate() &&
-            t.date.getMonth() === today.getMonth() &&
-            t.date.getFullYear() === today.getFullYear()
-          );
-        }
-
-        if (budget.period === "weekly") {
-          const now = new Date();
-          const startOfWeek = new Date(now);
-          startOfWeek.setDate(now.getDate() - now.getDay());
-          startOfWeek.setHours(0, 0, 0, 0);
-          return t.date >= startOfWeek;
-        }
-
-        return true;
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
-  };
+  const getSpent = (budget: Budget) => getBudgetSpent(transactions, budget);
 
   const { formatCurrency, ready } = useCurrency();
 
@@ -133,14 +109,18 @@ export default function BudgetsPage() {
             const remaining = budget.limit - spent;
 
             return (
-              <div key={budget.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+              <Link
+                key={budget.id}
+                href={`/budgets/${budget.id}`}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:border-gray-300 dark:hover:border-gray-700 transition-colors block"
+              >
                 {/* Header carte */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <p className="text-gray-900 dark:text-white font-semibold">{budget.category}</p>
                     <p className="text-gray-500 text-xs mt-0.5">{periodLabel[budget.period]}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0" onClick={e => e.preventDefault()}>
                     <button
                       onClick={() => setEditingBudget(budget)}
                       className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
@@ -180,7 +160,7 @@ export default function BudgetsPage() {
                     : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> restant</>
                   }
                 </p>
-              </div>
+              </Link>
             );
           })}
         </div>

@@ -19,7 +19,9 @@ import {
   ShieldOff,
   ChevronUp,
   ChevronDown,
-  ChevronsUpDown
+  ChevronsUpDown,
+  ArrowUpDown,
+  Check
 } from "lucide-react";
 
 interface AdminUser {
@@ -86,6 +88,7 @@ export default function AdminPage() {
   const [now, setNow] = useState(() => Date.now());
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -94,6 +97,7 @@ export default function AdminPage() {
       setSortKey(key);
       setSortDir(DEFAULT_SORT_DIR[key]);
     }
+    setShowSortMenu(false);
   };
 
   // Ne fait vieillir le statut "en ligne" que via un tick local : Firestore ne pousse
@@ -395,14 +399,58 @@ export default function AdminPage() {
         </button>
       </div>
 
-      <div className="relative mb-4">
-        <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" strokeWidth={2} />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher par nom ou email…"
-          className="w-full sm:max-w-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors text-sm"
-        />
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1 sm:flex-none">
+          <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" strokeWidth={2} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Rechercher par nom ou email…"
+            className="w-full sm:max-w-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors text-sm"
+          />
+        </div>
+
+        {/* Bouton de tri — mobile uniquement : sur desktop, on trie via les en-têtes du tableau */}
+        <div className="relative md:hidden">
+          <button
+            onClick={() => setShowSortMenu(s => !s)}
+            className={`flex items-center justify-center gap-2 border rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors shrink-0 ${
+              showSortMenu
+                ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400"
+                : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
+            aria-label="Trier"
+          >
+            <ArrowUpDown className="w-4 h-4" strokeWidth={2} />
+          </button>
+
+          {showSortMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg overflow-hidden z-20">
+                {(Object.keys(COLUMN_LABELS) as SortKey[]).map(key => (
+                  <button
+                    key={key}
+                    onClick={() => handleSort(key)}
+                    className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      {sortKey === key && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />}
+                      <span className={sortKey === key ? "text-gray-900 dark:text-white font-medium" : ""}>
+                        {COLUMN_LABELS[key]}
+                      </span>
+                    </span>
+                    {sortKey === key && (
+                      sortDir === "asc"
+                        ? <ChevronUp className="w-3.5 h-3.5 text-gray-500" strokeWidth={2} />
+                        : <ChevronDown className="w-3.5 h-3.5 text-gray-500" strokeWidth={2} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {error && (
