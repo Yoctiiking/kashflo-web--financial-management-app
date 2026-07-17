@@ -166,6 +166,23 @@ export const addTransaction = async (
   });
 };
 
+export const updateTransaction = async (
+  userId: string,
+  transactionId: string,
+  data: {
+    amount: number;
+    type: TransactionType;
+    category: string;
+    label: string;
+    date: Date;
+  }
+) => {
+  await updateDoc(doc(db, "users", userId, "transactions", transactionId), {
+    ...data,
+    date: Timestamp.fromDate(data.date)
+  });
+};
+
 export const deleteTransaction = async (userId: string, transactionId: string) => {
   await deleteDoc(doc(db, "users", userId, "transactions", transactionId));
 };

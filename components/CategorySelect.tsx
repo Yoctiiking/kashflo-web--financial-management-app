@@ -32,11 +32,11 @@ export default function CategorySelect({ categories, value, onChange, label = "C
 
   return (
     <div>
-      <label className="block text-sm text-gray-400 mb-1.5">{label}</label>
+      <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{label}</label>
       <select
         value={selected}
         onChange={(e) => handleSelectChange(e.target.value)}
-        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+        className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors"
       >
         <option value="">Sélectionner...</option>
         {categories.map(cat => (
@@ -48,7 +48,7 @@ export default function CategorySelect({ categories, value, onChange, label = "C
           type="text"
           value={customText}
           onChange={(e) => handleCustomChange(e.target.value)}
-          className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 mt-2 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+          className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 mt-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
           placeholder="Préciser la catégorie (optionnel)"
         />
       )}

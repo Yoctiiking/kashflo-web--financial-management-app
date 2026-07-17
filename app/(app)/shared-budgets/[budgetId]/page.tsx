@@ -22,6 +22,7 @@ import { unshareExpenseToPersonal } from "@/lib/firebase/firestore";
 import MigrateTransactionModal from "@/components/MigrateTransactionModal";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import SharedBudgetModal from "@/components/SharedBudgetModal";
+import { Pencil, X, AlertTriangle } from "lucide-react";
 
 const EXPIRY_OPTIONS = [
   { label: "1 heure", minutes: 60 },
@@ -317,13 +318,13 @@ export default function SharedBudgetDetailPage() {
   }
 
   const renderExpenseForm = () => (
-    <div ref={formRef} className="mb-4 p-4 bg-gray-800 rounded-xl space-y-3">
+    <div ref={formRef} className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl space-y-3">
       <input
         type="text"
         value={label}
         onChange={e => setLabel(e.target.value)}
         placeholder="Description"
-        className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+        className="w-full bg-gray-200 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
       />
       <div className="flex gap-2">
         <input
@@ -333,27 +334,27 @@ export default function SharedBudgetDetailPage() {
           step="0.01"
           onChange={e => setAmount(e.target.value)}
           placeholder="Montant"
-          className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+          className="flex-1 bg-gray-200 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
         />
         <input
           type="date"
           value={date}
           onChange={e => setDate(e.target.value)}
-          className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+          className="flex-1 bg-gray-200 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
         />
       </div>
-      {formError && <p className="text-red-400 text-xs">{formError}</p>}
+      {formError && <p className="text-red-600 dark:text-red-400 text-xs">{formError}</p>}
       <div className="flex gap-2">
         <button
           onClick={handleSubmitExpense}
           disabled={formLoading}
-          className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
+          className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-gray-900 dark:text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
         >
           {formLoading ? "..." : editingExpense ? "Modifier" : "Ajouter"}
         </button>
         <button
           onClick={closeExpenseForm}
-          className="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-sm py-2.5 rounded-xl transition-colors"
+          className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm py-2.5 rounded-xl transition-colors"
         >
           Annuler
         </button>
@@ -366,52 +367,53 @@ export default function SharedBudgetDetailPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">{budget.name}</h2>
-          <p className="text-gray-400 mt-1 text-sm">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{budget.name}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
             {budget.category} · {budget.members.length} membre{budget.members.length > 1 ? "s" : ""}
           </p>
         </div>
         {isAdmin && (
           <button
             onClick={() => setShowEditBudget(true)}
-            className="text-gray-400 hover:text-white text-sm border border-gray-800 hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
+            className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
           >
-            ✏️<span className="hidden sm:inline"> Modifier</span>
+            <Pencil className="w-4 h-4" strokeWidth={2} />
+            <span className="hidden sm:inline">Modifier</span>
           </button>
         )}
       </div>
 
       {/* Progression */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-6">
         <div className="flex justify-between items-baseline gap-2 text-sm mb-2">
-          <span className={`inline-flex items-center gap-1 min-w-0 ${isOver ? "text-red-400 font-semibold" : "text-white font-semibold"}`}>
+          <span className={`inline-flex items-center gap-1 min-w-0 ${isOver ? "text-red-600 dark:text-red-400 font-semibold" : "text-gray-900 dark:text-white font-semibold"}`}>
             <CurrencyValue amount={totalSpent} ready={ready} formatCurrency={formatCurrency} />
             <span className="truncate">dépensé</span>
           </span>
-          <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-400 shrink-0" />
+          <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-600 dark:text-gray-400 shrink-0" />
         </div>
-        <div className="w-full bg-gray-800 rounded-full h-3 mb-2">
+        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 mb-2">
           <div
             className={`h-3 rounded-full transition-all ${isOver ? "bg-red-500" : "bg-emerald-500"}`}
             style={{ width: `${percentage}%` }}
           />
         </div>
-        <p className={`text-xs ${isOver ? "text-red-400" : "text-gray-500"}`}>
+        <p className={`text-xs ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-500"}`}>
           {isOver
-            ? <>⚠️ Dépassé de <CurrencyValue amount={totalSpent - budget.limit} ready={ready} formatCurrency={formatCurrency} /></>
+            ? <><AlertTriangle className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />Dépassé de <CurrencyValue amount={totalSpent - budget.limit} ready={ready} formatCurrency={formatCurrency} /></>
             : <><CurrencyValue amount={budget.limit - totalSpent} ready={ready} formatCurrency={formatCurrency} /> restant · {Math.round(percentage)}%</>
           }
         </p>
       </div>
 
       {/* Membres */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">Membres</h3>
+          <h3 className="text-gray-900 dark:text-white font-semibold">Membres</h3>
           {isAdmin && (
             <button
               onClick={() => setShowInvite(!showInvite)}
-              className="text-emerald-500 text-sm hover:text-emerald-400 transition-colors"
+              className="text-emerald-600 dark:text-emerald-500 text-sm hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             >
               + Inviter
             </button>
@@ -424,7 +426,7 @@ export default function SharedBudgetDetailPage() {
             value={memberSearch}
             onChange={e => setMemberSearch(e.target.value)}
             placeholder="Rechercher un membre..."
-            className="w-full mb-3 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full mb-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
           />
         )}
 
@@ -432,20 +434,20 @@ export default function SharedBudgetDetailPage() {
           {filteredMembers.slice(0, visibleMembersCount).map(uid => (
             <div key={uid} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-semibold">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-sm font-semibold">
                   {(memberNames[uid] || uid).charAt(0).toUpperCase()}
                 </div>
-                <span className="text-gray-300 text-sm">
+                <span className="text-gray-700 dark:text-gray-300 text-sm">
                   {memberNames[uid] || uid}
                   {uid === budget.createdBy && (
-                    <span className="ml-2 text-xs text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Admin</span>
+                    <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Admin</span>
                   )}
                 </span>
               </div>
               {isAdmin && uid !== budget.createdBy && uid !== user?.uid && (
                 <button
                   onClick={() => handleRemoveMember(uid)}
-                  className="text-gray-600 hover:text-red-400 transition-colors text-sm"
+                  className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors text-sm"
                 >
                   Retirer
                 </button>
@@ -460,7 +462,7 @@ export default function SharedBudgetDetailPage() {
         {filteredMembers.length > visibleMembersCount && (
           <button
             onClick={() => setVisibleMembersCount(c => c + 5)}
-            className="w-full mt-3 text-gray-400 hover:text-white text-sm py-2 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
+            className="w-full mt-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
           >
             Voir plus ({filteredMembers.length - visibleMembersCount} restants)
           </button>
@@ -469,22 +471,22 @@ export default function SharedBudgetDetailPage() {
         {budget.members.length > visibleMembersCount && (
           <button
             onClick={() => setVisibleMembersCount(c => c + 5)}
-            className="w-full mt-3 text-gray-400 hover:text-white text-sm py-2 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
+            className="w-full mt-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
           >
             Voir plus ({budget.members.length - visibleMembersCount} restants)
           </button>
         )}
 
         {showInvite && (
-          <div className="mt-4 pt-4 border-t border-gray-800 space-y-3">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
             <div className="flex flex-wrap gap-2">
               {EXPIRY_OPTIONS.map(opt => (
                 <button
                   key={opt.minutes}
                   onClick={() => setExpiryMinutes(opt.minutes)}
                   className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${expiryMinutes === opt.minutes
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                    : "bg-gray-800 text-gray-400 border border-transparent"
+                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-transparent"
                     }`}
                 >
                   {opt.label}
@@ -492,12 +494,12 @@ export default function SharedBudgetDetailPage() {
               ))}
             </div>
 
-            <div className="flex bg-gray-800 rounded-xl p-1">
+            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
               <button
                 onClick={() => setMultipleUse(false)}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${!multipleUse
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
               >
                 🔒 Usage unique
@@ -505,8 +507,8 @@ export default function SharedBudgetDetailPage() {
               <button
                 onClick={() => setMultipleUse(true)}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${multipleUse
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
               >
                 ♾️ Usages multiples
@@ -515,7 +517,7 @@ export default function SharedBudgetDetailPage() {
 
             <button
               onClick={handleInvite}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
+              className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
             >
               {copiedCode ? "✅ Lien copié !" : "Générer et copier le lien"}
             </button>
@@ -524,19 +526,19 @@ export default function SharedBudgetDetailPage() {
       </div>
 
       {/* Dépenses */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">Dépenses</h3>
+          <h3 className="text-gray-900 dark:text-white font-semibold">Dépenses</h3>
           <div className="flex gap-3">
             <button
               onClick={() => setShowMigrateModal(true)}
-              className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
+              className="text-blue-600 dark:text-blue-400 text-sm hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
             >
               📥 Depuis mes transactions
             </button>
             <button
               onClick={handleToggleAddExpense}
-              className="text-emerald-500 text-sm hover:text-emerald-400 transition-colors"
+              className="text-emerald-600 dark:text-emerald-500 text-sm hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             >
               + Ajouter
             </button>
@@ -563,7 +565,7 @@ export default function SharedBudgetDetailPage() {
                 value={expenseSearch}
                 onChange={e => setExpenseSearch(e.target.value)}
                 placeholder="Rechercher une dépense..."
-                className="w-full mb-4 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                className="w-full mb-4 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               />
             )}
 
@@ -576,26 +578,26 @@ export default function SharedBudgetDetailPage() {
                 ) : (
                   <div key={expense.id} className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{expense.label}</p>
+                      <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{expense.label}</p>
                       <p className="text-gray-500 text-xs truncate">
                         {expense.addedByName || memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: fr })}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <CurrencyValue amount={expense.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-400 font-semibold text-sm" />
+                      <CurrencyValue amount={expense.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-600 dark:text-red-400 font-semibold text-sm" />
                       {expense.addedBy === user?.uid && (
                         <>
                           <button
                             onClick={() => startEditExpense(expense)}
-                            className="text-gray-600 hover:text-emerald-400 transition-colors text-sm"
+                            className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                           >
-                            ✏️
+                            <Pencil className="w-4 h-4" strokeWidth={2} />
                           </button>
                           <button
                             onClick={() => setDeletingExpense(expense)}
-                            className="text-gray-600 hover:text-red-400 transition-colors text-sm"
+                            className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                           >
-                            ✕
+                            <X className="w-4 h-4" strokeWidth={2} />
                           </button>
                         </>
                       )}
@@ -611,7 +613,7 @@ export default function SharedBudgetDetailPage() {
             {filteredExpenses.length > visibleSpentCount && (
               <button
                 onClick={() => setVisibleSpentCount(c => c + 10)}
-                className="w-full mt-4 text-gray-400 hover:text-white text-sm py-2.5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors"
+                className="w-full mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
               >
                 Voir plus ({filteredExpenses.length - visibleSpentCount} restantes)
               </button>
@@ -622,7 +624,7 @@ export default function SharedBudgetDetailPage() {
       {!isAdmin && (
         <button
           onClick={handleLeave}
-          className="w-full mt-6 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium py-3 rounded-xl transition-colors border border-red-500/20"
+          className="w-full mt-6 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-medium py-3 rounded-xl transition-colors border border-red-500/20"
         >
           Quitter ce budget partagé
         </button>

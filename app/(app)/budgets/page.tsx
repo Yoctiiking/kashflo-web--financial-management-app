@@ -8,6 +8,7 @@ import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import CurrencyValue from "@/components/CurrencyValue";
+import { Pencil, X, AlertTriangle } from "lucide-react";
 
 export default function BudgetsPage() {
   const { user } = useAuth();
@@ -106,12 +107,12 @@ export default function BudgetsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-white">Budgets</h2>
-          <p className="text-gray-400 mt-1 text-sm">{budgets.length} budget{budgets.length > 1 ? "s" : ""} actif{budgets.length > 1 ? "s" : ""}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Budgets</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{budgets.length} budget{budgets.length > 1 ? "s" : ""} actif{budgets.length > 1 ? "s" : ""}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
+          className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
         >
           + Nouveau budget
         </button>
@@ -119,9 +120,9 @@ export default function BudgetsPage() {
 
       {/* Liste des budgets */}
       {budgets.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-12 text-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center">
           <p className="text-gray-500 mb-2">Aucun budget défini</p>
-          <p className="text-gray-600 text-sm">Crée un budget pour suivre tes dépenses par catégorie</p>
+          <p className="text-gray-400 dark:text-gray-600 text-sm">Crée un budget pour suivre tes dépenses par catégorie</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -132,26 +133,25 @@ export default function BudgetsPage() {
             const remaining = budget.limit - spent;
 
             return (
-              <div key={budget.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+              <div key={budget.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
                 {/* Header carte */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-white font-semibold">{budget.category}</p>
+                    <p className="text-gray-900 dark:text-white font-semibold">{budget.category}</p>
                     <p className="text-gray-500 text-xs mt-0.5">{periodLabel[budget.period]}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setEditingBudget(budget)}
-                      className="text-gray-600 hover:text-emerald-400 transition-colors text-sm"
+                      className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                     >
-                      ✏️
+                      <Pencil className="w-4 h-4" strokeWidth={2} />
                     </button>
-                    |
                     <button
                       onClick={() => handleDelete(budget.id)}
-                      className="text-gray-600 hover:text-red-400 transition-colors text-sm"
+                      className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     >
-                      ✕
+                      <X className="w-4 h-4" strokeWidth={2} />
                     </button>
                   </div>
                 </div>
@@ -159,13 +159,13 @@ export default function BudgetsPage() {
                 {/* Montants */}
                 <div className="mb-3">
                   <div className="flex justify-between items-baseline gap-2 text-sm mb-1.5">
-                    <span className={`inline-flex items-center gap-1 min-w-0 ${isOver ? "text-red-400" : "text-gray-300"}`}>
+                    <span className={`inline-flex items-center gap-1 min-w-0 ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>
                       <CurrencyValue amount={spent} ready={ready} formatCurrency={formatCurrency} />
                       <span className="truncate">dépensé</span>
                     </span>
                     <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-500 shrink-0" />
                   </div>
-                  <div className="w-full bg-gray-800 rounded-full h-2">
+                  <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all ${isOver ? "bg-red-500" : "bg-emerald-500"}`}
                       style={{ width: `${percentage}%` }}
@@ -174,9 +174,9 @@ export default function BudgetsPage() {
                 </div>
 
                 {/* Reste */}
-                <p className={`text-xs ${isOver ? "text-red-400" : "text-gray-500"}`}>
+                <p className={`text-xs ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-500"}`}>
                   {isOver
-                    ? <>⚠️ Dépassé de <CurrencyValue amount={Math.abs(remaining)} ready={ready} formatCurrency={formatCurrency} /></>
+                    ? <><AlertTriangle className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />Dépassé de <CurrencyValue amount={Math.abs(remaining)} ready={ready} formatCurrency={formatCurrency} /></>
                     : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> restant</>
                   }
                 </p>
@@ -189,7 +189,7 @@ export default function BudgetsPage() {
       {/* FAB mobile */}
       <button
         onClick={() => setShowModal(true)}
-        className="sm:hidden fixed bottom-24 right-4 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-white text-2xl font-light rounded-full shadow-lg shadow-emerald-500/30 transition-colors z-40 flex items-center justify-center"
+        className="sm:hidden fixed bottom-24 right-4 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white text-2xl font-light rounded-full shadow-lg shadow-emerald-500/30 transition-colors z-40 flex items-center justify-center"
       >
         +
       </button>

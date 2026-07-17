@@ -9,6 +9,7 @@ import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import { X } from "lucide-react";
 
 interface Props {
     budgetId: string;
@@ -178,29 +179,29 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
                 <div className="flex items-center justify-between p-6 pb-4 shrink-0">
-                    <h2 className="text-white font-semibold text-lg">Ajouter depuis mes transactions</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
+                    <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Ajouter depuis mes transactions</h2>
+                    <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
                 </div>
 
                 <div className="px-6 pb-3 shrink-0 flex items-center justify-center gap-3">
                     <button
                         onClick={goToPreviousMonth}
-                        className="text-gray-400 hover:text-white transition-colors"
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                         aria-label="Mois précédent"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="15 18 9 12 15 6" />
                         </svg>
                     </button>
-                    <p className="text-gray-300 text-sm font-medium capitalize w-32 text-center">
+                    <p className="text-gray-700 dark:text-gray-300 text-sm font-medium capitalize w-32 text-center">
                         {format(new Date(effectiveYear, targetMonth), "MMMM yyyy", { locale: fr })}
                     </p>
                     <button
                         onClick={goToNextMonth}
                         disabled={isCurrentMonthDisplayed}
-                        className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         aria-label="Mois suivant"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -214,8 +215,8 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                         <button
                             onClick={() => setShowDatePicker(!showDatePicker)}
                             className={`shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border transition-colors ${dateFilter || showDatePicker
-                                ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400"
-                                : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
+                                ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                                 }`}
                             aria-label="Filtrer par date"
                         >
@@ -228,7 +229,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Nom, montant, ou mois (ex: juin)"
-                            className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                            className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
                         />
                     </div>
 
@@ -238,12 +239,12 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                                 type="date"
                                 value={dateFilter}
                                 onChange={(e) => handleDateFilterChange(e.target.value)}
-                                className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
+                                className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
                             />
                             {dateFilter && (
                                 <button
                                     onClick={() => setDateFilter("")}
-                                    className="shrink-0 px-3 bg-gray-800 border border-gray-700 rounded-xl text-gray-400 hover:text-white transition-colors text-sm"
+                                    className="shrink-0 px-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-sm"
                                 >
                                     Effacer
                                 </button>
@@ -272,10 +273,10 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                                         disabled={migrating}
                                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left border ${isSelected
                                             ? "bg-emerald-500/10 border-emerald-500/40"
-                                            : "bg-gray-800 border-transparent hover:bg-gray-700"
+                                            : "bg-gray-100 dark:bg-gray-800 border-transparent hover:bg-gray-200 dark:hover:bg-gray-700"
                                             } disabled:opacity-50`}
                                     >
-                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-emerald-500 border-emerald-500" : "border-gray-600"
+                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-emerald-500 border-emerald-500" : "border-gray-400 dark:border-gray-600"
                                             }`}>
                                             {isSelected && (
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -284,12 +285,12 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-white text-sm font-medium truncate">{tx.label}</p>
+                                            <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{tx.label}</p>
                                             <p className="text-gray-500 text-xs mt-0.5">
                                                 {tx.category} · {format(tx.date, "d MMM yyyy", { locale: fr })}
                                             </p>
                                         </div>
-                                        <CurrencyValue amount={tx.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-400 font-semibold text-sm shrink-0" />
+                                        <CurrencyValue amount={tx.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-600 dark:text-red-400 font-semibold text-sm shrink-0" />
                                     </button>
                                 );
                             })}
@@ -298,15 +299,15 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                 </div>
 
                 {selectedIds.size > 0 && (
-                    <div className="p-6 pt-4 border-t border-gray-800 shrink-0 space-y-3">
+                    <div className="p-6 pt-4 border-t border-gray-200 dark:border-gray-800 shrink-0 space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">{selectedIds.size} sélectionnée{selectedIds.size > 1 ? "s" : ""}</span>
-                            <CurrencyValue amount={selectedTotal} ready={ready} formatCurrency={formatCurrency} className="text-white font-semibold" />
+                            <span className="text-gray-600 dark:text-gray-400">{selectedIds.size} sélectionnée{selectedIds.size > 1 ? "s" : ""}</span>
+                            <CurrencyValue amount={selectedTotal} ready={ready} formatCurrency={formatCurrency} className="text-gray-900 dark:text-white font-semibold" />
                         </div>
                         <button
                             onClick={handleMigrateSelected}
                             disabled={migrating}
-                            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-colors"
+                            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                         >
                             {migrating ? "Déplacement..." : `Déplacer ${selectedIds.size} transaction${selectedIds.size > 1 ? "s" : ""}`}
                         </button>

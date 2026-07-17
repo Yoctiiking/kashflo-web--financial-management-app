@@ -45,17 +45,17 @@ function LoginForm() {
   };
 
   return (
-    <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
-      <h2 className="text-xl font-semibold text-white mb-6">Connexion</h2>
+    <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-800">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Connexion</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm text-gray-400 mb-1.5">Email</label>
+          <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
             placeholder="toi@exemple.com"
             required
           />
@@ -63,10 +63,10 @@ function LoginForm() {
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-sm text-gray-400">Mot de passe</label>
+            <label className="text-sm text-gray-600 dark:text-gray-400">Mot de passe</label>
             <Link
               href={`/forgot-password${email && isValidEmail(email) ? `?email=${encodeURIComponent(email)}` : ""}`}
-              className="text-xs text-emerald-500 hover:text-emerald-400 transition-colors"
+              className="text-xs text-emerald-600 dark:text-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             >
               Mot de passe oublié ?
             </Link>
@@ -80,13 +80,13 @@ function LoginForm() {
         </div>
 
         {error && (
-          <p className="text-red-400 text-sm">{error}</p>
+          <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
         )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
+          className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
         >
           {loading ? "Connexion..." : "Se connecter"}
         </button>
@@ -94,7 +94,7 @@ function LoginForm() {
 
       <p className="text-center text-gray-500 text-sm mt-6">
         Pas encore de compte ?{" "}
-        <Link href="/register" className="text-emerald-500 hover:text-emerald-400">
+        <Link href="/register" className="text-emerald-600 dark:text-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400">
           S'inscrire
         </Link>
       </p>

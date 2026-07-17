@@ -16,19 +16,19 @@ export default function VerifyEmailCompletePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center px-6">
       <div className="w-full max-w-md text-center">
-        <h1 className="text-3xl font-bold text-white mb-6">
-          Kash<span className="text-emerald-500">Flo</span>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+          Kash<span className="text-emerald-600 dark:text-emerald-500">Flo</span>
         </h1>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-8">
           <div className="text-4xl mb-4">✅</div>
-          <h2 className="text-white font-semibold text-xl mb-2">Email vérifié !</h2>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-xl mb-2">Email vérifié !</h2>
           {!closeFailed ? (
-            <p className="text-gray-400 text-sm">Fermeture de cette fenêtre...</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Fermeture de cette fenêtre...</p>
           ) : (
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
               Tu peux fermer cet onglet et retourner sur Kash Flo.
             </p>
           )}
