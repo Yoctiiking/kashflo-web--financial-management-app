@@ -11,12 +11,9 @@ import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
+import { MONTHS_FR } from "@/lib/utils/months";
+import ExportRangeModal from "@/components/ExportRangeModal";
 import { ArrowDownLeft, ArrowUpRight, Pencil, X } from "lucide-react";
-
-const MONTHS_FR = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre"
-];
 
 function normalize(str: string) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -51,6 +48,7 @@ export default function TransactionsPage() {
   const [filter, setFilter] = useState<"all" | "expense" | "income">("all");
   const [search, setSearch] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showExportRangeModal, setShowExportRangeModal] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
   const [pickerYear, setPickerYear] = useState(currentYear);
@@ -277,20 +275,29 @@ export default function TransactionsPage() {
               <span className="hidden sm:inline">Exporter</span>
             </button>
             {showExportMenu && (
-              <div className="absolute right-0 mt-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden z-10 w-32">
-                <button
-                  onClick={handleExportCSV}
-                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                >
-                  CSV
-                </button>
-                <button
-                  onClick={handleExportPDF}
-                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                >
-                  PDF
-                </button>
-              </div>
+              <>
+                <div className="fixed inset-0 z-[5]" onClick={() => setShowExportMenu(false)} />
+                <div className="absolute right-0 mt-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden z-10 w-44">
+                  <button
+                    onClick={handleExportCSV}
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    CSV (mois affiché)
+                  </button>
+                  <button
+                    onClick={handleExportPDF}
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    PDF (mois affiché)
+                  </button>
+                  <button
+                    onClick={() => { setShowExportRangeModal(true); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border-t border-gray-300 dark:border-gray-700"
+                  >
+                    Plage de mois...
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
@@ -415,6 +422,13 @@ export default function TransactionsPage() {
           transaction={editingTransaction}
           onClose={() => setEditingTransaction(null)}
           onSuccess={loadData}
+        />
+      )}
+
+      {showExportRangeModal && user && (
+        <ExportRangeModal
+          userId={user.uid}
+          onClose={() => setShowExportRangeModal(false)}
         />
       )}
     </div>

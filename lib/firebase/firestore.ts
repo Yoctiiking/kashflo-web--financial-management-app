@@ -145,6 +145,28 @@ export const getLastMonthsTransactions = async (
   })) as Transaction[];
 };
 
+export const getTransactionsInRange = async (
+  userId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<Transaction[]> => {
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    where("date", ">=", Timestamp.fromDate(startDate)),
+    where("date", "<=", Timestamp.fromDate(endDate)),
+    orderBy("date", "desc"),
+    orderBy("createdAt", "desc")
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    date: (doc.data().date as Timestamp).toDate(),
+    createdAt: (doc.data().createdAt as Timestamp).toDate()
+  })) as Transaction[];
+};
+
 export const addTransaction = async (
   userId: string,
   data: {
