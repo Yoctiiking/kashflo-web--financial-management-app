@@ -12,6 +12,7 @@ interface UserProfile {
   currency?: string;
   expenseCategories?: string[];
   incomeCategories?: string[];
+  isAdmin?: boolean;
 }
 
 interface UserProfileContextType {

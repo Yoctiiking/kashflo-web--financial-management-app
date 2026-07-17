@@ -7,6 +7,7 @@ import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/cat
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 import CategorySelect from "@/components/CategorySelect";
+import { X } from "lucide-react";
 
 interface Props {
   groupId: string;
@@ -88,17 +89,17 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         {/* En-tête fixe */}
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <div>
-            <h2 className="text-white font-semibold text-lg">Nouvelle récurrence</h2>
+            <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Nouvelle récurrence</h2>
             <div className="flex items-center gap-1.5 mt-2">
               <div className={`h-1.5 rounded-full transition-all ${step === 1 ? "w-6 bg-emerald-500" : "w-6 bg-emerald-500/40"}`} />
-              <div className={`h-1.5 rounded-full transition-all ${step === 2 ? "w-6 bg-emerald-500" : "w-6 bg-gray-700"}`} />
+              <div className={`h-1.5 rounded-full transition-all ${step === 2 ? "w-6 bg-emerald-500" : "w-6 bg-gray-200 dark:bg-gray-700"}`} />
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
+          <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
         {/* Contenu scrollable */}
@@ -106,17 +107,17 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
           {step === 1 && (
             <>
               {/* Type */}
-              <div className="flex bg-gray-800 rounded-xl p-1">
+              <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
                 <button
                   onClick={() => { setType("expense"); setCategory(""); }}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "expense" ? "bg-red-500/20 text-red-400" : "text-gray-400 hover:text-white"
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "expense" ? "bg-red-500/20 text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                 >
                   Dépense
                 </button>
                 <button
                   onClick={() => { setType("income"); setCategory(""); }}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "income" ? "bg-emerald-500/20 text-emerald-400" : "text-gray-400 hover:text-white"
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "income" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                 >
                   Revenu
@@ -125,12 +126,12 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
 
               {/* Montant */}
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Montant ({symbol})</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Montant ({symbol})</label>
                 <input
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
                   placeholder="0.00"
                   min="0"
                   step="0.01"
@@ -139,12 +140,12 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
 
               {/* Label */}
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Description</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Description</label>
                 <input
                   type="text"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
                   placeholder="Ex: Loyer"
                 />
               </div>
@@ -152,11 +153,11 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
               {/* Catégorie */}
               <CategorySelect categories={categories} value={category} onChange={setCategory} />
 
-              {error && <p className="text-red-400 text-sm">{error}</p>}
+              {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
 
               <button
                 onClick={handleNext}
-                className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 rounded-xl transition-colors"
+                className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
               >
                 Suivant
               </button>
@@ -167,15 +168,15 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
             <>
               {/* Fréquence */}
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Fréquence</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Fréquence</label>
                 <div className="grid grid-cols-2 gap-2">
                   {(["daily", "weekly", "monthly", "yearly", "custom"] as RecurrenceFrequency[]).map(f => (
                     <button
                       key={f}
                       onClick={() => setFrequency(f)}
                       className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${frequency === f
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                        : "bg-gray-800 text-gray-400 hover:text-white border border-transparent"
+                        ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-transparent"
                         }`}
                     >
                       {frequencyLabel[f]}
@@ -187,7 +188,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
               {/* Intervalle personnalisé */}
               {frequency === "custom" && (
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
                     Tous les combien de jours ?
                   </label>
                   <div className="flex items-center gap-3">
@@ -195,13 +196,13 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
                       type="number"
                       value={customDays}
                       onChange={(e) => setCustomDays(e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
                       placeholder="Ex: 14"
                       min="2"
                     />
-                    <span className="text-gray-400 text-sm whitespace-nowrap">jours</span>
+                    <span className="text-gray-600 dark:text-gray-400 text-sm whitespace-nowrap">jours</span>
                   </div>
-                  <p className="text-gray-600 text-xs mt-1.5">
+                  <p className="text-gray-400 dark:text-gray-600 text-xs mt-1.5">
                     {parseInt(customDays) >= 2
                       ? `Tous les ${customDays} jours`
                       : "Minimum 2 jours"
@@ -212,28 +213,28 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
 
               {/* Date de début */}
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Première occurrence</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Première occurrence</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
+                  className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
                 />
               </div>
 
-              {error && <p className="text-red-400 text-sm">{error}</p>}
+              {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
 
               <div className="flex gap-2">
                 <button
                   onClick={() => { setStep(1); setError(""); }}
-                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors"
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                 >
                   Retour
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                 >
                   {loading ? "Création..." : "Créer"}
                 </button>

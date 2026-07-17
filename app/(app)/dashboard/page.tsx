@@ -8,9 +8,11 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useCurrency } from "@/lib/hooks/useCurrency";
+import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 import CurrencyValue from "@/components/CurrencyValue";
 import OnboardingCarousel from "@/components/OnboardingCarousel";
 import { ONBOARDING_SLIDES, ONBOARDING_VERSION } from "@/lib/onboardingSlides";
+import { ArrowDownLeft, ArrowUpRight, Clock } from "lucide-react";
 
 const PIE_COLORS = [
     "#10b981", "#3b82f6", "#f59e0b", "#ef4444",
@@ -19,6 +21,7 @@ const PIE_COLORS = [
 
 export default function DashboardPage() {
     const { user } = useAuth();
+    const { profile } = useUserProfile();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -115,8 +118,8 @@ export default function DashboardPage() {
     const CustomPieTooltip = ({ active, payload }: any) => {
         if (!active || !payload?.length) return null;
         return (
-            <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm">
-                <p className="text-white font-medium">{payload[0].name}</p>
+            <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl p-3 text-sm">
+                <p className="text-gray-900 dark:text-white font-medium">{payload[0].name}</p>
                 <p style={{ color: payload[0].payload.fill }}>
                     <CurrencyValue amount={payload[0].value} ready={ready} formatCurrency={formatCurrency} />
                 </p>
@@ -140,17 +143,17 @@ export default function DashboardPage() {
 
             {/* Header */}
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white capitalize">{currentMonth}</h2>
-                <p className="text-gray-400 mt-1">Bonjour, {user?.displayName} 👋</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">{currentMonth}</h2>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">Bonjour, {profile?.displayName || user?.displayName} 👋</p>
             </div>
 
             {/* Notification récurrences à venir */}
             {upcomingRecurrences.length > 0 && (
                 <div className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
                     <div className="flex items-start gap-3">
-                        <span className="text-xl">⏰</span>
+                        <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" strokeWidth={2} />
                         <div className="flex-1 min-w-0">
-                            <p className="text-amber-400 font-medium text-sm mb-2">
+                            <p className="text-amber-600 dark:text-amber-400 font-medium text-sm mb-2">
                                 {upcomingRecurrences.length} paiement{upcomingRecurrences.length > 1 ? "s" : ""} à venir
                             </p>
                             <div className="space-y-1.5">
@@ -159,13 +162,13 @@ export default function DashboardPage() {
                                     const dayLabel = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Demain" : `Dans ${diffDays} jours`;
                                     return (
                                         <div key={r.id} className="flex items-center justify-between gap-2 text-sm">
-                                            <span className="text-gray-300 truncate min-w-0">{r.label} · {dayLabel}</span>
+                                            <span className="text-gray-700 dark:text-gray-300 truncate min-w-0">{r.label} · {dayLabel}</span>
                                             <CurrencyValue
                                                 amount={r.amount}
                                                 ready={ready}
                                                 formatCurrency={formatCurrency}
                                                 prefix={r.type === "income" ? "+" : "-"}
-                                                className={`shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}
+                                                className={`shrink-0 ${r.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                                             />
                                         </div>
                                     );
@@ -178,29 +181,29 @@ export default function DashboardPage() {
 
             {/* Cartes de stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 min-w-0">
-                    <p className="text-gray-400 text-sm mb-1">Solde</p>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 min-w-0">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Solde</p>
                     <CurrencyValue
                         amount={balance}
                         ready={ready}
                         formatCurrency={formatCurrency}
-                        className={`text-2xl font-bold truncate ${balance >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                        className={`text-2xl font-bold truncate ${balance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                     />
                 </div>
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 min-w-0">
-                    <p className="text-gray-400 text-sm mb-1">Revenus</p>
-                    <CurrencyValue amount={totalIncome} ready={ready} formatCurrency={formatCurrency} className="text-2xl font-bold text-emerald-400 truncate" />
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 min-w-0">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Revenus</p>
+                    <CurrencyValue amount={totalIncome} ready={ready} formatCurrency={formatCurrency} className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate" />
                 </div>
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 min-w-0">
-                    <p className="text-gray-400 text-sm mb-1">Dépenses</p>
-                    <CurrencyValue amount={totalExpenses} ready={ready} formatCurrency={formatCurrency} className="text-2xl font-bold text-red-400 truncate" />
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 min-w-0">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Dépenses</p>
+                    <CurrencyValue amount={totalExpenses} ready={ready} formatCurrency={formatCurrency} className="text-2xl font-bold text-red-600 dark:text-red-400 truncate" />
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Transactions récentes */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-4">Transactions récentes</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Transactions récentes</h3>
                     {recentTransactions.length === 0 ? (
                         <p className="text-gray-500 text-sm">Aucune transaction pour l'instant</p>
                     ) : (
@@ -208,7 +211,7 @@ export default function DashboardPage() {
                             {recentTransactions.map(tx => (
                                 <div key={tx.id} className="flex items-center justify-between gap-3">
                                     <div className="min-w-0">
-                                        <p className="text-white text-sm font-medium truncate">{tx.label}</p>
+                                        <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{tx.label}</p>
                                         <p className="text-gray-500 text-xs truncate">{tx.category}</p>
                                     </div>
                                     <CurrencyValue
@@ -216,7 +219,7 @@ export default function DashboardPage() {
                                         ready={ready}
                                         formatCurrency={formatCurrency}
                                         prefix={tx.type === "income" ? "+" : "-"}
-                                        className={`font-semibold text-sm shrink-0 ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}
+                                        className={`font-semibold text-sm shrink-0 ${tx.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                                     />
                                 </div>
                             ))}
@@ -225,8 +228,8 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Budgets */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-4">Budgets</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Budgets</h3>
                     {budgets.length === 0 ? (
                         <p className="text-gray-500 text-sm">Aucun budget défini</p>
                     ) : (
@@ -266,18 +269,18 @@ export default function DashboardPage() {
                                         <div key={budget.id}>
                                             <div className="flex justify-between items-baseline gap-2 text-sm mb-1.5">
                                                 <div className="min-w-0 truncate">
-                                                    <span className="text-gray-300">{budget.category}</span>
-                                                    <span className="text-gray-600 text-xs ml-2">
+                                                    <span className="text-gray-700 dark:text-gray-300">{budget.category}</span>
+                                                    <span className="text-gray-400 dark:text-gray-600 text-xs ml-2">
                                                         {budget.period === "daily" ? "/ jour" : budget.period === "weekly" ? "/ semaine" : "/ mois"}
                                                     </span>
                                                 </div>
-                                                <span className={`inline-flex items-center gap-1 shrink-0 ${isOver ? "text-red-400" : "text-gray-400"}`}>
+                                                <span className={`inline-flex items-center gap-1 shrink-0 ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400"}`}>
                                                     <CurrencyValue amount={spent} ready={ready} formatCurrency={formatCurrency} />
                                                     <span>/</span>
                                                     <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} />
                                                 </span>
                                             </div>
-                                            <div className="w-full bg-gray-800 rounded-full h-1.5">
+                                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
                                                 <div
                                                     className={`h-1.5 rounded-full transition-all ${isOver ? "bg-red-500" : "bg-emerald-500"}`}
                                                     style={{ width: `${percentage}%` }}
@@ -292,8 +295,8 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Récurrences du mois */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-4">Récurrences ce mois</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Récurrences ce mois</h3>
                     {monthRecurrences.length === 0 ? (
                         <p className="text-gray-500 text-sm">Aucune récurrence prévue ce mois</p>
                     ) : (
@@ -301,12 +304,15 @@ export default function DashboardPage() {
                             {monthRecurrences.map(r => (
                                 <div key={r.id} className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
                                             }`}>
-                                            {r.type === "income" ? "💰" : "💸"}
+                                            {r.type === "income"
+                                                ? <ArrowDownLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
+                                                : <ArrowUpRight className="w-4 h-4 text-red-600 dark:text-red-400" strokeWidth={2} />
+                                            }
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-white text-sm font-medium truncate">{r.label}</p>
+                                            <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{r.label}</p>
                                             <p className="text-gray-500 text-xs">
                                                 {format(r.nextOccurrence, "d MMM", { locale: fr })}
                                             </p>
@@ -317,7 +323,7 @@ export default function DashboardPage() {
                                         ready={ready}
                                         formatCurrency={formatCurrency}
                                         prefix={r.type === "income" ? "+" : "-"}
-                                        className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-400" : "text-red-400"}`}
+                                        className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                                     />
                                 </div>
                             ))}
@@ -326,8 +332,8 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Pie chart */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-4">Dépenses par catégorie</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Dépenses par catégorie</h3>
                     {pieData.length === 0 ? (
                         <p className="text-gray-500 text-sm">Aucune dépense ce mois-ci</p>
                     ) : (
@@ -364,13 +370,13 @@ export default function DashboardPage() {
                                                 className="w-2.5 h-2.5 rounded-full shrink-0"
                                                 style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
                                             />
-                                            <span className="text-gray-300 text-xs truncate">{entry.name}</span>
+                                            <span className="text-gray-700 dark:text-gray-300 text-xs truncate">{entry.name}</span>
                                         </div>
                                         <CurrencyValue
                                             amount={entry.value}
                                             ready={ready}
                                             formatCurrency={formatCurrency}
-                                            className="text-gray-400 text-xs shrink-0 self-end sm:self-auto sm:ml-2"
+                                            className="text-gray-600 dark:text-gray-400 text-xs shrink-0 self-end sm:self-auto sm:ml-2"
                                         />
                                     </div>
                                 ))}

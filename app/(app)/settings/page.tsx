@@ -18,6 +18,7 @@ import { hasPinSet, removePin } from "@/lib/pinLock";
 import PinSetupModal from "@/components/PinSetupModal";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
+import { useTheme } from "@/lib/providers/ThemeProvider";
 
 const CURRENCIES = [
     { code: "CAD", label: "Dollar canadien (CAD)" },
@@ -33,6 +34,7 @@ export default function SettingsPage() {
     const router = useRouter();
     const confirm = useConfirm();
     const { profile } = useUserProfile();
+    const { theme, setTheme } = useTheme();
     const [displayName, setDisplayName] = useState(profile?.displayName || user?.displayName || "");
     const [nameLoading, setNameLoading] = useState(false);
     const [nameSuccess, setNameSuccess] = useState(false);
@@ -189,50 +191,75 @@ export default function SettingsPage() {
         <div className="p-4 sm:p-8 max-w-5xl">
             {/* Header */}
             <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white">Paramètres</h2>
-                <p className="text-gray-400 mt-1 text-sm">{user?.email}</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Paramètres</h2>
+                <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{user?.email}</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Nom */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 @container">
-                    <h3 className="text-white font-semibold mb-4">Nom d'affichage</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 @container">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Nom d'affichage</h3>
                     <div className="flex flex-col @sm:flex-row gap-2">
                         <input
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
-                            className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                            className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
                             placeholder="Ton prénom"
                         />
                         <button
                             onClick={handleUpdateName}
                             disabled={nameLoading}
-                            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-medium px-5 py-3 rounded-xl transition-colors whitespace-nowrap"
+                            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-gray-900 dark:text-white font-medium px-5 py-3 rounded-xl transition-colors whitespace-nowrap"
                         >
                             {nameLoading ? "..." : "Sauvegarder"}
                         </button>
                     </div>
-                    {nameError && <p className="text-red-400 text-sm mt-2">{nameError}</p>}
-                    {nameSuccess && <p className="text-emerald-400 text-sm mt-2">✅ Nom mis à jour</p>}
+                    {nameError && <p className="text-red-600 dark:text-red-400 text-sm mt-2">{nameError}</p>}
+                    {nameSuccess && <p className="text-emerald-600 dark:text-emerald-400 text-sm mt-2">✅ Nom mis à jour</p>}
+                </div>
+
+                {/* Apparence */}
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Apparence</h3>
+                    <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+                        <button
+                            onClick={() => setTheme("dark")}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${theme === "dark"
+                                ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                                }`}
+                        >
+                            🌙 Sombre
+                        </button>
+                        <button
+                            onClick={() => setTheme("light")}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${theme === "light"
+                                ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                                }`}
+                        >
+                            ☀️ Clair
+                        </button>
+                    </div>
                 </div>
 
                 {/* Verrouillage par code */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-1">Verrouillage par code</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-1">Verrouillage par code</h3>
                     <p className="text-gray-500 text-sm mb-4">
                         Protège l'accès à l'app après 5 minutes d'inactivité
                     </p>
                     {pinActive ? (
                         <button
                             onClick={handleRemovePin}
-                            className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium py-3 rounded-xl transition-colors border border-red-500/20"
+                            className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-medium py-3 rounded-xl transition-colors border border-red-500/20"
                         >
                             Désactiver le code
                         </button>
                     ) : (
                         <button
                             onClick={() => setShowPinSetup(true)}
-                            className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors"
+                            className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                         >
                             Activer un code de verrouillage
                         </button>
@@ -240,22 +267,22 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Catégories */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-1">Catégories</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-1">Catégories</h3>
                     <p className="text-gray-500 text-sm mb-4">
                         Ajoute, renomme ou supprime tes catégories de dépenses et revenus
                     </p>
                     <button
                         onClick={() => setShowCategories(true)}
-                        className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors"
+                        className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                     >
                         Gérer les catégories
                     </button>
                 </div>
 
                 {/* Mot de passe */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-4">Mot de passe</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Mot de passe</h3>
                     <div className="space-y-3">
                         <PasswordInput
                             value={currentPassword}
@@ -272,12 +299,12 @@ export default function SettingsPage() {
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Confirmer le nouveau mot de passe"
                         />
-                        {passwordError && <p className="text-red-400 text-sm">{passwordError}</p>}
-                        {passwordSuccess && <p className="text-emerald-400 text-sm">✅ Mot de passe mis à jour</p>}
+                        {passwordError && <p className="text-red-600 dark:text-red-400 text-sm">{passwordError}</p>}
+                        {passwordSuccess && <p className="text-emerald-600 dark:text-emerald-400 text-sm">✅ Mot de passe mis à jour</p>}
                         <button
                             onClick={handleUpdatePassword}
                             disabled={passwordLoading}
-                            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-colors"
+                            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                         >
                             {passwordLoading ? "Mise à jour..." : "Changer le mot de passe"}
                         </button>
@@ -285,8 +312,8 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Devise */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-1">Devise</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-1">Devise</h3>
                     <p className="text-gray-500 text-sm mb-4">
                         Choisis la devise dans laquelle tes montants s'affichent. La conversion est automatique et basée sur les taux du jour.
                     </p>
@@ -294,42 +321,42 @@ export default function SettingsPage() {
                         value={currency}
                         onChange={(e) => handleUpdateCurrency(e.target.value)}
                         disabled={currencyLoading}
-                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+                        className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
                     >
                         {CURRENCIES.map(c => (
                             <option key={c.code} value={c.code}>{c.label}</option>
                         ))}
                     </select>
-                    {currencySuccess && <p className="text-emerald-400 text-sm mt-3">✅ Devise mise à jour</p>}
+                    {currencySuccess && <p className="text-emerald-600 dark:text-emerald-400 text-sm mt-3">✅ Devise mise à jour</p>}
                 </div>
 
                 {/* Contact */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-1">Nous contacter</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-1">Nous contacter</h3>
                     <p className="text-gray-500 text-sm mb-4">Une question, un bug, ou une suggestion ?</p>
                     <button
                         onClick={() => setShowFeedback(true)}
-                        className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors"
+                        className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                     >
                         ✉️ Envoyer un message
                     </button>
                 </div>
 
                 {/* Déconnexion */}
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-white font-semibold mb-1">Session</h3>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-1">Session</h3>
                     <p className="text-gray-500 text-sm mb-4">Connecté en tant que {user?.email}</p>
                     <button
                         onClick={() => logoutUser().then(() => router.push("/login"))}
-                        className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors"
+                        className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                     >
                         🚪 Se déconnecter
                     </button>
                 </div>
 
                 {/* Zone danger — pleine largeur */}
-                <div className="bg-gray-900 border border-red-500/20 rounded-2xl p-6 lg:col-span-2 text-center">
-                    <h3 className="text-red-400 font-semibold mb-1">Zone dangereuse</h3>
+                <div className="bg-white dark:bg-gray-900 border border-red-500/20 rounded-2xl p-6 lg:col-span-2 text-center">
+                    <h3 className="text-red-600 dark:text-red-400 font-semibold mb-1">Zone dangereuse</h3>
                     <p className="text-gray-500 text-sm mb-4">
                         La suppression de ton compte est irréversible. Toutes tes données seront perdues.
                     </p>
@@ -337,13 +364,13 @@ export default function SettingsPage() {
                     {!showDeleteConfirm ? (
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
-                            className="w-full sm:w-auto bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium px-6 py-3 rounded-xl transition-colors border border-red-500/20"
+                            className="w-full sm:w-auto bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-medium px-6 py-3 rounded-xl transition-colors border border-red-500/20"
                         >
                             Supprimer mon compte
                         </button>
                     ) : (
                         <div className="max-w-md space-y-3">
-                            <p className="text-gray-300 text-sm">
+                            <p className="text-gray-700 dark:text-gray-300 text-sm">
                                 Entre ton mot de passe pour confirmer la suppression :
                             </p>
                             <PasswordInput
@@ -352,7 +379,7 @@ export default function SettingsPage() {
                                 onChange={(e) => setDeletePassword(e.target.value)}
                                 placeholder="Ton mot de passe"
                             />
-                            {deleteError && <p className="text-red-400 text-sm">{deleteError}</p>}
+                            {deleteError && <p className="text-red-600 dark:text-red-400 text-sm">{deleteError}</p>}
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => {
@@ -360,14 +387,14 @@ export default function SettingsPage() {
                                         setDeletePassword("");
                                         setDeleteError("");
                                     }}
-                                    className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 rounded-xl transition-colors"
+                                    className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                                 >
                                     Annuler
                                 </button>
                                 <button
                                     onClick={handleDeleteAccount}
                                     disabled={deleteLoading}
-                                    className="flex-1 bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-colors"
+                                    className="flex-1 bg-red-500 hover:bg-red-400 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                                 >
                                     {deleteLoading ? "Suppression..." : "Confirmer"}
                                 </button>
