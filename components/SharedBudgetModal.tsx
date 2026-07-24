@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { createSharedBudget, updateSharedBudget } from "@/lib/firebase/firestore";
 import { SharedBudget, BudgetPeriod } from "@/types";
 import { DEFAULT_EXPENSE_CATEGORIES } from "@/lib/categories";
@@ -17,6 +18,8 @@ interface Props {
 }
 
 export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }: Props) {
+  const t = useTranslations("sharedBudgetModal");
+  const tPeriod = useTranslations("common.period");
   const { profile } = useUserProfile();
   const [period, setPeriod] = useState<BudgetPeriod>(budget?.period || "monthly");
   const [loading, setLoading] = useState(false);
@@ -37,15 +40,15 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
 
   const isEditing = !!budget;
 
-  const periodLabel = { daily: "/ jour", weekly: "/ semaine", monthly: "/ mois" };
+  const periodLabel = { daily: tPeriod("daily"), weekly: tPeriod("weekly"), monthly: tPeriod("monthly") };
 
   const handleSubmit = async () => {
     if (!name || !category || !limit) {
-      setError("Tous les champs sont obligatoires");
+      setError(t("errors.required"));
       return;
     }
     if (isNaN(parseFloat(limit)) || parseFloat(limit) <= 0) {
-      setError("Le montant doit être un nombre positif");
+      setError(t("errors.invalidAmount"));
       return;
     }
 
@@ -62,7 +65,7 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Erreur lors de l'enregistrement");
+      setError(t("errors.generic"));
     } finally {
       setLoading(false);
     }
@@ -73,27 +76,27 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h2 className="text-gray-900 dark:text-white font-semibold text-lg">
-            {isEditing ? "Modifier le budget" : "Nouveau budget partagé"}
+            {isEditing ? t("editTitle") : t("newTitle")}
           </h2>
           <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nom du budget</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("nameLabel")}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-              placeholder="Ex: Courses de la semaine"
+              placeholder={t("namePlaceholder")}
             />
           </div>
 
           <CategorySelect categories={categories} value={category} onChange={setCategory} />
 
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Limite ({symbol})</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("limitLabel", { symbol })}</label>
             <input
               type="number"
               value={limit}
@@ -106,7 +109,7 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
           </div>
 
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Période</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("periodLabel")}</label>
             <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
               {(["daily", "weekly", "monthly"] as BudgetPeriod[]).map(p => (
                 <button
@@ -130,7 +133,7 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
-            {loading ? "..." : isEditing ? "Sauvegarder" : "Créer le budget"}
+            {loading ? "..." : isEditing ? t("save") : t("create")}
           </button>
         </div>
       </div>

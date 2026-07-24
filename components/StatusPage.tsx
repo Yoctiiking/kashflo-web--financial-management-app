@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { LucideIcon } from "lucide-react";
 
 interface StatusPageProps {
@@ -14,8 +17,9 @@ export default function StatusPage({
   title,
   message,
   actionHref = "/",
-  actionLabel = "Retour à l'accueil"
+  actionLabel
 }: StatusPageProps) {
+  const t = useTranslations("statusPage");
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center px-6">
       <div className="w-full max-w-md">
@@ -36,7 +40,7 @@ export default function StatusPage({
             href={actionHref}
             className="block w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
-            {actionLabel}
+            {actionLabel ?? t("defaultAction")}
           </Link>
         </div>
       </div>

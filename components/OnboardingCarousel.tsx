@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { OnboardingSlide } from "@/lib/onboardingSlides";
 
 interface Props {
@@ -9,6 +10,8 @@ interface Props {
 }
 
 export default function OnboardingCarousel({ slides, onComplete }: Props) {
+  const t = useTranslations("onboarding");
+  const tSlides = useTranslations("onboarding.slides");
   const [index, setIndex] = useState(0);
   const isLast = index === slides.length - 1;
   const slide = slides[index];
@@ -29,14 +32,14 @@ export default function OnboardingCarousel({ slides, onComplete }: Props) {
             onClick={onComplete}
             className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-sm transition-colors hover:text-gray-900 dark:hover:text-white hover:underline"
           >
-            Passer
+            {t("skip")}
           </button>
         </div>
 
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center">
           <div className="text-6xl mb-6">{slide.icon}</div>
-          <h2 className="text-gray-900 dark:text-white font-bold text-2xl mb-3">{slide.title}</h2>
-          <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-8">{slide.description}</p>
+          <h2 className="text-gray-900 dark:text-white font-bold text-2xl mb-3">{tSlides(`${slide.key}.title`)}</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-8">{tSlides(`${slide.key}.description`)}</p>
 
           <div className="flex items-center justify-center gap-2 mb-8">
             {slides.map((_, i) => (
@@ -53,7 +56,7 @@ export default function OnboardingCarousel({ slides, onComplete }: Props) {
             onClick={handleNext}
             className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
-            {isLast ? "Compris" : "Suivant"}
+            {isLast ? t("done") : t("next")}
           </button>
         </div>
       </div>

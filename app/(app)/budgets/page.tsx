@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/firestore";
 import { Budget, Transaction } from "@/types";
@@ -20,6 +21,8 @@ export default function BudgetsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const confirm = useConfirm();
+  const t = useTranslations("budgets");
+  const tPeriod = useTranslations("common.period");
 
 
   const loadData = useCallback(async () => {
@@ -46,9 +49,9 @@ export default function BudgetsPage() {
   const handleDelete = async (budgetId: string) => {
     if (!user) return;
     const ok = await confirm({
-      title: "Supprimer ce budget ?",
-      message: "Cette action est irréversible.",
-      confirmLabel: "Supprimer",
+      title: t("deleteConfirm.title"),
+      message: t("deleteConfirm.message"),
+      confirmLabel: t("deleteConfirm.confirm"),
       danger: true
     });
     if (!ok) return;
@@ -65,9 +68,9 @@ export default function BudgetsPage() {
   const { formatCurrency, ready } = useCurrency();
 
   const periodLabel: Record<string, string> = {
-    daily: "/ jour",
-    weekly: "/ semaine",
-    monthly: "/ mois"
+    daily: tPeriod("daily"),
+    weekly: tPeriod("weekly"),
+    monthly: tPeriod("monthly")
   };
 
   if (loading) {
@@ -83,22 +86,22 @@ export default function BudgetsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Budgets</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{budgets.length} budget{budgets.length > 1 ? "s" : ""} actif{budgets.length > 1 ? "s" : ""}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{t("activeCount", { count: budgets.length })}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
           className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
         >
-          + Nouveau budget
+          {t("new")}
         </button>
       </div>
 
       {/* Liste des budgets */}
       {budgets.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center">
-          <p className="text-gray-500 mb-2">Aucun budget défini</p>
-          <p className="text-gray-400 dark:text-gray-600 text-sm">Crée un budget pour suivre tes dépenses par catégorie</p>
+          <p className="text-gray-500 mb-2">{t("emptyTitle")}</p>
+          <p className="text-gray-400 dark:text-gray-600 text-sm">{t("emptyDescription")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -141,7 +144,7 @@ export default function BudgetsPage() {
                   <div className="flex justify-between items-baseline gap-2 text-sm mb-1.5">
                     <span className={`inline-flex items-center gap-1 min-w-0 ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>
                       <CurrencyValue amount={spent} ready={ready} formatCurrency={formatCurrency} />
-                      <span className="truncate">dépensé</span>
+                      <span className="truncate">{t("spent")}</span>
                     </span>
                     <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-500 shrink-0" />
                   </div>
@@ -156,8 +159,8 @@ export default function BudgetsPage() {
                 {/* Reste */}
                 <p className={`text-xs ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-500"}`}>
                   {isOver
-                    ? <><AlertTriangle className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />Dépassé de <CurrencyValue amount={Math.abs(remaining)} ready={ready} formatCurrency={formatCurrency} /></>
-                    : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> restant</>
+                    ? <><AlertTriangle className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />{t("over")} <CurrencyValue amount={Math.abs(remaining)} ready={ready} formatCurrency={formatCurrency} /></>
+                    : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> {t("remaining")}</>
                   }
                 </p>
               </Link>

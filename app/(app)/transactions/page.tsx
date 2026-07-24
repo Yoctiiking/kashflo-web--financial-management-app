@@ -6,12 +6,13 @@ import { getMonthTransactions, deleteTransaction } from "@/lib/firebase/firestor
 import { Transaction } from "@/types";
 import AddTransactionModal from "@/components/AddTransactionModal";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { useTranslations } from "next-intl";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
-import { MONTHS_FR } from "@/lib/utils/months";
+import { getMonthNames, getDateFnsLocale } from "@/lib/utils/months";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import ExportRangeModal from "@/components/ExportRangeModal";
 import { ArrowDownLeft, ArrowUpRight, Pencil, X } from "lucide-react";
 
@@ -19,10 +20,10 @@ function normalize(str: string) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
-function parseMonthSearch(search: string): { month: number; year: number | null; remainder: string } | null {
+function parseMonthSearch(search: string, monthNames: string[]): { month: number; year: number | null; remainder: string } | null {
   const normalized = normalize(search);
-  for (let i = 0; i < MONTHS_FR.length; i++) {
-    const monthNorm = normalize(MONTHS_FR[i]);
+  for (let i = 0; i < monthNames.length; i++) {
+    const monthNorm = normalize(monthNames[i]);
     if (normalized === monthNorm) {
       return { month: i, year: null, remainder: "" };
     }
@@ -55,9 +56,13 @@ export default function TransactionsPage() {
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
   const confirm = useConfirm();
+  const t = useTranslations("transactions");
+  const { language } = useLanguage();
+  const monthNames = getMonthNames(language);
+  const dateLocale = getDateFnsLocale(language);
 
   useEffect(() => {
-    const parsed = parseMonthSearch(search);
+    const parsed = parseMonthSearch(search, monthNames);
     if (!parsed) return;
     const targetYear = parsed.year ?? currentYear;
     const isFuture = targetYear > now.getFullYear() ||
@@ -68,7 +73,7 @@ export default function TransactionsPage() {
       setCurrentYear(targetYear);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search, language]);
 
   const handleExportCSV = () => {
     const filenameSuffix = format(new Date(currentYear, currentMonth), "yyyy-MM");
@@ -77,7 +82,7 @@ export default function TransactionsPage() {
   };
 
   const handleExportPDF = () => {
-    const monthLabel = format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: fr });
+    const monthLabel = format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: dateLocale });
     const filenameSuffix = format(new Date(currentYear, currentMonth), "yyyy-MM");
     exportTransactionsToPDF(filtered, `transactions_${filenameSuffix}`, monthLabel, formatCurrency, fromBase, currency);
     setShowExportMenu(false);
@@ -123,9 +128,9 @@ export default function TransactionsPage() {
   const handleDelete = async (transactionId: string) => {
     if (!user) return;
     const ok = await confirm({
-      title: "Supprimer cette transaction ?",
-      message: "Cette action est irréversible.",
-      confirmLabel: "Supprimer",
+      title: t("deleteConfirm.title"),
+      message: t("deleteConfirm.message"),
+      confirmLabel: t("deleteConfirm.confirm"),
       danger: true
     });
     if (!ok) return;
@@ -143,7 +148,7 @@ export default function TransactionsPage() {
 
   const { formatCurrency, fromBase, currency, ready } = useCurrency();
 
-  const parsedSearch = parseMonthSearch(search);
+  const parsedSearch = parseMonthSearch(search, monthNames);
   const effectiveSearch = parsedSearch !== null ? parsedSearch.remainder : search;
 
   const filtered = transactions.filter(t => {
@@ -167,12 +172,12 @@ export default function TransactionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Transactions</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h2>
           <div className="flex items-center gap-3 mt-2 relative">
             <button
               onClick={goToPreviousMonth}
               className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-              aria-label="Mois précédent"
+              aria-label={t("prevMonth")}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
@@ -183,14 +188,14 @@ export default function TransactionsPage() {
               onClick={openMonthPicker}
               className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm capitalize transition-colors"
             >
-              {format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: fr })}
+              {format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: dateLocale })}
             </button>
 
             <button
               onClick={goToNextMonth}
               disabled={currentYear === now.getFullYear() && currentMonth === now.getMonth()}
               className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              aria-label="Mois suivant"
+              aria-label={t("nextMonth")}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />
@@ -226,7 +231,7 @@ export default function TransactionsPage() {
                     </button>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
-                    {MONTHS_FR.map((m, i) => {
+                    {monthNames.map((m, i) => {
                       const isFuture = pickerYear === now.getFullYear() && i > now.getMonth();
                       const isSelected = pickerYear === currentYear && i === currentMonth;
                       return (
@@ -257,7 +262,7 @@ export default function TransactionsPage() {
           <button
             onClick={() => setShowSearch(s => !s)}
             className={`sm:hidden p-2.5 rounded-xl transition-colors ${showSearch ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"}`}
-            aria-label="Rechercher"
+            aria-label={t("search")}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
@@ -272,7 +277,7 @@ export default function TransactionsPage() {
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span className="hidden sm:inline">Exporter</span>
+              <span className="hidden sm:inline">{t("export")}</span>
             </button>
             {showExportMenu && (
               <>
@@ -282,19 +287,19 @@ export default function TransactionsPage() {
                     onClick={handleExportCSV}
                     className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
-                    CSV (mois affiché)
+                    {t("exportCsv")}
                   </button>
                   <button
                     onClick={handleExportPDF}
                     className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
-                    PDF (mois affiché)
+                    {t("exportPdf")}
                   </button>
                   <button
                     onClick={() => { setShowExportRangeModal(true); setShowExportMenu(false); }}
                     className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border-t border-gray-300 dark:border-gray-700"
                   >
-                    Plage de mois...
+                    {t("exportRange")}
                   </button>
                 </div>
               </>
@@ -305,7 +310,7 @@ export default function TransactionsPage() {
             onClick={() => setShowModal(true)}
             className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
           >
-            + Ajouter
+            {t("add")}
           </button>
         </div>
       </div>
@@ -322,7 +327,7 @@ export default function TransactionsPage() {
                 : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 }`}
             >
-              {f === "all" ? "Tout" : f === "expense" ? "Dépenses" : "Revenus"}
+              {f === "all" ? t("filters.all") : f === "expense" ? t("filters.expense") : t("filters.income")}
             </button>
           ))}
         </div>
@@ -332,7 +337,7 @@ export default function TransactionsPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Nom, catégorie, ou mois (ex: juin)"
+            placeholder={t("searchPlaceholder")}
             autoFocus={showSearch}
             className="w-full sm:w-56 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl pl-4 pr-9 py-2.5 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
           />
@@ -351,7 +356,7 @@ export default function TransactionsPage() {
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-gray-500">Aucune transaction</p>
+            <p className="text-gray-500">{t("empty")}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -368,7 +373,7 @@ export default function TransactionsPage() {
                   <div className="min-w-0">
                     <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{tx.label}</p>
                     <p className="text-gray-500 text-xs mt-0.5 truncate">
-                      {tx.category} · {format(tx.date, "d MMM", { locale: fr })}
+                      {tx.category} · {format(tx.date, "d MMM", { locale: dateLocale })}
                     </p>
                   </div>
                 </div>

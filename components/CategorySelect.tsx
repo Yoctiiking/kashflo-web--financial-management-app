@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface Props {
   categories: string[];
@@ -9,7 +10,8 @@ interface Props {
   label?: string;
 }
 
-export default function CategorySelect({ categories, value, onChange, label = "Catégorie" }: Props) {
+export default function CategorySelect({ categories, value, onChange, label }: Props) {
+  const t = useTranslations("common.categorySelect");
   const [selected, setSelected] = useState(() => (categories.includes(value) || !value ? value : "Autre"));
   const [customText, setCustomText] = useState(() => (categories.includes(value) || !value ? "" : value));
 
@@ -32,13 +34,13 @@ export default function CategorySelect({ categories, value, onChange, label = "C
 
   return (
     <div>
-      <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{label}</label>
+      <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{label ?? t("label")}</label>
       <select
         value={selected}
         onChange={(e) => handleSelectChange(e.target.value)}
         className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors"
       >
-        <option value="">Sélectionner...</option>
+        <option value="">{t("placeholder")}</option>
         {categories.map(cat => (
           <option key={cat} value={cat}>{cat}</option>
         ))}
@@ -49,7 +51,7 @@ export default function CategorySelect({ categories, value, onChange, label = "C
           value={customText}
           onChange={(e) => handleCustomChange(e.target.value)}
           className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 mt-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-          placeholder="Préciser la catégorie (optionnel)"
+          placeholder={t("customPlaceholder")}
         />
       )}
     </div>

@@ -4,7 +4,9 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/providers/AuthProvider";
 import { ConfirmProvider } from "@/lib/providers/ConfirmProvider";
 import { UserProfileProvider } from "@/lib/providers/UserProfileProvider";
+import { LanguageProvider } from "@/lib/providers/LanguageProvider";
 import { ThemeProvider } from "@/lib/providers/ThemeProvider";
+import EnterKeyNavigation from "@/components/EnterKeyNavigation";
 
 // Applique le thème stocké avant le premier rendu pour éviter un flash du mauvais thème.
 // Le mode sombre reste la valeur par défaut (className="dark" sur <html>) tant que
@@ -44,11 +46,14 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
+          <EnterKeyNavigation />
           <AuthProvider>
             <UserProfileProvider>
-              <ConfirmProvider>
-                {children}
-              </ConfirmProvider>
+              <LanguageProvider>
+                <ConfirmProvider>
+                  {children}
+                </ConfirmProvider>
+              </LanguageProvider>
             </UserProfileProvider>
           </AuthProvider>
         </ThemeProvider>

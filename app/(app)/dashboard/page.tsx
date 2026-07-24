@@ -5,10 +5,12 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { getUserProfile, getMonthTransactions, getRecentTransactions, getBudgets, getRecurrences, updateOnboardingVersion } from "@/lib/firebase/firestore";
 import { Transaction, Budget, Recurrence } from "@/types";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS } from "date-fns/locale";
+import { useTranslations } from "next-intl";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import CurrencyValue from "@/components/CurrencyValue";
 import OnboardingCarousel from "@/components/OnboardingCarousel";
 import { ONBOARDING_SLIDES, ONBOARDING_VERSION } from "@/lib/onboardingSlides";
@@ -22,6 +24,9 @@ const PIE_COLORS = [
 export default function DashboardPage() {
     const { user } = useAuth();
     const { profile } = useUserProfile();
+    const { language } = useLanguage();
+    const dateLocale = language === "en" ? enUS : fr;
+    const t = useTranslations("dashboard");
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -89,7 +94,7 @@ export default function DashboardPage() {
 
     const { formatCurrency, ready } = useCurrency();
 
-    const currentMonth = format(new Date(), "MMMM yyyy", { locale: fr });
+    const currentMonth = format(new Date(), "MMMM yyyy", { locale: dateLocale });
 
     const now = new Date();
     const monthRecurrences = recurrences.filter(r => {
@@ -144,7 +149,7 @@ export default function DashboardPage() {
             {/* Header */}
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">{currentMonth}</h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">Bonjour, {profile?.displayName || user?.displayName} 👋</p>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">{t("greeting", { name: profile?.displayName || user?.displayName || "" })}</p>
             </div>
 
             {/* Notification récurrences à venir */}
@@ -154,12 +159,12 @@ export default function DashboardPage() {
                         <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" strokeWidth={2} />
                         <div className="flex-1 min-w-0">
                             <p className="text-amber-600 dark:text-amber-400 font-medium text-sm mb-2">
-                                {upcomingRecurrences.length} paiement{upcomingRecurrences.length > 1 ? "s" : ""} à venir
+                                {t("upcomingPayments", { count: upcomingRecurrences.length })}
                             </p>
                             <div className="space-y-1.5">
                                 {upcomingRecurrences.map(r => {
                                     const diffDays = Math.ceil((r.nextOccurrence.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                                    const dayLabel = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Demain" : `Dans ${diffDays} jours`;
+                                    const dayLabel = diffDays === 0 ? t("dayLabel.today") : diffDays === 1 ? t("dayLabel.tomorrow") : t("dayLabel.inDays", { days: diffDays });
                                     return (
                                         <div key={r.id} className="flex items-center justify-between gap-2 text-sm">
                                             <span className="text-gray-700 dark:text-gray-300 truncate min-w-0">{r.label} · {dayLabel}</span>
@@ -182,7 +187,7 @@ export default function DashboardPage() {
             {/* Cartes de stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 min-w-0">
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Solde</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">{t("stats.balance")}</p>
                     <CurrencyValue
                         amount={balance}
                         ready={ready}
@@ -191,11 +196,11 @@ export default function DashboardPage() {
                     />
                 </div>
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 min-w-0">
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Revenus</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">{t("stats.income")}</p>
                     <CurrencyValue amount={totalIncome} ready={ready} formatCurrency={formatCurrency} className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate" />
                 </div>
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 min-w-0">
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Dépenses</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">{t("stats.expenses")}</p>
                     <CurrencyValue amount={totalExpenses} ready={ready} formatCurrency={formatCurrency} className="text-2xl font-bold text-red-600 dark:text-red-400 truncate" />
                 </div>
             </div>
@@ -203,9 +208,9 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Transactions récentes */}
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Transactions récentes</h3>
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">{t("recentTransactions.title")}</h3>
                     {recentTransactions.length === 0 ? (
-                        <p className="text-gray-500 text-sm">Aucune transaction pour l'instant</p>
+                        <p className="text-gray-500 text-sm">{t("recentTransactions.empty")}</p>
                     ) : (
                         <div className="space-y-3">
                             {recentTransactions.map(tx => (
@@ -229,9 +234,9 @@ export default function DashboardPage() {
 
                 {/* Budgets */}
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Budgets</h3>
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">{t("budgets.title")}</h3>
                     {budgets.length === 0 ? (
-                        <p className="text-gray-500 text-sm">Aucun budget défini</p>
+                        <p className="text-gray-500 text-sm">{t("budgets.empty")}</p>
                     ) : (
                         <div className="space-y-4">
                             {budgets
@@ -271,7 +276,7 @@ export default function DashboardPage() {
                                                 <div className="min-w-0 truncate">
                                                     <span className="text-gray-700 dark:text-gray-300">{budget.category}</span>
                                                     <span className="text-gray-400 dark:text-gray-600 text-xs ml-2">
-                                                        {budget.period === "daily" ? "/ jour" : budget.period === "weekly" ? "/ semaine" : "/ mois"}
+                                                        {budget.period === "daily" ? t("budgets.perDay") : budget.period === "weekly" ? t("budgets.perWeek") : t("budgets.perMonth")}
                                                     </span>
                                                 </div>
                                                 <span className={`inline-flex items-center gap-1 shrink-0 ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400"}`}>
@@ -296,9 +301,9 @@ export default function DashboardPage() {
 
                 {/* Récurrences du mois */}
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Récurrences ce mois</h3>
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">{t("monthRecurrences.title")}</h3>
                     {monthRecurrences.length === 0 ? (
-                        <p className="text-gray-500 text-sm">Aucune récurrence prévue ce mois</p>
+                        <p className="text-gray-500 text-sm">{t("monthRecurrences.empty")}</p>
                     ) : (
                         <div className="space-y-3">
                             {monthRecurrences.map(r => (
@@ -314,7 +319,7 @@ export default function DashboardPage() {
                                         <div className="min-w-0">
                                             <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{r.label}</p>
                                             <p className="text-gray-500 text-xs">
-                                                {format(r.nextOccurrence, "d MMM", { locale: fr })}
+                                                {format(r.nextOccurrence, "d MMM", { locale: dateLocale })}
                                             </p>
                                         </div>
                                     </div>
@@ -333,9 +338,9 @@ export default function DashboardPage() {
 
                 {/* Pie chart */}
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Dépenses par catégorie</h3>
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">{t("expensesByCategory.title")}</h3>
                     {pieData.length === 0 ? (
-                        <p className="text-gray-500 text-sm">Aucune dépense ce mois-ci</p>
+                        <p className="text-gray-500 text-sm">{t("expensesByCategory.empty")}</p>
                     ) : (
                         <div className="flex items-center gap-4">
                             <div className="w-1/2 max-w-[200px] h-[200px]">

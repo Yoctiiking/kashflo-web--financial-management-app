@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
 import { getTransactionsInRange } from "@/lib/firebase/firestore";
 import { exportTransactionsToCSV, exportTransactionsToPDF } from "@/lib/utils/exportUtils";
 import { useCurrency } from "@/lib/hooks/useCurrency";
-import { MONTHS_FR } from "@/lib/utils/months";
+import { getMonthNames } from "@/lib/utils/months";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import { X } from "lucide-react";
 
 interface Props {
@@ -24,6 +26,9 @@ export default function ExportRangeModal({ userId, onClose }: Props) {
   const [loading, setLoading] = useState<"csv" | "pdf" | null>(null);
   const [error, setError] = useState("");
   const { formatCurrency, fromBase, currency } = useCurrency();
+  const { language } = useLanguage();
+  const monthNames = getMonthNames(language);
+  const t = useTranslations("exportRangeModal");
 
   const years = Array.from({ length: 6 }, (_, i) => now.getFullYear() - i);
 
@@ -31,7 +36,7 @@ export default function ExportRangeModal({ userId, onClose }: Props) {
 
   const handleExport = async (type: "csv" | "pdf") => {
     if (!isRangeValid) {
-      setError("La date de début doit précéder la date de fin");
+      setError(t("errorRange"));
       return;
     }
     setError("");
@@ -42,7 +47,7 @@ export default function ExportRangeModal({ userId, onClose }: Props) {
       const transactions = await getTransactionsInRange(userId, startDate, endDate);
 
       const filenameSuffix = `${format(startDate, "yyyy-MM")}_a_${format(endDate, "yyyy-MM")}`;
-      const rangeLabel = `${capitalize(MONTHS_FR[fromMonth])} ${fromYear} — ${capitalize(MONTHS_FR[toMonth])} ${toYear}`;
+      const rangeLabel = `${capitalize(monthNames[fromMonth])} ${fromYear} — ${capitalize(monthNames[toMonth])} ${toYear}`;
 
       if (type === "csv") {
         exportTransactionsToCSV(transactions, `transactions_${filenameSuffix}`, fromBase, currency);
@@ -52,7 +57,7 @@ export default function ExportRangeModal({ userId, onClose }: Props) {
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Erreur lors de l'export");
+      setError(t("errorExport"));
     } finally {
       setLoading(null);
     }
@@ -62,7 +67,7 @@ export default function ExportRangeModal({ userId, onClose }: Props) {
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md">
         <div className="flex items-center justify-between p-6 pb-4">
-          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Exporter une plage de mois</h2>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">{t("title")}</h2>
           <button
             onClick={onClose}
             className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -73,14 +78,14 @@ export default function ExportRangeModal({ userId, onClose }: Props) {
 
         <div className="px-6 pb-6 space-y-4">
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Du</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("from")}</label>
             <div className="flex gap-2">
               <select
                 value={fromMonth}
                 onChange={e => setFromMonth(Number(e.target.value))}
                 className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-3 py-2.5 text-gray-900 dark:text-white text-sm capitalize focus:outline-none focus:border-emerald-500 transition-colors"
               >
-                {MONTHS_FR.map((m, i) => (
+                {monthNames.map((m, i) => (
                   <option key={m} value={i}>{capitalize(m)}</option>
                 ))}
               </select>
@@ -97,14 +102,14 @@ export default function ExportRangeModal({ userId, onClose }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Au</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("to")}</label>
             <div className="flex gap-2">
               <select
                 value={toMonth}
                 onChange={e => setToMonth(Number(e.target.value))}
                 className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-3 py-2.5 text-gray-900 dark:text-white text-sm capitalize focus:outline-none focus:border-emerald-500 transition-colors"
               >
-                {MONTHS_FR.map((m, i) => (
+                {monthNames.map((m, i) => (
                   <option key={m} value={i}>{capitalize(m)}</option>
                 ))}
               </select>
@@ -128,14 +133,14 @@ export default function ExportRangeModal({ userId, onClose }: Props) {
               disabled={loading !== null}
               className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors text-sm"
             >
-              {loading === "csv" ? "..." : "Exporter en CSV"}
+              {loading === "csv" ? "..." : t("exportCsv")}
             </button>
             <button
               onClick={() => handleExport("pdf")}
               disabled={loading !== null}
               className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors text-sm"
             >
-              {loading === "pdf" ? "..." : "Exporter en PDF"}
+              {loading === "pdf" ? "..." : t("exportPdf")}
             </button>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { getSharedBudgetInvite, useSharedBudgetInvite } from "@/lib/firebase/firestore";
 import Link from "next/link";
@@ -13,6 +14,7 @@ export default function JoinBudgetPage() {
   const { code } = useParams<{ code: string }>();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const t = useTranslations("joinBudget");
   const [status, setStatus] = useState<Status>("loading");
   const [budgetId, setBudgetId] = useState<string | null>(null);
   const [budgetName, setBudgetName] = useState<string>("");
@@ -49,39 +51,39 @@ export default function JoinBudgetPage() {
       setTimeout(() => router.push(`/shared-budgets/${bId}`), 2000);
     } else {
       setStatus("error");
-      setErrorMessage(result.error || "Une erreur est survenue");
+      setErrorMessage(result.error || t("errorGeneric"));
     }
   };
 
   const states: Record<Status, { icon: React.ReactNode; title: React.ReactNode; message: string; action?: React.ReactNode }> = {
-    loading: { icon: <Loader2 className="w-10 h-10 animate-spin" strokeWidth={2} />, title: "Vérification...", message: "On vérifie ton invitation" },
-    invalid: { icon: <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" strokeWidth={2} />, title: "Lien invalide", message: "Ce lien n'existe pas ou a été supprimé" },
-    expired: { icon: <Clock className="w-10 h-10 text-amber-600 dark:text-amber-400" strokeWidth={2} />, title: "Lien expiré", message: "Ce lien a expiré" },
-    used: { icon: <Lock className="w-10 h-10 text-gray-500" strokeWidth={2} />, title: "Lien déjà utilisé", message: "Ce lien à usage unique a déjà été utilisé" },
+    loading: { icon: <Loader2 className="w-10 h-10 animate-spin" strokeWidth={2} />, title: t("loadingTitle"), message: t("loadingMessage") },
+    invalid: { icon: <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" strokeWidth={2} />, title: t("invalidTitle"), message: t("invalidMessage") },
+    expired: { icon: <Clock className="w-10 h-10 text-amber-600 dark:text-amber-400" strokeWidth={2} />, title: t("expiredTitle"), message: t("expiredMessage") },
+    used: { icon: <Lock className="w-10 h-10 text-gray-500" strokeWidth={2} />, title: t("usedTitle"), message: t("usedMessage") },
     valid: {
       icon: <Users className="w-10 h-10 text-emerald-600 dark:text-emerald-500" strokeWidth={2} />,
       title: budgetName ? (
         <>
-          Rejoindre le budget
+          {t("joinBudgetTitle")}
           <br />
           <span className="text-emerald-600 dark:text-emerald-500">{budgetName}</span>
         </>
-      ) : "Rejoindre le budget partagé",
-      message: user ? "Tu es invité à rejoindre ce budget partagé" : "Connecte-toi pour rejoindre ce budget",
+      ) : t("joinSharedBudgetTitle"),
+      message: user ? t("invitedMessage") : t("loginPromptMessage"),
       action: user ? (
         <button onClick={handleJoin} className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors mt-4">
-          Rejoindre
+          {t("join")}
         </button>
       ) : (
         <div className="flex flex-col gap-2 mt-4">
-          <Link href={`/login?redirect=/join-budget/${code}`} className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors text-center">Se connecter</Link>
-          <Link href={`/register?redirect=/join-budget/${code}`} className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors text-center">Créer un compte</Link>
+          <Link href={`/login?redirect=/join-budget/${code}`} className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors text-center">{t("login")}</Link>
+          <Link href={`/register?redirect=/join-budget/${code}`} className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors text-center">{t("createAccount")}</Link>
         </div>
       )
     },
-    joining: { icon: <Loader2 className="w-10 h-10 animate-spin" strokeWidth={2} />, title: "Rejoindre...", message: "On t'ajoute au budget" },
-    success: { icon: <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />, title: "Bienvenue !", message: "Tu as rejoint le budget. Redirection..." },
-    error: { icon: <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" strokeWidth={2} />, title: "Erreur", message: errorMessage }
+    joining: { icon: <Loader2 className="w-10 h-10 animate-spin" strokeWidth={2} />, title: t("joiningTitle"), message: t("joiningMessage") },
+    success: { icon: <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />, title: t("successTitle"), message: t("successMessage") },
+    error: { icon: <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" strokeWidth={2} />, title: t("errorTitle"), message: errorMessage }
   };
 
   const current = states[status];

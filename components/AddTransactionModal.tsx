@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { addTransaction, updateTransaction } from "@/lib/firebase/firestore";
 import { Transaction, TransactionType } from "@/types";
@@ -21,6 +22,7 @@ interface Props {
 export default function AddTransactionModal({ groupId, transaction, defaultCategory, onClose, onSuccess }: Props) {
   const { symbol, toBase, fromBase, formatCurrency, ready } = useCurrency(); const { user } = useAuth();
   const { profile } = useUserProfile();
+  const t = useTranslations("transactionModal");
   const isEditing = !!transaction;
   const lockCategory = !isEditing && !!defaultCategory;
   const [type, setType] = useState<TransactionType>(transaction?.type || "expense");
@@ -48,11 +50,11 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
   const handleSubmit = async () => {
     if (!user) return;
     if (!amount || !label || !category) {
-      setError("Tous les champs sont obligatoires");
+      setError(t("errors.required"));
       return;
     }
     if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      setError("Le montant doit être un nombre positif");
+      setError(t("errors.invalidAmount"));
       return;
     }
 
@@ -82,7 +84,7 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
       onClose();
     } catch (err) {
       console.error(err);
-      setError(isEditing ? "Erreur lors de la modification" : "Erreur lors de l'ajout");
+      setError(isEditing ? t("errors.updateFailed") : t("errors.createFailed"));
     } finally {
       setLoading(false);
     }
@@ -94,7 +96,7 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h2 className="text-gray-900 dark:text-white font-semibold text-lg">
-            {isEditing ? "Modifier la transaction" : "Nouvelle transaction"}
+            {isEditing ? t("editTitle") : t("newTitle")}
           </h2>
           <button
             onClick={onClose}
@@ -108,7 +110,7 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
           {/* Type toggle */}
           {lockCategory ? (
             <div className="flex items-center gap-2 bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium px-4 py-2.5 rounded-xl">
-              Dépense · {defaultCategory}
+              {t("expenseLocked", { category: defaultCategory })}
             </div>
           ) : (
             <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
@@ -119,7 +121,7 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
               >
-                Dépense
+                {t("expense")}
               </button>
               <button
                 onClick={() => { setType("income"); setCategory(""); }}
@@ -128,14 +130,14 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
               >
-                Revenu
+                {t("income")}
               </button>
             </div>
           )}
 
           {/* Montant */}
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Montant ({symbol})</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("amountLabel", { symbol })}</label>
             <input
               type="number"
               value={amount}
@@ -149,13 +151,13 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
 
           {/* Label */}
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Description</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("descriptionLabel")}</label>
             <input
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-              placeholder="Ex: Épicerie Metro"
+              placeholder={t("descriptionPlaceholder")}
             />
           </div>
 
@@ -164,7 +166,7 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
 
           {/* Date */}
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Date</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("dateLabel")}</label>
             <input
               type="date"
               value={date}
@@ -182,8 +184,8 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
             {loading
-              ? (isEditing ? "Sauvegarde..." : "Ajout en cours...")
-              : (isEditing ? "Sauvegarder" : "Ajouter")}
+              ? (isEditing ? t("saving") : t("adding"))
+              : (isEditing ? t("save") : t("addSubmit"))}
           </button>
         </div>
       </div>

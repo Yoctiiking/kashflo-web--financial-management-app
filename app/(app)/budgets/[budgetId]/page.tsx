@@ -3,23 +3,19 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { getBudgets, getMonthTransactions, deleteTransaction } from "@/lib/firebase/firestore";
 import { Budget, Transaction } from "@/types";
 import { getBudgetSpent, getBudgetTransactions } from "@/lib/utils/budgetUtils";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { getDateFnsLocale } from "@/lib/utils/months";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import BudgetModal from "@/components/BudgetModal";
 import AddTransactionModal from "@/components/AddTransactionModal";
 import { Pencil, X, AlertTriangle } from "lucide-react";
-
-const periodLabel: Record<string, string> = {
-  daily: "/ jour",
-  weekly: "/ semaine",
-  monthly: "/ mois"
-};
 
 export default function BudgetDetailPage() {
   const { user } = useAuth();
@@ -34,6 +30,15 @@ export default function BudgetDetailPage() {
   const [search, setSearch] = useState("");
   const { formatCurrency, ready } = useCurrency();
   const confirm = useConfirm();
+  const t = useTranslations("budgetDetail");
+  const tPeriod = useTranslations("common.period");
+  const { language } = useLanguage();
+  const dateLocale = getDateFnsLocale(language);
+  const periodLabel: Record<string, string> = {
+    daily: tPeriod("daily"),
+    weekly: tPeriod("weekly"),
+    monthly: tPeriod("monthly")
+  };
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -73,9 +78,9 @@ export default function BudgetDetailPage() {
   const handleDelete = async (transaction: Transaction) => {
     if (!user) return;
     const ok = await confirm({
-      title: "Supprimer cette transaction ?",
-      message: "Cette action est irréversible.",
-      confirmLabel: "Supprimer",
+      title: t("deleteConfirm.title"),
+      message: t("deleteConfirm.message"),
+      confirmLabel: t("deleteConfirm.confirm"),
       danger: true
     });
     if (!ok) return;
@@ -103,7 +108,7 @@ export default function BudgetDetailPage() {
   if (!budget) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500">Budget introuvable</p>
+        <p className="text-gray-500">{t("notFound")}</p>
       </div>
     );
   }
@@ -121,7 +126,7 @@ export default function BudgetDetailPage() {
           className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
         >
           <Pencil className="w-4 h-4" strokeWidth={2} />
-          <span className="hidden sm:inline">Modifier</span>
+          <span className="hidden sm:inline">{t("edit")}</span>
         </button>
       </div>
 
@@ -130,7 +135,7 @@ export default function BudgetDetailPage() {
         <div className="flex justify-between items-baseline gap-2 text-sm mb-2">
           <span className={`inline-flex items-center gap-1 min-w-0 ${isOver ? "text-red-600 dark:text-red-400 font-semibold" : "text-gray-900 dark:text-white font-semibold"}`}>
             <CurrencyValue amount={spent} ready={ready} formatCurrency={formatCurrency} />
-            <span className="truncate">dépensé</span>
+            <span className="truncate">{t("spent")}</span>
           </span>
           <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-600 dark:text-gray-400 shrink-0" />
         </div>
@@ -142,8 +147,8 @@ export default function BudgetDetailPage() {
         </div>
         <p className={`text-xs ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-500"}`}>
           {isOver
-            ? <><AlertTriangle className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />Dépassé de <CurrencyValue amount={Math.abs(remaining)} ready={ready} formatCurrency={formatCurrency} /></>
-            : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> restant · {Math.round(percentage)}%</>
+            ? <><AlertTriangle className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />{t("over")} <CurrencyValue amount={Math.abs(remaining)} ready={ready} formatCurrency={formatCurrency} /></>
+            : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> {t("remainingPercent", { percent: Math.round(percentage) })}</>
           }
         </p>
       </div>
@@ -151,17 +156,17 @@ export default function BudgetDetailPage() {
       {/* Transactions */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-900 dark:text-white font-semibold">Transactions</h3>
+          <h3 className="text-gray-900 dark:text-white font-semibold">{t("transactions")}</h3>
           <button
             onClick={() => setShowAddTransaction(true)}
             className="text-emerald-600 dark:text-emerald-500 text-sm hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
           >
-            + Ajouter
+            {t("add")}
           </button>
         </div>
 
         {budgetTransactions.length === 0 ? (
-          <p className="text-gray-500 text-sm">Aucune transaction pour l'instant</p>
+          <p className="text-gray-500 text-sm">{t("empty")}</p>
         ) : (
           <>
             {budgetTransactions.length > 10 && (
@@ -169,28 +174,28 @@ export default function BudgetDetailPage() {
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Rechercher une transaction..."
+                placeholder={t("searchPlaceholder")}
                 className="w-full mb-4 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               />
             )}
 
             <div className="space-y-3">
-              {filteredTransactions.slice(0, visibleCount).map(t => (
-                <div key={t.id} className="flex items-center justify-between gap-3">
+              {filteredTransactions.slice(0, visibleCount).map(tx => (
+                <div key={tx.id} className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{t.label}</p>
-                    <p className="text-gray-500 text-xs truncate">{format(t.date, "d MMM", { locale: fr })}</p>
+                    <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{tx.label}</p>
+                    <p className="text-gray-500 text-xs truncate">{format(tx.date, "d MMM", { locale: dateLocale })}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <CurrencyValue amount={t.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-600 dark:text-red-400 font-semibold text-sm" />
+                    <CurrencyValue amount={tx.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-600 dark:text-red-400 font-semibold text-sm" />
                     <button
-                      onClick={() => setEditingTransaction(t)}
+                      onClick={() => setEditingTransaction(tx)}
                       className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                     >
                       <Pencil className="w-4 h-4" strokeWidth={2} />
                     </button>
                     <button
-                      onClick={() => handleDelete(t)}
+                      onClick={() => handleDelete(tx)}
                       className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     >
                       <X className="w-4 h-4" strokeWidth={2} />
@@ -199,7 +204,7 @@ export default function BudgetDetailPage() {
                 </div>
               ))}
               {filteredTransactions.length === 0 && (
-                <p className="text-gray-500 text-sm">Aucune transaction trouvée</p>
+                <p className="text-gray-500 text-sm">{t("noResults")}</p>
               )}
             </div>
 
@@ -208,7 +213,7 @@ export default function BudgetDetailPage() {
                 onClick={() => setVisibleCount(c => c + 10)}
                 className="w-full mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
               >
-                Voir plus ({filteredTransactions.length - visibleCount} restantes)
+                {t("showMore", { count: filteredTransactions.length - visibleCount })}
               </button>
             )}
           </>

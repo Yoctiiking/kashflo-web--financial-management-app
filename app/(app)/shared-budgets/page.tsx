@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
+import { useTranslations } from "next-intl";
 import { getSharedBudgets, deleteSharedBudget } from "@/lib/firebase/firestore";
 import { SharedBudget } from "@/types";
 import SharedBudgetModal from "@/components/SharedBudgetModal";
@@ -10,12 +11,6 @@ import CurrencyValue from "@/components/CurrencyValue";
 import Link from "next/link";
 import { Pencil, X } from "lucide-react";
 
-const periodLabel: Record<string, string> = {
-  daily: "/ jour",
-  weekly: "/ semaine",
-  monthly: "/ mois"
-};
-
 export default function SharedBudgetsPage() {
   const { user } = useAuth();
   const [budgets, setBudgets] = useState<SharedBudget[]>([]);
@@ -23,6 +18,13 @@ export default function SharedBudgetsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<SharedBudget | null>(null);
   const { formatCurrency, ready } = useCurrency();
+  const t = useTranslations("sharedBudgets");
+  const tPeriod = useTranslations("common.period");
+  const periodLabel: Record<string, string> = {
+    daily: tPeriod("daily"),
+    weekly: tPeriod("weekly"),
+    monthly: tPeriod("monthly")
+  };
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -41,7 +43,7 @@ export default function SharedBudgetsPage() {
   }, [loadData]);
 
   const handleDelete = async (budgetId: string) => {
-    if (!confirm("Supprimer ce budget partagé ?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     try {
       await deleteSharedBudget(budgetId);
       await loadData();
@@ -62,21 +64,21 @@ export default function SharedBudgetsPage() {
     <div className="p-4 sm:p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Budgets partagés</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{budgets.length} budget{budgets.length > 1 ? "s" : ""}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{t("budgetCount", { count: budgets.length })}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
           className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
         >
-          + Nouveau
+          {t("new")}
         </button>
       </div>
 
       {budgets.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center">
-          <p className="text-gray-500 mb-2">Aucun budget partagé</p>
-          <p className="text-gray-400 dark:text-gray-600 text-sm">Crée un budget et invite des membres à y contribuer</p>
+          <p className="text-gray-500 mb-2">{t("emptyTitle")}</p>
+          <p className="text-gray-400 dark:text-gray-600 text-sm">{t("emptyDescription")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -110,7 +112,7 @@ export default function SharedBudgetsPage() {
               </div>
               <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-emerald-600 dark:text-emerald-400 font-semibold" />
               <p className="text-gray-400 dark:text-gray-600 text-xs mt-1">
-                {budget.members.length} membre{budget.members.length > 1 ? "s" : ""}
+                {t("memberCount", { count: budget.members.length })}
               </p>
             </Link>
           ))}

@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
+import { useTranslations } from "next-intl";
 import { getRecurrences, deleteRecurrence, toggleRecurrence } from "@/lib/firebase/firestore";
 import { processAllRecurrences } from "@/lib/recurrenceEngine";
 import { Recurrence } from "@/types";
 import AddRecurrenceModal from "@/components/AddRecurrenceModal";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { getDateFnsLocale } from "@/lib/utils/months";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
@@ -21,6 +23,10 @@ export default function RecurrencesPage() {
   const [showModal, setShowModal] = useState(false);
   const [generated, setGenerated] = useState<number | null>(null);
   const confirm = useConfirm();
+  const t = useTranslations("recurrences");
+  const tFrequency = useTranslations("common.frequency");
+  const { language } = useLanguage();
+  const dateLocale = getDateFnsLocale(language);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -66,9 +72,9 @@ export default function RecurrencesPage() {
   const handleDelete = async (recurrenceId: string) => {
     if (!user) return;
     const ok = await confirm({
-    title: "Supprimer cette récurrence ?",
-    message: "Cette action est irréversible.",
-    confirmLabel: "Supprimer",
+    title: t("deleteConfirm.title"),
+    message: t("deleteConfirm.message"),
+    confirmLabel: t("deleteConfirm.confirm"),
     danger: true
   });
   if (!ok) return;
@@ -82,11 +88,11 @@ export default function RecurrencesPage() {
 
   const getFrequencyLabel = (r: Recurrence): string => {
     switch (r.frequency) {
-      case "daily": return "Quotidien";
-      case "weekly": return "Hebdomadaire";
-      case "monthly": return "Mensuel";
-      case "yearly": return "Annuel";
-      case "custom": return `Tous les ${r.customDays ?? "?"} jours`;
+      case "daily": return tFrequency("daily");
+      case "weekly": return tFrequency("weekly");
+      case "monthly": return tFrequency("monthly");
+      case "yearly": return tFrequency("yearly");
+      case "custom": return t("everyXDays", { days: r.customDays ?? "?" });
       default: return r.frequency;
     }
   };
@@ -106,8 +112,8 @@ export default function RecurrencesPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Récurrences</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">Transactions automatiques</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{t("subtitle")}</p>
         </div>
         <div className="flex gap-2 sm:gap-3">
           <button
@@ -116,13 +122,13 @@ export default function RecurrencesPage() {
             className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-900 dark:text-white font-medium px-3 sm:px-4 py-2.5 rounded-xl transition-colors text-sm"
           >
             <RefreshCw className={`w-4 h-4 ${processing ? "animate-spin" : ""}`} strokeWidth={2} />
-            Générer
+            {t("generate")}
           </button>
           <button
             onClick={() => setShowModal(true)}
             className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium px-4 py-2.5 rounded-xl transition-colors text-sm"
           >
-            + Nouvelle
+            {t("new")}
           </button>
         </div>
       </div>
@@ -132,8 +138,8 @@ export default function RecurrencesPage() {
         <div className="mb-6 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
           <p className="text-emerald-600 dark:text-emerald-400 text-sm">
             {generated === 0
-              ? "✅ Aucune transaction à générer — tout est à jour"
-              : `✅ ${generated} transaction${generated > 1 ? "s" : ""} générée${generated > 1 ? "s" : ""}`
+              ? t("generatedNone")
+              : t("generatedCount", { count: generated })
             }
           </p>
         </div>
@@ -142,8 +148,8 @@ export default function RecurrencesPage() {
       {/* Liste */}
       {recurrences.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center">
-          <p className="text-gray-500 mb-2">Aucune récurrence définie</p>
-          <p className="text-gray-400 dark:text-gray-600 text-sm">Ajoute tes dépenses et revenus automatiques</p>
+          <p className="text-gray-500 mb-2">{t("emptyTitle")}</p>
+          <p className="text-gray-400 dark:text-gray-600 text-sm">{t("emptyDescription")}</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
@@ -180,7 +186,7 @@ export default function RecurrencesPage() {
 
                 <div className="flex items-center justify-between mt-1.5 pl-[6.5rem]">
                   <p className="text-gray-500 text-xs truncate mr-2">
-                    {r.category} · {getFrequencyLabel(r)} · prochain: {format(r.nextOccurrence, "d MMM", { locale: fr })}
+                    {r.category} · {getFrequencyLabel(r)} · {t("nextLabel")} {format(r.nextOccurrence, "d MMM", { locale: dateLocale })}
                   </p>
                   <button
                     onClick={() => handleDelete(r.id)}
