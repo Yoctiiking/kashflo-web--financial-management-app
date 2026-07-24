@@ -18,6 +18,7 @@ import {
 import { doc, setDoc, serverTimestamp, updateDoc, deleteDoc, arrayRemove, collection, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "./config";
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/categories";
+import { detectDeviceLanguage } from "@/lib/providers/LanguageProvider";
 
 const sendVerificationEmail = async (user: User) => {
   await sendEmailVerification(user, { url: `${APP_URL}/verify-email-complete`, handleCodeInApp: false });
@@ -52,6 +53,7 @@ export const registerUser = async (
     email,
     photoURL: null,
     groupId,
+    language: detectDeviceLanguage(),
     expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
     incomeCategories: DEFAULT_INCOME_CATEGORIES,
     createdAt: serverTimestamp()
