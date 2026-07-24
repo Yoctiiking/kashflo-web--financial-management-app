@@ -51,6 +51,7 @@ export interface UserProfile {
   email: string;
   photoURL: string | null;
   currency: string;
+  language: string;
   createdAt: Date;
   onboardingVersion?: number;
   expenseCategories: string[];

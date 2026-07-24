@@ -2,13 +2,15 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
+import { useTranslations } from "next-intl";
 import { getSavingsGoals, deleteSavingsGoal, addToSavingsGoal } from "@/lib/firebase/firestore";
 import { SavingsGoal } from "@/types";
 import SavingsGoalModal from "@/components/SavingsGoalModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { getDateFnsLocale } from "@/lib/utils/months";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import { Pencil, X, PartyPopper } from "lucide-react";
 
@@ -21,6 +23,9 @@ export default function SavingsPage() {
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [addAmount, setAddAmount] = useState("");
   const confirm = useConfirm();
+  const t = useTranslations("savings");
+  const { language } = useLanguage();
+  const dateLocale = getDateFnsLocale(language);
 
   const { formatCurrency, ready, toBase } = useCurrency();
 
@@ -43,9 +48,9 @@ export default function SavingsPage() {
   const handleDelete = async (goalId: string) => {
   if (!user) return;
   const ok = await confirm({
-    title: "Supprimer cet objectif ?",
-    message: "Cette action est irréversible.",
-    confirmLabel: "Supprimer",
+    title: t("deleteConfirm.title"),
+    message: t("deleteConfirm.message"),
+    confirmLabel: t("deleteConfirm.confirm"),
     danger: true
   });
   if (!ok) return;
@@ -83,21 +88,21 @@ export default function SavingsPage() {
     <div className="p-4 sm:p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Objectifs d'épargne</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{goals.length} objectif{goals.length > 1 ? "s" : ""}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{t("goalCount", { count: goals.length })}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
           className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
         >
-          + Nouvel objectif
+          {t("new")}
         </button>
       </div>
 
       {goals.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center">
-          <p className="text-gray-500 mb-2">Aucun objectif d'épargne</p>
-          <p className="text-gray-400 dark:text-gray-600 text-sm">Crée un objectif pour suivre ta progression</p>
+          <p className="text-gray-500 mb-2">{t("emptyTitle")}</p>
+          <p className="text-gray-400 dark:text-gray-600 text-sm">{t("emptyDescription")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -113,7 +118,7 @@ export default function SavingsPage() {
                     <p className="text-gray-900 dark:text-white font-semibold">{goal.name}</p>
                     {goal.targetDate && (
                       <p className="text-gray-500 text-xs mt-0.5">
-                        Objectif : {format(goal.targetDate, "d MMM yyyy", { locale: fr })}
+                        {t("targetDate", { date: format(goal.targetDate, "d MMM yyyy", { locale: dateLocale }) })}
                       </p>
                     )}
                   </div>
@@ -148,8 +153,8 @@ export default function SavingsPage() {
 
                 <p className={`text-xs mb-3 ${isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500"}`}>
                   {isComplete
-                    ? <><PartyPopper className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />Objectif atteint !</>
-                    : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> restant · {Math.round(percentage)}%</>
+                    ? <><PartyPopper className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />{t("complete")}</>
+                    : <><CurrencyValue amount={remaining} ready={ready} formatCurrency={formatCurrency} /> {t("remainingPercent", { percent: Math.round(percentage) })}</>
                   }
                 </p>
 
@@ -161,7 +166,7 @@ export default function SavingsPage() {
                       onChange={(e) => setAddAmount(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") handleAddAmount(goal.id); if (e.key === "Escape") { setAddingTo(null); setAddAmount(""); } }}
                       className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-3 py-2.5 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-                      placeholder="Montant à ajouter"
+                      placeholder={t("addAmountPlaceholder")}
                       autoFocus
                     />
                     <div className="flex gap-2">
@@ -169,13 +174,13 @@ export default function SavingsPage() {
                         onClick={() => handleAddAmount(goal.id)}
                         className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white text-sm font-medium py-2 rounded-xl transition-colors"
                       >
-                        Confirmer
+                        {t("confirm")}
                       </button>
                       <button
                         onClick={() => { setAddingTo(null); setAddAmount(""); }}
                         className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm py-2 rounded-xl transition-colors"
                       >
-                        Annuler
+                        {t("cancel")}
                       </button>
                     </div>
                   </div>
@@ -184,7 +189,7 @@ export default function SavingsPage() {
                     onClick={() => setAddingTo(goal.id)}
                     className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-emerald-600 dark:text-emerald-400 text-sm font-medium py-2 rounded-xl transition-colors"
                   >
-                    + Ajouter un montant
+                    {t("addAmount")}
                   </button>
                 )}
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { TransactionType } from "@/types";
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/categories";
 import { updateUserCategories } from "@/lib/firebase/firestore";
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function CategoriesModal({ onClose }: Props) {
+  const t = useTranslations("categoriesModal");
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const [type, setType] = useState<TransactionType>("expense");
@@ -79,7 +81,7 @@ export default function CategoriesModal({ onClose }: Props) {
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Erreur lors de l'enregistrement");
+      setError(t("errorSave"));
     } finally {
       setLoading(false);
     }
@@ -89,7 +91,7 @@ export default function CategoriesModal({ onClose }: Props) {
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
-          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Catégories</h2>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">{t("title")}</h2>
           <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
@@ -100,14 +102,14 @@ export default function CategoriesModal({ onClose }: Props) {
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "expense" ? "bg-red-500/20 text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 }`}
             >
-              Dépenses
+              {t("expense")}
             </button>
             <button
               onClick={() => setType("income")}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "income" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 }`}
             >
-              Revenus
+              {t("income")}
             </button>
           </div>
         </div>
@@ -140,7 +142,7 @@ export default function CategoriesModal({ onClose }: Props) {
           ))}
 
           {categories.length === 0 && (
-            <p className="text-gray-500 text-sm text-center py-4">Aucune catégorie</p>
+            <p className="text-gray-500 text-sm text-center py-4">{t("empty")}</p>
           )}
         </div>
 
@@ -151,7 +153,7 @@ export default function CategoriesModal({ onClose }: Props) {
               onChange={(e) => setNewCategory(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
               className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors text-sm"
-              placeholder="Nouvelle catégorie"
+              placeholder={t("newPlaceholder")}
             />
             <button
               onClick={handleAdd}
@@ -168,7 +170,7 @@ export default function CategoriesModal({ onClose }: Props) {
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
-            {loading ? "..." : "Enregistrer"}
+            {loading ? "..." : t("save")}
           </button>
         </div>
       </div>

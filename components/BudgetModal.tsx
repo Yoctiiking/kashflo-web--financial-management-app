@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { addBudget, updateBudget } from "@/lib/firebase/firestore";
 import { Budget, BudgetPeriod } from "@/types";
 import { DEFAULT_EXPENSE_CATEGORIES } from "@/lib/categories";
@@ -18,6 +19,8 @@ interface Props {
 
 export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Props) {
   const { profile } = useUserProfile();
+  const t = useTranslations("budgetModal");
+  const tPeriod = useTranslations("common.period");
   const [period, setPeriod] = useState<BudgetPeriod>(budget?.period || "monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -38,11 +41,11 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
 
   const handleSubmit = async () => {
     if (!category || !limit) {
-      setError("Tous les champs sont obligatoires");
+      setError(t("errors.required"));
       return;
     }
     if (isNaN(parseFloat(limit)) || parseFloat(limit) <= 0) {
-      setError("Le montant doit être un nombre positif");
+      setError(t("errors.invalidAmount"));
       return;
     }
 
@@ -67,16 +70,16 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
       onClose();
     } catch (err) {
       console.error(err);
-      setError(isEditing ? "Erreur lors de la modification" : "Erreur lors de la création");
+      setError(isEditing ? t("errors.updateFailed") : t("errors.createFailed"));
     } finally {
       setLoading(false);
     }
   };
 
   const periodLabel = {
-    daily: "/ jour",
-    weekly: "/ semaine",
-    monthly: "/ mois"
+    daily: tPeriod("daily"),
+    weekly: tPeriod("weekly"),
+    monthly: tPeriod("monthly")
   };
 
   return (
@@ -84,7 +87,7 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h2 className="text-gray-900 dark:text-white font-semibold text-lg">
-            {isEditing ? "Modifier le budget" : "Nouveau budget"}
+            {isEditing ? t("editTitle") : t("newTitle")}
           </h2>
           <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
@@ -95,7 +98,7 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
 
           {/* Limite */}
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Limite ({symbol})</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("limitLabel", { symbol })}</label>
             <input
               type="number"
               value={limit}
@@ -109,7 +112,7 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
 
           {/* Période */}
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Période</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("periodLabel")}</label>
             <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
               {(["daily", "weekly", "monthly"] as BudgetPeriod[]).map(p => (
                 <button
@@ -133,7 +136,7 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
-            {loading ? "..." : isEditing ? "Sauvegarder" : "Créer le budget"}
+            {loading ? "..." : isEditing ? t("save") : t("create")}
           </button>
         </div>
       </div>

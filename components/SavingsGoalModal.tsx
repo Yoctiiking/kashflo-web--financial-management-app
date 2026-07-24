@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { addSavingsGoal, updateSavingsGoal } from "@/lib/firebase/firestore";
 import { SavingsGoal } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: Props) {
+  const t = useTranslations("savingsGoalModal");
   const { symbol, toBase, fromBase, ready } = useCurrency();
   const [name, setName] = useState(goal?.name || "");
   const [targetAmount, setTargetAmount] = useState(
@@ -39,11 +41,11 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
 
   const handleSubmit = async () => {
     if (!name || !targetAmount) {
-      setError("Le nom et le montant cible sont obligatoires");
+      setError(t("errors.required"));
       return;
     }
     if (isNaN(parseFloat(targetAmount)) || parseFloat(targetAmount) <= 0) {
-      setError("Le montant cible doit être un nombre positif");
+      setError(t("errors.invalidAmount"));
       return;
     }
 
@@ -73,7 +75,7 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Erreur lors de l'enregistrement");
+      setError(t("errors.generic"));
     } finally {
       setLoading(false);
     }
@@ -84,25 +86,25 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h2 className="text-gray-900 dark:text-white font-semibold text-lg">
-            {isEditing ? "Modifier l'objectif" : "Nouvel objectif d'épargne"}
+            {isEditing ? t("editTitle") : t("newTitle")}
           </h2>
           <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 pb-6 space-y-4">
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nom de l'objectif</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("nameLabel")}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-              placeholder="Ex: Vacances, Fonds d'urgence..."
+              placeholder={t("namePlaceholder")}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Montant cible ({symbol})</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("targetAmountLabel", { symbol })}</label>
             <input
               type="number"
               value={targetAmount}
@@ -115,7 +117,7 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
           </div>
 
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Montant déjà épargné ({symbol})</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("currentAmountLabel", { symbol })}</label>
             <input
               type="number"
               value={currentAmount}
@@ -128,7 +130,7 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
           </div>
 
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Date cible (optionnel)</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("targetDateLabel")}</label>
             <input
               type="date"
               value={targetDate}
@@ -144,7 +146,7 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
-            {loading ? "..." : isEditing ? "Sauvegarder" : "Créer l'objectif"}
+            {loading ? "..." : isEditing ? t("save") : t("create")}
           </button>
         </div>
       </div>

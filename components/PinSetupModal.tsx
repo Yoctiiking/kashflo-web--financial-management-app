@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { setPin, removePin, hasPinSet } from "@/lib/pinLock";
 import { X } from "lucide-react";
 
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function PinSetupModal({ onClose, onSuccess }: Props) {
+  const t = useTranslations("pinSetupModal");
   const [step, setStep] = useState<"enter" | "confirm">("enter");
   const [firstPin, setFirstPin] = useState("");
   const [pin, setPinValue] = useState("");
@@ -33,7 +35,7 @@ export default function PinSetupModal({ onClose, onSuccess }: Props) {
             onClose();
           });
         } else {
-          setError("Les codes ne correspondent pas");
+          setError(t("mismatch"));
           setTimeout(() => {
             setPinValue("");
             setFirstPin("");
@@ -51,13 +53,13 @@ export default function PinSetupModal({ onClose, onSuccess }: Props) {
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md p-8 text-center">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-gray-900 dark:text-white font-semibold text-xl">
-            {step === "enter" ? "Créer un code" : "Confirmer le code"}
+            {step === "enter" ? t("createTitle") : t("confirmTitle")}
           </h2>
           <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
         </div>
 
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-8">
-          {step === "enter" ? "Choisis un code à 4 chiffres" : "Entre à nouveau ton code"}
+          {step === "enter" ? t("createDescription") : t("confirmDescription")}
         </p>
 
         <div className="flex justify-center gap-4 mb-10">

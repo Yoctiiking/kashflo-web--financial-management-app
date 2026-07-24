@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { forgotPassword } from "@/lib/firebase/auth";
 import Link from "next/link";
 
@@ -11,11 +12,12 @@ function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const t = useTranslations("auth.forgotPassword");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError("Entre ton adresse email");
+      setError(t("errorEmailRequired"));
       return;
     }
 
@@ -34,36 +36,39 @@ function ForgotPasswordForm() {
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-800">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Mot de passe oublié</h2>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{t("title")}</h2>
 
       {sent ? (
         <div className="text-center py-4">
           <div className="text-4xl mb-4">📧</div>
           <p className="text-gray-700 dark:text-gray-300 text-sm mb-6">
-            Un lien de réinitialisation a été envoyé à <strong className="text-gray-900 dark:text-white">{email}</strong>.
+            {t.rich("sentMessage", {
+              email,
+              strong: (chunks) => <strong className="text-gray-900 dark:text-white">{chunks}</strong>
+            })}
           </p>
           <Link
             href="/login"
             className="inline-block bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium px-6 py-3 rounded-xl transition-colors"
           >
-            Retour à la connexion
+            {t("backToLogin")}
           </Link>
         </div>
       ) : (
         <>
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-            Entre ton adresse email et on t'enverra un lien pour réinitialiser ton mot de passe.
+            {t("description")}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Email</label>
+              <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("emailLabel")}</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-                placeholder="toi@exemple.com"
+                placeholder={t("emailPlaceholder")}
                 required
               />
             </div>
@@ -75,7 +80,7 @@ function ForgotPasswordForm() {
               disabled={loading}
               className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
             >
-              {loading ? "Envoi..." : "Envoyer le lien"}
+              {loading ? t("submitting") : t("submit")}
             </button>
           </form>
 
@@ -84,7 +89,7 @@ function ForgotPasswordForm() {
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
-              Retour à la connexion
+              {t("backToLogin")}
             </Link>
           </p>
         </>

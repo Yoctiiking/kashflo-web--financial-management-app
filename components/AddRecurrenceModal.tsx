@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { addRecurrence } from "@/lib/firebase/firestore";
 import { TransactionType, RecurrenceFrequency } from "@/types";
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from "@/lib/categories";
@@ -16,6 +17,8 @@ interface Props {
 }
 
 export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Props) {
+  const t = useTranslations("addRecurrenceModal");
+  const tFrequency = useTranslations("common.frequency");
   const { profile } = useUserProfile();
   const { symbol, toBase } = useCurrency();
   const [step, setStep] = useState<1 | 2>(1);
@@ -34,20 +37,20 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
     : (profile?.incomeCategories ?? DEFAULT_INCOME_CATEGORIES);
 
   const frequencyLabel: Record<RecurrenceFrequency, string> = {
-    daily: "Quotidien",
-    weekly: "Hebdomadaire",
-    monthly: "Mensuel",
-    yearly: "Annuel",
-    custom: "Personnalisé"
+    daily: tFrequency("daily"),
+    weekly: tFrequency("weekly"),
+    monthly: tFrequency("monthly"),
+    yearly: tFrequency("yearly"),
+    custom: tFrequency("custom")
   };
 
   const handleNext = () => {
     if (!amount || !label || !category) {
-      setError("Tous les champs sont obligatoires");
+      setError(t("errors.required"));
       return;
     }
     if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      setError("Le montant doit être un nombre positif");
+      setError(t("errors.invalidAmount"));
       return;
     }
     setError("");
@@ -58,7 +61,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
     if (frequency === "custom") {
       const days = parseInt(customDays);
       if (isNaN(days) || days < 2) {
-        setError("L'intervalle personnalisé doit être d'au moins 2 jours");
+        setError(t("errors.customDaysInvalid"));
         return;
       }
     }
@@ -81,7 +84,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Erreur lors de la création");
+      setError(t("errors.createFailed"));
     } finally {
       setLoading(false);
     }
@@ -93,7 +96,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
         {/* En-tête fixe */}
         <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <div>
-            <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Nouvelle récurrence</h2>
+            <h2 className="text-gray-900 dark:text-white font-semibold text-lg">{t("title")}</h2>
             <div className="flex items-center gap-1.5 mt-2">
               <div className={`h-1.5 rounded-full transition-all ${step === 1 ? "w-6 bg-emerald-500" : "w-6 bg-emerald-500/40"}`} />
               <div className={`h-1.5 rounded-full transition-all ${step === 2 ? "w-6 bg-emerald-500" : "w-6 bg-gray-200 dark:bg-gray-700"}`} />
@@ -113,20 +116,20 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "expense" ? "bg-red-500/20 text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                 >
-                  Dépense
+                  {t("expense")}
                 </button>
                 <button
                   onClick={() => { setType("income"); setCategory(""); }}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${type === "income" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                 >
-                  Revenu
+                  {t("income")}
                 </button>
               </div>
 
               {/* Montant */}
               <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Montant ({symbol})</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("amountLabel", { symbol })}</label>
                 <input
                   type="number"
                   value={amount}
@@ -140,13 +143,13 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
 
               {/* Label */}
               <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Description</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("descriptionLabel")}</label>
                 <input
                   type="text"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
                   className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-                  placeholder="Ex: Loyer"
+                  placeholder={t("descriptionPlaceholder")}
                 />
               </div>
 
@@ -159,7 +162,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
                 onClick={handleNext}
                 className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
               >
-                Suivant
+                {t("next")}
               </button>
             </>
           )}
@@ -168,7 +171,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
             <>
               {/* Fréquence */}
               <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Fréquence</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("frequencyLabel")}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {(["daily", "weekly", "monthly", "yearly", "custom"] as RecurrenceFrequency[]).map(f => (
                     <button
@@ -189,7 +192,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
               {frequency === "custom" && (
                 <div>
                   <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                    Tous les combien de jours ?
+                    {t("customDaysLabel")}
                   </label>
                   <div className="flex items-center gap-3">
                     <input
@@ -197,15 +200,15 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
                       value={customDays}
                       onChange={(e) => setCustomDays(e.target.value)}
                       className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-                      placeholder="Ex: 14"
+                      placeholder={t("customDaysPlaceholder")}
                       min="2"
                     />
-                    <span className="text-gray-600 dark:text-gray-400 text-sm whitespace-nowrap">jours</span>
+                    <span className="text-gray-600 dark:text-gray-400 text-sm whitespace-nowrap">{t("daysSuffix")}</span>
                   </div>
                   <p className="text-gray-400 dark:text-gray-600 text-xs mt-1.5">
                     {parseInt(customDays) >= 2
-                      ? `Tous les ${customDays} jours`
-                      : "Minimum 2 jours"
+                      ? t("customDaysSummary", { days: customDays })
+                      : t("customDaysMin")
                     }
                   </p>
                 </div>
@@ -213,7 +216,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
 
               {/* Date de début */}
               <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Première occurrence</label>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("startDateLabel")}</label>
                 <input
                   type="date"
                   value={startDate}
@@ -229,14 +232,14 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
                   onClick={() => { setStep(1); setError(""); }}
                   className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                 >
-                  Retour
+                  {t("back")}
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
                   className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                 >
-                  {loading ? "Création..." : "Créer"}
+                  {loading ? t("creating") : t("create")}
                 </button>
               </div>
             </>

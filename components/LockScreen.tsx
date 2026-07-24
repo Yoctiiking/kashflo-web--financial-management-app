@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { verifyPin } from "@/lib/pinLock";
 import { logoutUser } from "@/lib/firebase/auth";
 import { useRouter } from "next/navigation";
@@ -11,6 +12,7 @@ interface Props {
 
 export default function LockScreen({ onUnlock }: Props) {
   const router = useRouter();
+  const t = useTranslations("lockScreen");
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
@@ -27,7 +29,7 @@ export default function LockScreen({ onUnlock }: Props) {
       if (valid) {
         onUnlock();
       } else {
-        setError("Code incorrect");
+        setError(t("incorrect"));
         setTimeout(() => setPin(""), 400);
       }
       setChecking(false);
@@ -45,7 +47,7 @@ export default function LockScreen({ onUnlock }: Props) {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
           Kash<span className="text-emerald-600 dark:text-emerald-500">Flo</span>
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-8">Entre ton code pour continuer</p>
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-8">{t("prompt")}</p>
 
         <div className="flex justify-center gap-3 mb-8">
           {[0, 1, 2, 3].map(i => (
@@ -92,7 +94,7 @@ export default function LockScreen({ onUnlock }: Props) {
           onClick={() => logoutUser().then(() => router.push("/login"))}
           className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-sm transition-colors"
         >
-          Se déconnecter
+          {t("logout")}
         </button>
       </div>
     </div>

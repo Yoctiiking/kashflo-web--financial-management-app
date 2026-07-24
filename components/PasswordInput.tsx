@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, InputHTMLAttributes } from "react";
+import { useTranslations } from "next-intl";
 
 type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "className"> & {
   variant?: "default" | "danger";
@@ -13,6 +14,7 @@ const VARIANT_CLASSES: Record<NonNullable<Props["variant"]>, string> = {
 
 export default function PasswordInput({ variant = "default", ...props }: Props) {
   const [visible, setVisible] = useState(false);
+  const t = useTranslations("common.passwordInput");
 
   return (
     <div className="relative">
@@ -25,7 +27,7 @@ export default function PasswordInput({ variant = "default", ...props }: Props) 
         type="button"
         onClick={() => setVisible(v => !v)}
         tabIndex={-1}
-        aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+        aria-label={visible ? t("hide") : t("show")}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
         {visible ? (

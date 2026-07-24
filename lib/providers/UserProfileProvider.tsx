@@ -10,6 +10,7 @@ interface UserProfile {
   email?: string;
   photoURL?: string | null;
   currency?: string;
+  language?: string;
   expenseCategories?: string[];
   incomeCategories?: string[];
   isAdmin?: boolean;
