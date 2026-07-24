@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { saveFeedback } from "@/lib/firebase/firestore";
 import { X } from "lucide-react";
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function FeedbackModal({ onClose }: Props) {
+    const t = useTranslations("feedbackModal");
     const { user } = useAuth();
     const [name, setName] = useState(user?.displayName || "");
     const [email, setEmail] = useState(user?.email || "");
@@ -20,7 +22,7 @@ export default function FeedbackModal({ onClose }: Props) {
 
     const handleSubmit = async () => {
         if (!name || !email || !message) {
-            setError("Tous les champs sont obligatoires");
+            setError(t("errors.required"));
             return;
         }
 
@@ -46,7 +48,7 @@ export default function FeedbackModal({ onClose }: Props) {
             setTimeout(() => onClose(), 2000);
         } catch (err) {
             console.error(err);
-            setError("Erreur lors de l'envoi");
+            setError(t("errors.generic"));
         } finally {
             setLoading(false);
         }
@@ -56,7 +58,7 @@ export default function FeedbackModal({ onClose }: Props) {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
                 <div className="flex items-center justify-between p-6 pb-4 shrink-0">
-                    <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Nous contacter</h2>
+                    <h2 className="text-gray-900 dark:text-white font-semibold text-lg">{t("title")}</h2>
                     <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
                 </div>
 
@@ -64,45 +66,45 @@ export default function FeedbackModal({ onClose }: Props) {
                     {success ? (
                         <div className="text-center py-8">
                             <div className="text-4xl mb-3">✅</div>
-                            <p className="text-emerald-600 dark:text-emerald-400 font-medium">Message envoyé !</p>
-                            <p className="text-gray-500 text-sm mt-1">Merci pour ton retour</p>
+                            <p className="text-emerald-600 dark:text-emerald-400 font-medium">{t("successTitle")}</p>
+                            <p className="text-gray-500 text-sm mt-1">{t("successDescription")}</p>
                         </div>
                     ) : (
                         <>
                             <p className="text-gray-600 dark:text-gray-400 text-sm">
-                                Une question, un bug, ou une suggestion ? Écris-nous, on te répond rapidement.
+                                {t("description")}
                             </p>
 
                             <div>
-                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nom</label>
+                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("nameLabel")}</label>
                                 <input
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-                                    placeholder="Ton nom"
+                                    placeholder={t("namePlaceholder")}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Email</label>
+                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("emailLabel")}</label>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-                                    placeholder="ton@email.com"
+                                    placeholder={t("emailPlaceholder")}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Message</label>
+                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("messageLabel")}</label>
                                 <textarea
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                     rows={5}
                                     className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
-                                    placeholder="Décris ton problème ou ta suggestion..."
+                                    placeholder={t("messagePlaceholder")}
                                 />
                             </div>
 
@@ -113,7 +115,7 @@ export default function FeedbackModal({ onClose }: Props) {
                                 disabled={loading}
                                 className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                             >
-                                {loading ? "Envoi..." : "Envoyer"}
+                                {loading ? t("submitting") : t("submit")}
                             </button>
                         </>
                     )}

@@ -46,6 +46,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     email: data.email,
     photoURL: data.photoURL,
     currency: data.currency ?? "CAD",
+    language: data.language ?? "fr",
     createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
     onboardingVersion: data.onboardingVersion ?? 0,
     expenseCategories: data.expenseCategories ?? DEFAULT_EXPENSE_CATEGORIES,
@@ -63,6 +64,10 @@ export const resetOnboarding = async (userId: string) => {
 
 export const updateUserCurrency = async (userId: string, currency: string) => {
   await updateDoc(doc(db, "users", userId), { currency });
+};
+
+export const updateUserLanguage = async (userId: string, language: string) => {
+  await updateDoc(doc(db, "users", userId), { language });
 };
 
 export const updateUserCategories = async (
@@ -132,6 +137,28 @@ export const getLastMonthsTransactions = async (
   const q = query(
     collection(db, "users", userId, "transactions"),
     where("date", ">=", Timestamp.fromDate(startDate)),
+    orderBy("date", "desc"),
+    orderBy("createdAt", "desc")
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    date: (doc.data().date as Timestamp).toDate(),
+    createdAt: (doc.data().createdAt as Timestamp).toDate()
+  })) as Transaction[];
+};
+
+export const getTransactionsInRange = async (
+  userId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<Transaction[]> => {
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    where("date", ">=", Timestamp.fromDate(startDate)),
+    where("date", "<=", Timestamp.fromDate(endDate)),
     orderBy("date", "desc"),
     orderBy("createdAt", "desc")
   );
@@ -227,12 +254,15 @@ export const getRecurrences = async (userId: string): Promise<Recurrence[]> => {
     orderBy("createdAt", "desc")
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    nextOccurrence: (doc.data().nextOccurrence as Timestamp).toDate(),
-    createdAt: (doc.data().createdAt as Timestamp).toDate()
-  })) as Recurrence[];
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      nextOccurrence: data.nextOccurrence ? (data.nextOccurrence as Timestamp).toDate() : new Date(),
+      createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date()
+    };
+  }) as Recurrence[];
 };
 
 export const addRecurrence = async (

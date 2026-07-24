@@ -3,6 +3,7 @@
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { logoutUser } from "@/lib/firebase/auth";
 import { getRecurrences } from "@/lib/firebase/firestore";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import { useInactivityLogout } from "@/lib/hooks/useInactivityLogout";
 import { useAppLock } from "@/lib/hooks/useAppLock";
 import LockScreen from "@/components/LockScreen";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import { isAdmin } from "@/lib/admin";
 import {
   LayoutDashboard,
@@ -25,18 +27,20 @@ import {
   ShieldCheck
 } from "lucide-react";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/budgets", label: "Budgets", icon: Target },
-  { href: "/shared-budgets", label: "Partagés", icon: Users },
-  { href: "/savings", label: "Épargne", icon: PiggyBank },
-  { href: "/recurrences", label: "Récurrences", icon: Repeat },
-  { href: "/stats", label: "Statistiques", icon: BarChart3 },
-  { href: "/settings", label: "Paramètres", icon: Settings },
-];
+const LANGUAGES = ["fr", "en"] as const;
 
-const adminNavItem = { href: "/admin", label: "Admin", icon: ShieldCheck };
+const navItems = [
+  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/transactions", key: "transactions", icon: ArrowLeftRight },
+  { href: "/budgets", key: "budgets", icon: Target },
+  { href: "/shared-budgets", key: "sharedBudgets", icon: Users },
+  { href: "/savings", key: "savings", icon: PiggyBank },
+  { href: "/recurrences", key: "recurrences", icon: Repeat },
+  { href: "/stats", key: "stats", icon: BarChart3 },
+  { href: "/settings", key: "settings", icon: Settings },
+] as const;
+
+const adminNavItem = { href: "/admin", key: "admin", icon: ShieldCheck } as const;
 
 const primaryMobileItems = ["/dashboard", "/transactions", "/budgets", "/recurrences"];
 
@@ -47,6 +51,8 @@ export default function AppLayout({
 }) {
   const { user, loading } = useAuth();
   const { profile } = useUserProfile();
+  const { language, setLanguage } = useLanguage();
+  const t = useTranslations("nav");
   const router = useRouter();
   const pathname = usePathname();
   const [upcomingCount, setUpcomingCount] = useState(0);
@@ -132,7 +138,7 @@ export default function AppLayout({
                   }`}
               >
                 <item.icon className="w-5 h-5" strokeWidth={2} />
-                {item.label}
+                {t(item.key)}
                 {showBadge && (
                   <span className="ml-auto bg-amber-500 text-gray-950 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                     {upcomingCount}
@@ -143,14 +149,28 @@ export default function AppLayout({
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+        {/* Langue + Déconnexion */}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang}
+                onClick={() => setLanguage(lang)}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-medium uppercase transition-colors ${language === lang
+                  ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
           <button
             onClick={() => logoutUser().then(() => router.push("/login"))}
             className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
           >
             <LogOut className="w-5 h-5" strokeWidth={2} />
-            Déconnexion
+            {t("logout")}
           </button>
         </div>
       </aside>
@@ -181,7 +201,7 @@ export default function AppLayout({
                     }`}
                 >
                   <item.icon className="w-5 h-5" strokeWidth={2} />
-                  {item.label}
+                  {t(item.key)}
                   {showBadge && (
                     <span className="ml-auto bg-amber-500 text-gray-950 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                       {upcomingCount}
@@ -190,12 +210,28 @@ export default function AppLayout({
                 </Link>
               );
             })}
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+              <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+                {LANGUAGES.map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => setLanguage(lang)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium uppercase transition-colors ${language === lang
+                      ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                      : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button
               onClick={() => logoutUser().then(() => router.push("/login"))}
               className="w-full flex items-center gap-4 px-6 py-4 text-base text-red-600 dark:text-red-400 border-t border-gray-200 dark:border-gray-800"
             >
               <LogOut className="w-5 h-5" strokeWidth={2} />
-              Déconnexion
+              {t("logout")}
             </button>
           </div>
         </div>
@@ -222,7 +258,7 @@ export default function AppLayout({
                 )}
               </span>
               <span className="truncate w-full text-center px-0.5">
-                {item.label === "Récurrences" ? "Récurr." : item.label}
+                {item.key === "recurrences" ? t("recurrencesShort") : t(item.key)}
               </span>
             </Link>
           );
@@ -233,7 +269,7 @@ export default function AppLayout({
             }`}
         >
           <Menu className="w-5 h-5" strokeWidth={2} />
-          <span>Plus</span>
+          <span>{t("more")}</span>
         </button>
       </nav>
     </div>

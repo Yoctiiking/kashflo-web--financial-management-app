@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { getMonthTransactions, migrateTransactionToSharedBudget } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { getMonthNames, getDateFnsLocale } from "@/lib/utils/months";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import { X } from "lucide-react";
 
@@ -17,19 +19,14 @@ interface Props {
     onSuccess: () => void;
 }
 
-const MONTHS_FR = [
-    "janvier", "février", "mars", "avril", "mai", "juin",
-    "juillet", "août", "septembre", "octobre", "novembre", "décembre"
-];
-
 function normalize(str: string) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
-function parseMonthSearch(search: string): { month: number; year: number | null; remainder: string } | null {
+function parseMonthSearch(search: string, monthNames: string[]): { month: number; year: number | null; remainder: string } | null {
     const normalized = normalize(search);
-    for (let i = 0; i < MONTHS_FR.length; i++) {
-        const monthNorm = normalize(MONTHS_FR[i]);
+    for (let i = 0; i < monthNames.length; i++) {
+        const monthNorm = normalize(monthNames[i]);
         if (normalized === monthNorm) {
             return { month: i, year: null, remainder: "" };
         }
@@ -47,6 +44,10 @@ function parseMonthSearch(search: string): { month: number; year: number | null;
 
 export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }: Props) {
     const { user } = useAuth();
+    const t = useTranslations("migrateTransactionModal");
+    const { language } = useLanguage();
+    const monthNames = getMonthNames(language);
+    const dateLocale = getDateFnsLocale(language);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [migrating, setMigrating] = useState(false);
@@ -60,7 +61,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
     const [navYear, setNavYear] = useState(now.getFullYear());
     const [navMonth, setNavMonth] = useState(now.getMonth());
 
-    const parsedSearch = parseMonthSearch(search);
+    const parsedSearch = parseMonthSearch(search, monthNames);
     const targetYear = parsedSearch?.year ?? (parsedSearch ? navYear : navYear);
     const targetMonth = parsedSearch?.month ?? navMonth;
     const effectiveYear = parsedSearch ? (parsedSearch.year ?? navYear) : navYear;
@@ -125,11 +126,11 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
 
     const handleMigrateSelected = async () => {
         if (!user || selectedIds.size === 0) return;
-        const toMigrate = transactions.filter(t => selectedIds.has(t.id));
+        const toMigrate = transactions.filter(tx => selectedIds.has(tx.id));
         const ok = await confirm({
-            title: `Déplacer ${toMigrate.length} transaction${toMigrate.length > 1 ? "s" : ""} ?`,
-            message: "Elles seront retirées de tes transactions personnelles et ajoutées à ce budget partagé.",
-            confirmLabel: "Déplacer",
+            title: t("moveConfirmTitle", { count: toMigrate.length }),
+            message: t("moveConfirmMessage"),
+            confirmLabel: t("moveConfirmButton"),
             danger: false
         });
         if (!ok) return;
@@ -181,7 +182,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
                 <div className="flex items-center justify-between p-6 pb-4 shrink-0">
-                    <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Ajouter depuis mes transactions</h2>
+                    <h2 className="text-gray-900 dark:text-white font-semibold text-lg">{t("title")}</h2>
                     <button onClick={onClose} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" strokeWidth={2} /></button>
                 </div>
 
@@ -189,20 +190,20 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                     <button
                         onClick={goToPreviousMonth}
                         className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                        aria-label="Mois précédent"
+                        aria-label={t("prevMonth")}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="15 18 9 12 15 6" />
                         </svg>
                     </button>
                     <p className="text-gray-700 dark:text-gray-300 text-sm font-medium capitalize w-32 text-center">
-                        {format(new Date(effectiveYear, targetMonth), "MMMM yyyy", { locale: fr })}
+                        {format(new Date(effectiveYear, targetMonth), "MMMM yyyy", { locale: dateLocale })}
                     </p>
                     <button
                         onClick={goToNextMonth}
                         disabled={isCurrentMonthDisplayed}
                         className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        aria-label="Mois suivant"
+                        aria-label={t("nextMonth")}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="9 18 15 12 9 6" />
@@ -218,7 +219,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                                 ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                                 : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                                 }`}
-                            aria-label="Filtrer par date"
+                            aria-label={t("filterByDate")}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
@@ -228,7 +229,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Nom, montant, ou mois (ex: juin)"
+                            placeholder={t("searchPlaceholder")}
                             className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
                         />
                     </div>
@@ -246,7 +247,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                                     onClick={() => setDateFilter("")}
                                     className="shrink-0 px-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-sm"
                                 >
-                                    Effacer
+                                    {t("clear")}
                                 </button>
                             )}
                         </div>
@@ -260,7 +261,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                         </div>
                     ) : filtered.length === 0 ? (
                         <p className="text-gray-500 text-sm text-center py-8">
-                            {search || dateFilter ? "Aucun résultat" : "Aucune dépense ce mois-ci"}
+                            {search || dateFilter ? t("noResults") : t("emptyMonth")}
                         </p>
                     ) : (
                         <div className="space-y-2">
@@ -287,7 +288,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                                         <div className="flex-1 min-w-0">
                                             <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{tx.label}</p>
                                             <p className="text-gray-500 text-xs mt-0.5">
-                                                {tx.category} · {format(tx.date, "d MMM yyyy", { locale: fr })}
+                                                {tx.category} · {format(tx.date, "d MMM yyyy", { locale: dateLocale })}
                                             </p>
                                         </div>
                                         <CurrencyValue amount={tx.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-600 dark:text-red-400 font-semibold text-sm shrink-0" />
@@ -301,7 +302,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                 {selectedIds.size > 0 && (
                     <div className="p-6 pt-4 border-t border-gray-200 dark:border-gray-800 shrink-0 space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">{selectedIds.size} sélectionnée{selectedIds.size > 1 ? "s" : ""}</span>
+                            <span className="text-gray-600 dark:text-gray-400">{t("selectedCount", { count: selectedIds.size })}</span>
                             <CurrencyValue amount={selectedTotal} ready={ready} formatCurrency={formatCurrency} className="text-gray-900 dark:text-white font-semibold" />
                         </div>
                         <button
@@ -309,7 +310,7 @@ export default function MigrateTransactionModal({ budgetId, onClose, onSuccess }
                             disabled={migrating}
                             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
                         >
-                            {migrating ? "Déplacement..." : `Déplacer ${selectedIds.size} transaction${selectedIds.size > 1 ? "s" : ""}`}
+                            {migrating ? t("moving") : t("moveButton", { count: selectedIds.size })}
                         </button>
                     </div>
                 )}

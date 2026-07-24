@@ -5,7 +5,9 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { getLastMonthsTransactions } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { useTranslations } from "next-intl";
+import { getDateFnsLocale } from "@/lib/utils/months";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import {
   BarChart,
   Bar,
@@ -32,6 +34,9 @@ export default function StatsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const { formatCurrency, ready } = useCurrency();
+  const t = useTranslations("stats");
+  const { language } = useLanguage();
+  const dateLocale = getDateFnsLocale(language);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -52,7 +57,7 @@ export default function StatsPage() {
   const barData = Array.from({ length: 6 }, (_, i) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (5 - i));
-    const month = format(date, "MMM", { locale: fr });
+    const month = format(date, "MMM", { locale: dateLocale });
     const year = date.getFullYear();
     const monthNum = date.getMonth();
 
@@ -95,7 +100,7 @@ export default function StatsPage() {
         <p className="text-gray-600 dark:text-gray-400 mb-2 font-medium capitalize">{label}</p>
         {payload.map((entry: any) => (
           <p key={entry.name} style={{ color: entry.fill }}>
-            {entry.name === "income" ? "Revenus" : "Dépenses"} : <CurrencyValue amount={entry.value} ready={ready} formatCurrency={formatCurrency} />
+            {entry.name === "income" ? t("barChart.income") : t("barChart.expenses")} : <CurrencyValue amount={entry.value} ready={ready} formatCurrency={formatCurrency} />
           </p>
         ))}
       </div>
@@ -125,15 +130,15 @@ export default function StatsPage() {
   return (
     <div className="p-4 sm:p-8">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Statistiques</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">Les 6 derniers mois</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h2>
+        <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{t("subtitle")}</p>
       </div>
 
       <div className="space-y-6">
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-          <h3 className="text-gray-900 dark:text-white font-semibold mb-6">Revenus vs Dépenses</h3>
+          <h3 className="text-gray-900 dark:text-white font-semibold mb-6">{t("barChart.title")}</h3>
           {transactions.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-8">Aucune donnée disponible</p>
+            <p className="text-gray-500 text-sm text-center py-8">{t("barChart.empty")}</p>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={barData} barGap={4}>
@@ -161,10 +166,10 @@ export default function StatsPage() {
 
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
           <h3 className="text-gray-900 dark:text-white font-semibold mb-6">
-            Dépenses par catégorie — {format(new Date(), "MMMM yyyy", { locale: fr })}
+            {t("pieChart.titleWithMonth", { month: format(new Date(), "MMMM yyyy", { locale: dateLocale }) })}
           </h3>
           {pieData.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-8">Aucune dépense ce mois-ci</p>
+            <p className="text-gray-500 text-sm text-center py-8">{t("pieChart.empty")}</p>
           ) : (
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="w-full md:w-1/2 shrink-0">

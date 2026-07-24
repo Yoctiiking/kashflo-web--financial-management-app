@@ -1,0 +1,679 @@
+{
+  "common": {
+    "passwordInput": {
+      "show": "Afficher le mot de passe",
+      "hide": "Masquer le mot de passe"
+    },
+    "categorySelect": {
+      "label": "Catégorie",
+      "placeholder": "Sélectionner...",
+      "customPlaceholder": "Préciser la catégorie (optionnel)"
+    },
+    "period": {
+      "daily": "/ jour",
+      "weekly": "/ semaine",
+      "monthly": "/ mois"
+    },
+    "confirmModal": {
+      "cancel": "Annuler",
+      "confirm": "Confirmer"
+    },
+    "frequency": {
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel",
+      "yearly": "Annuel",
+      "custom": "Personnalisé"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "emailLabel": "Email",
+      "emailPlaceholder": "toi@exemple.com",
+      "passwordLabel": "Mot de passe",
+      "forgotPassword": "Mot de passe oublié ?",
+      "submit": "Se connecter",
+      "submitting": "Connexion...",
+      "noAccount": "Pas encore de compte ?",
+      "signUp": "S'inscrire",
+      "errors": {
+        "invalidCredential": "Email ou mot de passe incorrect",
+        "tooManyRequests": "Trop de tentatives, réessaie plus tard",
+        "generic": "Une erreur est survenue"
+      }
+    },
+    "register": {
+      "title": "Créer un compte",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Ton prénom",
+      "emailLabel": "Email",
+      "emailPlaceholder": "toi@exemple.com",
+      "passwordLabel": "Mot de passe",
+      "submit": "Créer mon compte",
+      "submitting": "Création...",
+      "haveAccount": "Déjà un compte ?",
+      "signIn": "Se connecter",
+      "errors": {
+        "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères",
+        "emailInUse": "Cet email est déjà utilisé",
+        "generic": "Une erreur est survenue"
+      }
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "description": "Entre ton adresse email et on t'enverra un lien pour réinitialiser ton mot de passe.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "toi@exemple.com",
+      "submit": "Envoyer le lien",
+      "submitting": "Envoi...",
+      "backToLogin": "Retour à la connexion",
+      "errorEmailRequired": "Entre ton adresse email",
+      "sentMessage": "Un lien de réinitialisation a été envoyé à <strong>{email}</strong>."
+    },
+    "verifyEmail": {
+      "title": "Vérifie ton email",
+      "message": "On a envoyé un lien de confirmation à <strong>{email}</strong>. Clique sur le lien dans l'email — tu seras redirigé automatiquement ici.",
+      "waiting": "En attente de vérification...",
+      "resend": "Renvoyer l'email",
+      "resending": "Envoi...",
+      "resent": "✅ Email renvoyé",
+      "logout": "Se déconnecter",
+      "errors": {
+        "tooManyRequests": "Trop de tentatives — réessaie dans quelques minutes.",
+        "generic": "Erreur lors de l'envoi. Réessaie dans un instant."
+      }
+    }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "displayName": {
+      "title": "Nom d'affichage",
+      "placeholder": "Ton prénom",
+      "save": "Sauvegarder",
+      "success": "Nom mis à jour",
+      "errors": {
+        "empty": "Le nom ne peut pas être vide",
+        "generic": "Erreur lors de la mise à jour"
+      }
+    },
+    "appearance": {
+      "title": "Apparence",
+      "dark": "🌙 Sombre",
+      "light": "☀️ Clair"
+    },
+    "pinLock": {
+      "title": "Verrouillage par code",
+      "description": "Protège l'accès à l'app après 5 minutes d'inactivité",
+      "disable": "Désactiver le code",
+      "enable": "Activer un code de verrouillage",
+      "confirmDisable": {
+        "title": "Désactiver le verrouillage par code ?",
+        "message": "L'application ne sera plus protégée par un code après une période d'inactivité.",
+        "confirm": "Désactiver"
+      }
+    },
+    "categories": {
+      "title": "Catégories",
+      "description": "Ajoute, renomme ou supprime tes catégories de dépenses et revenus",
+      "manage": "Gérer les catégories"
+    },
+    "password": {
+      "title": "Mot de passe",
+      "currentPlaceholder": "Mot de passe actuel",
+      "newPlaceholder": "Nouveau mot de passe",
+      "confirmPlaceholder": "Confirmer le nouveau mot de passe",
+      "submit": "Changer le mot de passe",
+      "submitting": "Mise à jour...",
+      "success": "Mot de passe mis à jour",
+      "errors": {
+        "required": "Tous les champs sont obligatoires",
+        "tooShort": "Le nouveau mot de passe doit contenir au moins 6 caractères",
+        "mismatch": "Les mots de passe ne correspondent pas",
+        "wrongPassword": "Mot de passe actuel incorrect",
+        "generic": "Erreur lors de la mise à jour"
+      }
+    },
+    "currency": {
+      "title": "Devise",
+      "description": "Choisis la devise dans laquelle tes montants s'affichent. La conversion est automatique et basée sur les taux du jour.",
+      "success": "Devise mise à jour",
+      "options": {
+        "CAD": "Dollar canadien (CAD)",
+        "USD": "Dollar américain (USD)",
+        "EUR": "Euro (EUR)",
+        "GBP": "Livre sterling (GBP)",
+        "CHF": "Franc suisse (CHF)",
+        "XOF": "Franc CFA (XOF)"
+      }
+    },
+    "language": {
+      "title": "Langue",
+      "description": "Choisis la langue de l'application.",
+      "success": "Langue mise à jour",
+      "options": {
+        "fr": "Français",
+        "en": "Anglais"
+      }
+    },
+    "contact": {
+      "title": "Nous contacter",
+      "description": "Une question, un bug, ou une suggestion ?",
+      "button": "✉️ Envoyer un message"
+    },
+    "session": {
+      "title": "Session",
+      "connectedAs": "Connecté en tant que {email}",
+      "logout": "🚪 Se déconnecter"
+    },
+    "dangerZone": {
+      "title": "Zone dangereuse",
+      "description": "La suppression de ton compte est irréversible. Toutes tes données seront perdues.",
+      "deleteButton": "Supprimer mon compte",
+      "confirmPrompt": "Entre ton mot de passe pour confirmer la suppression :",
+      "passwordPlaceholder": "Ton mot de passe",
+      "cancel": "Annuler",
+      "confirm": "Confirmer",
+      "deleting": "Suppression...",
+      "errors": {
+        "passwordRequired": "Entre ton mot de passe pour confirmer",
+        "wrongPassword": "Mot de passe incorrect",
+        "generic": "Erreur lors de la suppression"
+      }
+    }
+  },
+  "lockScreen": {
+    "prompt": "Entre ton code pour continuer",
+    "incorrect": "Code incorrect",
+    "logout": "Se déconnecter"
+  },
+  "pinSetupModal": {
+    "createTitle": "Créer un code",
+    "confirmTitle": "Confirmer le code",
+    "createDescription": "Choisis un code à 4 chiffres",
+    "confirmDescription": "Entre à nouveau ton code",
+    "mismatch": "Les codes ne correspondent pas"
+  },
+  "categoriesModal": {
+    "title": "Catégories",
+    "expense": "Dépenses",
+    "income": "Revenus",
+    "empty": "Aucune catégorie",
+    "newPlaceholder": "Nouvelle catégorie",
+    "save": "Enregistrer",
+    "errorSave": "Erreur lors de l'enregistrement"
+  },
+  "feedbackModal": {
+    "title": "Nous contacter",
+    "description": "Une question, un bug, ou une suggestion ? Écris-nous, on te répond rapidement.",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Ton nom",
+    "emailLabel": "Email",
+    "emailPlaceholder": "ton@email.com",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Décris ton problème ou ta suggestion...",
+    "submit": "Envoyer",
+    "submitting": "Envoi...",
+    "successTitle": "Message envoyé !",
+    "successDescription": "Merci pour ton retour",
+    "errors": {
+      "required": "Tous les champs sont obligatoires",
+      "generic": "Erreur lors de l'envoi"
+    }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "budgets": "Budgets",
+    "sharedBudgets": "Partagés",
+    "savings": "Épargne",
+    "recurrences": "Récurrences",
+    "recurrencesShort": "Récurr.",
+    "stats": "Statistiques",
+    "settings": "Paramètres",
+    "admin": "Admin",
+    "more": "Plus",
+    "logout": "Déconnexion"
+  },
+  "dashboard": {
+    "greeting": "Bonjour, {name} 👋",
+    "upcomingPayments": "{count, plural, one {# paiement à venir} other {# paiements à venir}}",
+    "dayLabel": {
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "inDays": "Dans {days, plural, one {# jour} other {# jours}}"
+    },
+    "stats": {
+      "balance": "Solde",
+      "income": "Revenus",
+      "expenses": "Dépenses"
+    },
+    "recentTransactions": {
+      "title": "Transactions récentes",
+      "empty": "Aucune transaction pour l'instant"
+    },
+    "budgets": {
+      "title": "Budgets",
+      "empty": "Aucun budget défini",
+      "perDay": "/ jour",
+      "perWeek": "/ semaine",
+      "perMonth": "/ mois"
+    },
+    "monthRecurrences": {
+      "title": "Récurrences ce mois",
+      "empty": "Aucune récurrence prévue ce mois"
+    },
+    "expensesByCategory": {
+      "title": "Dépenses par catégorie",
+      "empty": "Aucune dépense ce mois-ci"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "prevMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "search": "Rechercher",
+    "searchPlaceholder": "Nom, catégorie, ou mois (ex : juin)",
+    "export": "Exporter",
+    "exportCsv": "CSV (mois affiché)",
+    "exportPdf": "PDF (mois affiché)",
+    "exportRange": "Plage de mois...",
+    "add": "+ Ajouter",
+    "filters": {
+      "all": "Tout",
+      "expense": "Dépenses",
+      "income": "Revenus"
+    },
+    "empty": "Aucune transaction",
+    "deleteConfirm": {
+      "title": "Supprimer cette transaction ?",
+      "message": "Cette action est irréversible.",
+      "confirm": "Supprimer"
+    }
+  },
+  "transactionModal": {
+    "editTitle": "Modifier la transaction",
+    "newTitle": "Nouvelle transaction",
+    "expenseLocked": "Dépense · {category}",
+    "expense": "Dépense",
+    "income": "Revenu",
+    "amountLabel": "Montant ({symbol})",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Ex: Épicerie Metro",
+    "dateLabel": "Date",
+    "saving": "Sauvegarde...",
+    "save": "Sauvegarder",
+    "adding": "Ajout en cours...",
+    "addSubmit": "Ajouter",
+    "errors": {
+      "required": "Tous les champs sont obligatoires",
+      "invalidAmount": "Le montant doit être un nombre positif",
+      "updateFailed": "Erreur lors de la modification",
+      "createFailed": "Erreur lors de l'ajout"
+    }
+  },
+  "exportRangeModal": {
+    "title": "Exporter une plage de mois",
+    "from": "Du",
+    "to": "Au",
+    "errorRange": "La date de début doit précéder la date de fin",
+    "errorExport": "Erreur lors de l'export",
+    "exportCsv": "Exporter en CSV",
+    "exportPdf": "Exporter en PDF"
+  },
+  "budgets": {
+    "title": "Budgets",
+    "activeCount": "{count, plural, one {# budget actif} other {# budgets actifs}}",
+    "new": "+ Nouveau budget",
+    "emptyTitle": "Aucun budget défini",
+    "emptyDescription": "Crée un budget pour suivre tes dépenses par catégorie",
+    "spent": "dépensé",
+    "over": "Dépassé de",
+    "remaining": "restant",
+    "deleteConfirm": {
+      "title": "Supprimer ce budget ?",
+      "message": "Cette action est irréversible.",
+      "confirm": "Supprimer"
+    }
+  },
+  "budgetDetail": {
+    "notFound": "Budget introuvable",
+    "edit": "Modifier",
+    "spent": "dépensé",
+    "over": "Dépassé de",
+    "remainingPercent": "restant · {percent}%",
+    "transactions": "Transactions",
+    "add": "+ Ajouter",
+    "empty": "Aucune transaction pour l'instant",
+    "searchPlaceholder": "Rechercher une transaction...",
+    "noResults": "Aucune transaction trouvée",
+    "showMore": "Voir plus ({count} restantes)",
+    "deleteConfirm": {
+      "title": "Supprimer cette transaction ?",
+      "message": "Cette action est irréversible.",
+      "confirm": "Supprimer"
+    }
+  },
+  "budgetModal": {
+    "editTitle": "Modifier le budget",
+    "newTitle": "Nouveau budget",
+    "limitLabel": "Limite ({symbol})",
+    "periodLabel": "Période",
+    "save": "Sauvegarder",
+    "create": "Créer le budget",
+    "errors": {
+      "required": "Tous les champs sont obligatoires",
+      "invalidAmount": "Le montant doit être un nombre positif",
+      "updateFailed": "Erreur lors de la modification",
+      "createFailed": "Erreur lors de la création"
+    }
+  },
+  "stats": {
+    "title": "Statistiques",
+    "subtitle": "Les 6 derniers mois",
+    "barChart": {
+      "title": "Revenus vs Dépenses",
+      "empty": "Aucune donnée disponible",
+      "income": "Revenus",
+      "expenses": "Dépenses"
+    },
+    "pieChart": {
+      "titleWithMonth": "Dépenses par catégorie — {month}",
+      "empty": "Aucune dépense ce mois-ci"
+    }
+  },
+  "savings": {
+    "title": "Objectifs d'épargne",
+    "goalCount": "{count, plural, one {# objectif} other {# objectifs}}",
+    "new": "+ Nouvel objectif",
+    "emptyTitle": "Aucun objectif d'épargne",
+    "emptyDescription": "Crée un objectif pour suivre ta progression",
+    "targetDate": "Objectif : {date}",
+    "complete": "Objectif atteint !",
+    "remainingPercent": "restant · {percent}%",
+    "addAmountPlaceholder": "Montant à ajouter",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "addAmount": "+ Ajouter un montant",
+    "deleteConfirm": {
+      "title": "Supprimer cet objectif ?",
+      "message": "Cette action est irréversible.",
+      "confirm": "Supprimer"
+    }
+  },
+  "savingsGoalModal": {
+    "editTitle": "Modifier l'objectif",
+    "newTitle": "Nouvel objectif d'épargne",
+    "nameLabel": "Nom de l'objectif",
+    "namePlaceholder": "Ex: Vacances, Fonds d'urgence...",
+    "targetAmountLabel": "Montant cible ({symbol})",
+    "currentAmountLabel": "Montant déjà épargné ({symbol})",
+    "targetDateLabel": "Date cible (optionnel)",
+    "save": "Sauvegarder",
+    "create": "Créer l'objectif",
+    "errors": {
+      "required": "Le nom et le montant cible sont obligatoires",
+      "invalidAmount": "Le montant cible doit être un nombre positif",
+      "generic": "Erreur lors de l'enregistrement"
+    }
+  },
+  "recurrences": {
+    "title": "Récurrences",
+    "subtitle": "Transactions automatiques",
+    "generate": "Générer",
+    "new": "+ Nouvelle",
+    "generatedNone": "✅ Aucune transaction à générer — tout est à jour",
+    "generatedCount": "✅ {count, plural, one {# transaction générée} other {# transactions générées}}",
+    "emptyTitle": "Aucune récurrence définie",
+    "emptyDescription": "Ajoute tes dépenses et revenus automatiques",
+    "everyXDays": "Tous les {days} jours",
+    "nextLabel": "prochain :",
+    "deleteConfirm": {
+      "title": "Supprimer cette récurrence ?",
+      "message": "Cette action est irréversible.",
+      "confirm": "Supprimer"
+    }
+  },
+  "addRecurrenceModal": {
+    "title": "Nouvelle récurrence",
+    "expense": "Dépense",
+    "income": "Revenu",
+    "amountLabel": "Montant ({symbol})",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Ex: Loyer",
+    "next": "Suivant",
+    "frequencyLabel": "Fréquence",
+    "customDaysLabel": "Tous les combien de jours ?",
+    "customDaysPlaceholder": "Ex: 14",
+    "daysSuffix": "jours",
+    "customDaysSummary": "Tous les {days} jours",
+    "customDaysMin": "Minimum 2 jours",
+    "startDateLabel": "Première occurrence",
+    "back": "Retour",
+    "create": "Créer",
+    "creating": "Création...",
+    "errors": {
+      "required": "Tous les champs sont obligatoires",
+      "invalidAmount": "Le montant doit être un nombre positif",
+      "customDaysInvalid": "L'intervalle personnalisé doit être d'au moins 2 jours",
+      "createFailed": "Erreur lors de la création"
+    }
+  },
+  "sharedBudgets": {
+    "title": "Budgets partagés",
+    "budgetCount": "{count, plural, one {# budget} other {# budgets}}",
+    "new": "+ Nouveau",
+    "emptyTitle": "Aucun budget partagé",
+    "emptyDescription": "Crée un budget et invite des membres à y contribuer",
+    "memberCount": "{count, plural, one {# membre} other {# membres}}",
+    "deleteConfirm": "Supprimer ce budget partagé ?"
+  },
+  "sharedBudgetModal": {
+    "editTitle": "Modifier le budget",
+    "newTitle": "Nouveau budget partagé",
+    "nameLabel": "Nom du budget",
+    "namePlaceholder": "Ex: Courses de la semaine",
+    "limitLabel": "Limite ({symbol})",
+    "periodLabel": "Période",
+    "save": "Sauvegarder",
+    "create": "Créer le budget",
+    "errors": {
+      "required": "Tous les champs sont obligatoires",
+      "invalidAmount": "Le montant doit être un nombre positif",
+      "generic": "Erreur lors de l'enregistrement"
+    }
+  },
+  "deleteExpenseModal": {
+    "title": "Supprimer « {label} »",
+    "description": "Que veux-tu faire de cette dépense ?",
+    "unshare": "📤 Retirer du budget partagé",
+    "unshareDescription": "Revient dans les transactions personnelles",
+    "deletePermanently": "🗑️ Supprimer définitivement",
+    "cancel": "Annuler"
+  },
+  "migrateTransactionModal": {
+    "title": "Ajouter depuis mes transactions",
+    "prevMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "searchPlaceholder": "Nom, montant, ou mois (ex: juin)",
+    "filterByDate": "Filtrer par date",
+    "clear": "Effacer",
+    "noResults": "Aucun résultat",
+    "emptyMonth": "Aucune dépense ce mois-ci",
+    "selectedCount": "{count, plural, one {# sélectionnée} other {# sélectionnées}}",
+    "moveConfirmTitle": "{count, plural, one {Déplacer # transaction ?} other {Déplacer # transactions ?}}",
+    "moveConfirmMessage": "Elles seront retirées de tes transactions personnelles et ajoutées à ce budget partagé.",
+    "moveConfirmButton": "Déplacer",
+    "moving": "Déplacement...",
+    "moveButton": "{count, plural, one {Déplacer # transaction} other {Déplacer # transactions}}"
+  },
+  "sharedBudgetDetail": {
+    "notFound": "Budget introuvable",
+    "memberCount": "{count, plural, one {# membre} other {# membres}}",
+    "edit": "Modifier",
+    "spent": "dépensé",
+    "over": "Dépassé de",
+    "remainingPercent": "restant · {percent}%",
+    "members": {
+      "title": "Membres",
+      "invite": "+ Inviter",
+      "searchPlaceholder": "Rechercher un membre...",
+      "admin": "Admin",
+      "remove": "Retirer",
+      "empty": "Aucun membre trouvé",
+      "showMore": "Voir plus ({count} restants)",
+      "expiry1h": "1 heure",
+      "expiry24h": "24 heures",
+      "expiry7d": "7 jours",
+      "singleUse": "🔒 Usage unique",
+      "multipleUse": "♾️ Usages multiples",
+      "linkCopied": "✅ Lien copié !",
+      "generateLink": "Générer et copier le lien",
+      "removeConfirm": {
+        "title": "Retirer ce membre ?",
+        "message": "Ce membre n'aura plus accès à ce budget partagé.",
+        "confirm": "Retirer"
+      }
+    },
+    "expenses": {
+      "title": "Dépenses",
+      "fromTransactions": "📥 Depuis mes transactions",
+      "addButton": "+ Ajouter",
+      "empty": "Aucune dépense pour l'instant",
+      "searchPlaceholder": "Rechercher une dépense...",
+      "noResults": "Aucune dépense trouvée",
+      "showMore": "Voir plus ({count} restantes)",
+      "descriptionPlaceholder": "Description",
+      "amountPlaceholder": "Montant",
+      "formSubmitEdit": "Modifier",
+      "formSubmitAdd": "Ajouter",
+      "cancel": "Annuler"
+    },
+    "leave": "Quitter ce budget partagé",
+    "leaveConfirm": {
+      "title": "Quitter ce budget partagé ?",
+      "message": "Tu n'auras plus accès à ce budget partagé.",
+      "confirm": "Quitter"
+    },
+    "errors": {
+      "required": "Tous les champs sont obligatoires",
+      "invalidAmount": "Le montant doit être un nombre positif",
+      "generic": "Erreur lors de l'enregistrement"
+    }
+  },
+  "joinBudget": {
+    "loadingTitle": "Vérification...",
+    "loadingMessage": "On vérifie ton invitation",
+    "invalidTitle": "Lien invalide",
+    "invalidMessage": "Ce lien n'existe pas ou a été supprimé",
+    "expiredTitle": "Lien expiré",
+    "expiredMessage": "Ce lien a expiré",
+    "usedTitle": "Lien déjà utilisé",
+    "usedMessage": "Ce lien à usage unique a déjà été utilisé",
+    "joinBudgetTitle": "Rejoindre le budget",
+    "joinSharedBudgetTitle": "Rejoindre le budget partagé",
+    "invitedMessage": "Tu es invité à rejoindre ce budget partagé",
+    "loginPromptMessage": "Connecte-toi pour rejoindre ce budget",
+    "join": "Rejoindre",
+    "login": "Se connecter",
+    "createAccount": "Créer un compte",
+    "joiningTitle": "Rejoindre...",
+    "joiningMessage": "On t'ajoute au budget",
+    "successTitle": "Bienvenue !",
+    "successMessage": "Tu as rejoint le budget. Redirection...",
+    "errorTitle": "Erreur",
+    "errorGeneric": "Une erreur est survenue"
+  },
+  "statusPage": {
+    "defaultAction": "Retour à l'accueil"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "message": "Cette page n'existe pas ou a été déplacée."
+  },
+  "admin": {
+    "title": "Administration",
+    "userCount": "{count, plural, one {# utilisateur inscrit} other {# utilisateurs inscrits}}",
+    "realtime": "Temps réel",
+    "refresh": "Actualiser",
+    "searchPlaceholder": "Rechercher par nom ou email…",
+    "sort": "Trier",
+    "columns": {
+      "name": "Utilisateur",
+      "status": "Statut",
+      "role": "Rôle",
+      "createdAt": "Inscription",
+      "lastSignInTime": "Dernière connexion",
+      "actions": "Actions"
+    },
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "roleAdmin": "Admin",
+    "roleUser": "Utilisateur",
+    "configManaged": "Config",
+    "configManagedTitle": "Défini via la configuration serveur, non modifiable ici",
+    "cannotModifySelf": "Impossible de modifier son propre statut",
+    "cannotDeleteSelf": "Impossible de se supprimer soi-même",
+    "promote": "Promouvoir",
+    "demote": "Retirer admin",
+    "delete": "Supprimer",
+    "loading": "Chargement…",
+    "empty": "Aucun utilisateur trouvé",
+    "accessDenied": {
+      "title": "Accès refusé",
+      "message": "Tu n'as pas les droits nécessaires pour accéder à cette page.",
+      "action": "Retour au tableau de bord"
+    },
+    "errors": {
+      "loadFailed": "Erreur lors du chargement",
+      "deleteFailed": "Erreur lors de la suppression",
+      "updateFailed": "Erreur lors de la mise à jour"
+    },
+    "deleteConfirm": {
+      "title": "Supprimer cet utilisateur ?",
+      "message": "{name} sera définitivement supprimé, ainsi que toutes ses données. Cette action est irréversible.",
+      "confirm": "Supprimer"
+    },
+    "promoteConfirm": {
+      "title": "Promouvoir en administrateur ?",
+      "message": "{name} pourra accéder à cette page d'administration et gérer les utilisateurs.",
+      "confirm": "Promouvoir"
+    },
+    "demoteConfirm": {
+      "title": "Retirer les droits administrateur ?",
+      "message": "{name} n'aura plus accès à l'administration.",
+      "confirm": "Retirer"
+    }
+  },
+  "onboarding": {
+    "skip": "Passer",
+    "next": "Suivant",
+    "done": "Compris",
+    "slides": {
+      "welcome": {
+        "title": "Bienvenue sur Kash Flo",
+        "description": "Suis tes revenus et dépenses en un coup d'œil grâce à un dashboard clair et personnalisé."
+      },
+      "transactions": {
+        "title": "Transactions",
+        "description": "Ajoute tes dépenses et revenus en quelques secondes. Recherche, filtre, et navigue mois par mois."
+      },
+      "budgets": {
+        "title": "Budgets",
+        "description": "Définis des limites par catégorie — journalières, hebdomadaires ou mensuelles — et suis ta progression."
+      },
+      "sharedBudgets": {
+        "title": "Budgets partagés",
+        "description": "Invite d'autres personnes à contribuer à un budget commun, comme les courses ou les sorties."
+      },
+      "recurrencesSavings": {
+        "title": "Récurrences & Épargne",
+        "description": "Automatise tes paiements réguliers et suis tes objectifs d'épargne au fil du temps."
+      },
+      "exportData": {
+        "title": "Export de tes données",
+        "description": "Exporte tes transactions en CSV ou PDF directement depuis la page Transactions — pratique pour tes déclarations ou ton suivi personnel."
+      }
+    }
+  }
+}

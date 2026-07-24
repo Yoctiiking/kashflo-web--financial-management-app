@@ -1,0 +1,679 @@
+{
+  "common": {
+    "passwordInput": {
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "categorySelect": {
+      "label": "Category",
+      "placeholder": "Select...",
+      "customPlaceholder": "Specify category (optional)"
+    },
+    "period": {
+      "daily": "/ day",
+      "weekly": "/ week",
+      "monthly": "/ month"
+    },
+    "confirmModal": {
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "frequency": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "custom": "Custom"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "forgotPassword": "Forgot your password?",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account yet?",
+      "signUp": "Sign up",
+      "errors": {
+        "invalidCredential": "Incorrect email or password",
+        "tooManyRequests": "Too many attempts, try again later",
+        "generic": "Something went wrong"
+      }
+    },
+    "register": {
+      "title": "Create an account",
+      "nameLabel": "Name",
+      "namePlaceholder": "Your first name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "submit": "Create my account",
+      "submitting": "Creating...",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "errors": {
+        "passwordTooShort": "Password must be at least 6 characters",
+        "emailInUse": "This email is already in use",
+        "generic": "Something went wrong"
+      }
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "Enter your email address and we'll send you a link to reset your password.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "submit": "Send link",
+      "submitting": "Sending...",
+      "backToLogin": "Back to sign in",
+      "errorEmailRequired": "Enter your email address",
+      "sentMessage": "A reset link has been sent to <strong>{email}</strong>."
+    },
+    "verifyEmail": {
+      "title": "Verify your email",
+      "message": "We sent a confirmation link to <strong>{email}</strong>. Click the link in the email — you'll be redirected here automatically.",
+      "waiting": "Waiting for verification...",
+      "resend": "Resend email",
+      "resending": "Sending...",
+      "resent": "✅ Email resent",
+      "logout": "Log out",
+      "errors": {
+        "tooManyRequests": "Too many attempts — try again in a few minutes.",
+        "generic": "Error sending the email. Try again in a moment."
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "displayName": {
+      "title": "Display name",
+      "placeholder": "Your first name",
+      "save": "Save",
+      "success": "Name updated",
+      "errors": {
+        "empty": "Name cannot be empty",
+        "generic": "Error updating name"
+      }
+    },
+    "appearance": {
+      "title": "Appearance",
+      "dark": "🌙 Dark",
+      "light": "☀️ Light"
+    },
+    "pinLock": {
+      "title": "PIN lock",
+      "description": "Protects access to the app after 5 minutes of inactivity",
+      "disable": "Disable PIN",
+      "enable": "Enable PIN lock",
+      "confirmDisable": {
+        "title": "Disable PIN lock?",
+        "message": "The app will no longer be protected by a PIN after a period of inactivity.",
+        "confirm": "Disable"
+      }
+    },
+    "categories": {
+      "title": "Categories",
+      "description": "Add, rename, or remove your expense and income categories",
+      "manage": "Manage categories"
+    },
+    "password": {
+      "title": "Password",
+      "currentPlaceholder": "Current password",
+      "newPlaceholder": "New password",
+      "confirmPlaceholder": "Confirm new password",
+      "submit": "Change password",
+      "submitting": "Updating...",
+      "success": "Password updated",
+      "errors": {
+        "required": "All fields are required",
+        "tooShort": "The new password must be at least 6 characters",
+        "mismatch": "Passwords don't match",
+        "wrongPassword": "Current password is incorrect",
+        "generic": "Error updating password"
+      }
+    },
+    "currency": {
+      "title": "Currency",
+      "description": "Choose the currency your amounts are displayed in. Conversion is automatic and based on the day's rates.",
+      "success": "Currency updated",
+      "options": {
+        "CAD": "Canadian Dollar (CAD)",
+        "USD": "US Dollar (USD)",
+        "EUR": "Euro (EUR)",
+        "GBP": "British Pound (GBP)",
+        "CHF": "Swiss Franc (CHF)",
+        "XOF": "CFA Franc (XOF)"
+      }
+    },
+    "language": {
+      "title": "Language",
+      "description": "Choose the app's language.",
+      "success": "Language updated",
+      "options": {
+        "fr": "French",
+        "en": "English"
+      }
+    },
+    "contact": {
+      "title": "Contact us",
+      "description": "A question, a bug, or a suggestion?",
+      "button": "✉️ Send a message"
+    },
+    "session": {
+      "title": "Session",
+      "connectedAs": "Signed in as {email}",
+      "logout": "🚪 Log out"
+    },
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Deleting your account is irreversible. All your data will be lost.",
+      "deleteButton": "Delete my account",
+      "confirmPrompt": "Enter your password to confirm deletion:",
+      "passwordPlaceholder": "Your password",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "deleting": "Deleting...",
+      "errors": {
+        "passwordRequired": "Enter your password to confirm",
+        "wrongPassword": "Incorrect password",
+        "generic": "Error deleting account"
+      }
+    }
+  },
+  "lockScreen": {
+    "prompt": "Enter your PIN to continue",
+    "incorrect": "Incorrect PIN",
+    "logout": "Log out"
+  },
+  "pinSetupModal": {
+    "createTitle": "Create a PIN",
+    "confirmTitle": "Confirm PIN",
+    "createDescription": "Choose a 4-digit PIN",
+    "confirmDescription": "Enter your PIN again",
+    "mismatch": "PINs don't match"
+  },
+  "categoriesModal": {
+    "title": "Categories",
+    "expense": "Expenses",
+    "income": "Income",
+    "empty": "No category",
+    "newPlaceholder": "New category",
+    "save": "Save",
+    "errorSave": "Error saving"
+  },
+  "feedbackModal": {
+    "title": "Contact us",
+    "description": "A question, a bug, or a suggestion? Write to us, we'll get back to you quickly.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your name",
+    "emailLabel": "Email",
+    "emailPlaceholder": "your@email.com",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Describe your issue or suggestion...",
+    "submit": "Send",
+    "submitting": "Sending...",
+    "successTitle": "Message sent!",
+    "successDescription": "Thanks for your feedback",
+    "errors": {
+      "required": "All fields are required",
+      "generic": "Error sending message"
+    }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "budgets": "Budgets",
+    "sharedBudgets": "Shared",
+    "savings": "Savings",
+    "recurrences": "Recurring",
+    "recurrencesShort": "Recur.",
+    "stats": "Stats",
+    "settings": "Settings",
+    "admin": "Admin",
+    "more": "More",
+    "logout": "Log out"
+  },
+  "dashboard": {
+    "greeting": "Hi, {name} 👋",
+    "upcomingPayments": "{count, plural, one {# upcoming payment} other {# upcoming payments}}",
+    "dayLabel": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays": "In {days, plural, one {# day} other {# days}}"
+    },
+    "stats": {
+      "balance": "Balance",
+      "income": "Income",
+      "expenses": "Expenses"
+    },
+    "recentTransactions": {
+      "title": "Recent transactions",
+      "empty": "No transactions yet"
+    },
+    "budgets": {
+      "title": "Budgets",
+      "empty": "No budget set",
+      "perDay": "/ day",
+      "perWeek": "/ week",
+      "perMonth": "/ month"
+    },
+    "monthRecurrences": {
+      "title": "Recurring this month",
+      "empty": "No recurring payment this month"
+    },
+    "expensesByCategory": {
+      "title": "Expenses by category",
+      "empty": "No expenses this month"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "search": "Search",
+    "searchPlaceholder": "Name, category, or month (e.g. june)",
+    "export": "Export",
+    "exportCsv": "CSV (shown month)",
+    "exportPdf": "PDF (shown month)",
+    "exportRange": "Month range...",
+    "add": "+ Add",
+    "filters": {
+      "all": "All",
+      "expense": "Expenses",
+      "income": "Income"
+    },
+    "empty": "No transactions",
+    "deleteConfirm": {
+      "title": "Delete this transaction?",
+      "message": "This action cannot be undone.",
+      "confirm": "Delete"
+    }
+  },
+  "transactionModal": {
+    "editTitle": "Edit transaction",
+    "newTitle": "New transaction",
+    "expenseLocked": "Expense · {category}",
+    "expense": "Expense",
+    "income": "Income",
+    "amountLabel": "Amount ({symbol})",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "E.g: Grocery run",
+    "dateLabel": "Date",
+    "saving": "Saving...",
+    "save": "Save",
+    "adding": "Adding...",
+    "addSubmit": "Add",
+    "errors": {
+      "required": "All fields are required",
+      "invalidAmount": "The amount must be a positive number",
+      "updateFailed": "Error updating the transaction",
+      "createFailed": "Error adding the transaction"
+    }
+  },
+  "exportRangeModal": {
+    "title": "Export a month range",
+    "from": "From",
+    "to": "To",
+    "errorRange": "The start date must be before the end date",
+    "errorExport": "Error exporting",
+    "exportCsv": "Export as CSV",
+    "exportPdf": "Export as PDF"
+  },
+  "budgets": {
+    "title": "Budgets",
+    "activeCount": "{count, plural, one {# active budget} other {# active budgets}}",
+    "new": "+ New budget",
+    "emptyTitle": "No budget set",
+    "emptyDescription": "Create a budget to track your spending by category",
+    "spent": "spent",
+    "over": "Over by",
+    "remaining": "remaining",
+    "deleteConfirm": {
+      "title": "Delete this budget?",
+      "message": "This action cannot be undone.",
+      "confirm": "Delete"
+    }
+  },
+  "budgetDetail": {
+    "notFound": "Budget not found",
+    "edit": "Edit",
+    "spent": "spent",
+    "over": "Over by",
+    "remainingPercent": "remaining · {percent}%",
+    "transactions": "Transactions",
+    "add": "+ Add",
+    "empty": "No transactions yet",
+    "searchPlaceholder": "Search a transaction...",
+    "noResults": "No transactions found",
+    "showMore": "Show more ({count} remaining)",
+    "deleteConfirm": {
+      "title": "Delete this transaction?",
+      "message": "This action cannot be undone.",
+      "confirm": "Delete"
+    }
+  },
+  "budgetModal": {
+    "editTitle": "Edit budget",
+    "newTitle": "New budget",
+    "limitLabel": "Limit ({symbol})",
+    "periodLabel": "Period",
+    "save": "Save",
+    "create": "Create budget",
+    "errors": {
+      "required": "All fields are required",
+      "invalidAmount": "The amount must be a positive number",
+      "updateFailed": "Error updating the budget",
+      "createFailed": "Error creating the budget"
+    }
+  },
+  "stats": {
+    "title": "Statistics",
+    "subtitle": "The last 6 months",
+    "barChart": {
+      "title": "Income vs Expenses",
+      "empty": "No data available",
+      "income": "Income",
+      "expenses": "Expenses"
+    },
+    "pieChart": {
+      "titleWithMonth": "Expenses by category — {month}",
+      "empty": "No expenses this month"
+    }
+  },
+  "savings": {
+    "title": "Savings goals",
+    "goalCount": "{count, plural, one {# goal} other {# goals}}",
+    "new": "+ New goal",
+    "emptyTitle": "No savings goal",
+    "emptyDescription": "Create a goal to track your progress",
+    "targetDate": "Target: {date}",
+    "complete": "Goal reached!",
+    "remainingPercent": "remaining · {percent}%",
+    "addAmountPlaceholder": "Amount to add",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "addAmount": "+ Add amount",
+    "deleteConfirm": {
+      "title": "Delete this goal?",
+      "message": "This action cannot be undone.",
+      "confirm": "Delete"
+    }
+  },
+  "savingsGoalModal": {
+    "editTitle": "Edit goal",
+    "newTitle": "New savings goal",
+    "nameLabel": "Goal name",
+    "namePlaceholder": "E.g: Vacation, Emergency fund...",
+    "targetAmountLabel": "Target amount ({symbol})",
+    "currentAmountLabel": "Amount already saved ({symbol})",
+    "targetDateLabel": "Target date (optional)",
+    "save": "Save",
+    "create": "Create goal",
+    "errors": {
+      "required": "Name and target amount are required",
+      "invalidAmount": "The target amount must be a positive number",
+      "generic": "Error saving"
+    }
+  },
+  "recurrences": {
+    "title": "Recurring",
+    "subtitle": "Automatic transactions",
+    "generate": "Generate",
+    "new": "+ New",
+    "generatedNone": "✅ No transaction to generate — everything is up to date",
+    "generatedCount": "✅ {count, plural, one {# transaction generated} other {# transactions generated}}",
+    "emptyTitle": "No recurring transaction set",
+    "emptyDescription": "Add your automatic expenses and income",
+    "everyXDays": "Every {days} days",
+    "nextLabel": "next:",
+    "deleteConfirm": {
+      "title": "Delete this recurring transaction?",
+      "message": "This action cannot be undone.",
+      "confirm": "Delete"
+    }
+  },
+  "addRecurrenceModal": {
+    "title": "New recurring transaction",
+    "expense": "Expense",
+    "income": "Income",
+    "amountLabel": "Amount ({symbol})",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "E.g: Rent",
+    "next": "Next",
+    "frequencyLabel": "Frequency",
+    "customDaysLabel": "Every how many days?",
+    "customDaysPlaceholder": "E.g: 14",
+    "daysSuffix": "days",
+    "customDaysSummary": "Every {days} days",
+    "customDaysMin": "Minimum 2 days",
+    "startDateLabel": "First occurrence",
+    "back": "Back",
+    "create": "Create",
+    "creating": "Creating...",
+    "errors": {
+      "required": "All fields are required",
+      "invalidAmount": "The amount must be a positive number",
+      "customDaysInvalid": "The custom interval must be at least 2 days",
+      "createFailed": "Error creating"
+    }
+  },
+  "sharedBudgets": {
+    "title": "Shared budgets",
+    "budgetCount": "{count, plural, one {# budget} other {# budgets}}",
+    "new": "+ New",
+    "emptyTitle": "No shared budget",
+    "emptyDescription": "Create a budget and invite members to contribute",
+    "memberCount": "{count, plural, one {# member} other {# members}}",
+    "deleteConfirm": "Delete this shared budget?"
+  },
+  "sharedBudgetModal": {
+    "editTitle": "Edit budget",
+    "newTitle": "New shared budget",
+    "nameLabel": "Budget name",
+    "namePlaceholder": "E.g: Weekly groceries",
+    "limitLabel": "Limit ({symbol})",
+    "periodLabel": "Period",
+    "save": "Save",
+    "create": "Create budget",
+    "errors": {
+      "required": "All fields are required",
+      "invalidAmount": "The amount must be a positive number",
+      "generic": "Error saving"
+    }
+  },
+  "deleteExpenseModal": {
+    "title": "Delete \"{label}\"",
+    "description": "What do you want to do with this expense?",
+    "unshare": "📤 Remove from shared budget",
+    "unshareDescription": "Goes back to your personal transactions",
+    "deletePermanently": "🗑️ Delete permanently",
+    "cancel": "Cancel"
+  },
+  "migrateTransactionModal": {
+    "title": "Add from my transactions",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "searchPlaceholder": "Name, amount, or month (e.g. june)",
+    "filterByDate": "Filter by date",
+    "clear": "Clear",
+    "noResults": "No results",
+    "emptyMonth": "No expenses this month",
+    "selectedCount": "{count, plural, one {# selected} other {# selected}}",
+    "moveConfirmTitle": "{count, plural, one {Move # transaction?} other {Move # transactions?}}",
+    "moveConfirmMessage": "They will be removed from your personal transactions and added to this shared budget.",
+    "moveConfirmButton": "Move",
+    "moving": "Moving...",
+    "moveButton": "{count, plural, one {Move # transaction} other {Move # transactions}}"
+  },
+  "sharedBudgetDetail": {
+    "notFound": "Budget not found",
+    "memberCount": "{count, plural, one {# member} other {# members}}",
+    "edit": "Edit",
+    "spent": "spent",
+    "over": "Over by",
+    "remainingPercent": "remaining · {percent}%",
+    "members": {
+      "title": "Members",
+      "invite": "+ Invite",
+      "searchPlaceholder": "Search a member...",
+      "admin": "Admin",
+      "remove": "Remove",
+      "empty": "No members found",
+      "showMore": "Show more ({count} remaining)",
+      "expiry1h": "1 hour",
+      "expiry24h": "24 hours",
+      "expiry7d": "7 days",
+      "singleUse": "🔒 Single use",
+      "multipleUse": "♾️ Multiple uses",
+      "linkCopied": "✅ Link copied!",
+      "generateLink": "Generate and copy link",
+      "removeConfirm": {
+        "title": "Remove this member?",
+        "message": "This member will no longer have access to this shared budget.",
+        "confirm": "Remove"
+      }
+    },
+    "expenses": {
+      "title": "Expenses",
+      "fromTransactions": "📥 From my transactions",
+      "addButton": "+ Add",
+      "empty": "No expenses yet",
+      "searchPlaceholder": "Search an expense...",
+      "noResults": "No expenses found",
+      "showMore": "Show more ({count} remaining)",
+      "descriptionPlaceholder": "Description",
+      "amountPlaceholder": "Amount",
+      "formSubmitEdit": "Edit",
+      "formSubmitAdd": "Add",
+      "cancel": "Cancel"
+    },
+    "leave": "Leave this shared budget",
+    "leaveConfirm": {
+      "title": "Leave this shared budget?",
+      "message": "You will no longer have access to this shared budget.",
+      "confirm": "Leave"
+    },
+    "errors": {
+      "required": "All fields are required",
+      "invalidAmount": "The amount must be a positive number",
+      "generic": "Error saving"
+    }
+  },
+  "joinBudget": {
+    "loadingTitle": "Checking...",
+    "loadingMessage": "Verifying your invitation",
+    "invalidTitle": "Invalid link",
+    "invalidMessage": "This link doesn't exist or has been removed",
+    "expiredTitle": "Expired link",
+    "expiredMessage": "This link has expired",
+    "usedTitle": "Link already used",
+    "usedMessage": "This single-use link has already been used",
+    "joinBudgetTitle": "Join budget",
+    "joinSharedBudgetTitle": "Join shared budget",
+    "invitedMessage": "You're invited to join this shared budget",
+    "loginPromptMessage": "Sign in to join this budget",
+    "join": "Join",
+    "login": "Sign in",
+    "createAccount": "Create an account",
+    "joiningTitle": "Joining...",
+    "joiningMessage": "Adding you to the budget",
+    "successTitle": "Welcome!",
+    "successMessage": "You've joined the budget. Redirecting...",
+    "errorTitle": "Error",
+    "errorGeneric": "Something went wrong"
+  },
+  "statusPage": {
+    "defaultAction": "Back to home"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "message": "This page doesn't exist or has been moved."
+  },
+  "admin": {
+    "title": "Administration",
+    "userCount": "{count, plural, one {# registered user} other {# registered users}}",
+    "realtime": "Real-time",
+    "refresh": "Refresh",
+    "searchPlaceholder": "Search by name or email…",
+    "sort": "Sort",
+    "columns": {
+      "name": "User",
+      "status": "Status",
+      "role": "Role",
+      "createdAt": "Registered",
+      "lastSignInTime": "Last sign-in",
+      "actions": "Actions"
+    },
+    "online": "Online",
+    "offline": "Offline",
+    "roleAdmin": "Admin",
+    "roleUser": "User",
+    "configManaged": "Config",
+    "configManagedTitle": "Set via server configuration, not editable here",
+    "cannotModifySelf": "Cannot modify your own status",
+    "cannotDeleteSelf": "Cannot delete yourself",
+    "promote": "Promote",
+    "demote": "Remove admin",
+    "delete": "Delete",
+    "loading": "Loading…",
+    "empty": "No users found",
+    "accessDenied": {
+      "title": "Access denied",
+      "message": "You don't have the required permissions to access this page.",
+      "action": "Back to dashboard"
+    },
+    "errors": {
+      "loadFailed": "Error loading data",
+      "deleteFailed": "Error deleting user",
+      "updateFailed": "Error updating user"
+    },
+    "deleteConfirm": {
+      "title": "Delete this user?",
+      "message": "{name} will be permanently deleted, along with all their data. This action cannot be undone.",
+      "confirm": "Delete"
+    },
+    "promoteConfirm": {
+      "title": "Promote to administrator?",
+      "message": "{name} will be able to access this admin page and manage users.",
+      "confirm": "Promote"
+    },
+    "demoteConfirm": {
+      "title": "Remove administrator rights?",
+      "message": "{name} will no longer have access to administration.",
+      "confirm": "Remove"
+    }
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "done": "Got it",
+    "slides": {
+      "welcome": {
+        "title": "Welcome to Kash Flo",
+        "description": "Track your income and expenses at a glance with a clear, personalized dashboard."
+      },
+      "transactions": {
+        "title": "Transactions",
+        "description": "Add your expenses and income in seconds. Search, filter, and browse month by month."
+      },
+      "budgets": {
+        "title": "Budgets",
+        "description": "Set limits by category — daily, weekly, or monthly — and track your progress."
+      },
+      "sharedBudgets": {
+        "title": "Shared budgets",
+        "description": "Invite others to contribute to a shared budget, like groceries or outings."
+      },
+      "recurrencesSavings": {
+        "title": "Recurring & Savings",
+        "description": "Automate your regular payments and track your savings goals over time."
+      },
+      "exportData": {
+        "title": "Export your data",
+        "description": "Export your transactions as CSV or PDF directly from the Transactions page — handy for tax filing or personal tracking."
+      }
+    }
+  }
+}

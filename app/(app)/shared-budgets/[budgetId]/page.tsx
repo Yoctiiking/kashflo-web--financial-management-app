@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   subscribeToSharedBudget, subscribeToSharedExpenses, addSharedExpense,
   deleteSharedExpense, createSharedBudgetInvite, getUserProfile,
@@ -15,7 +16,8 @@ import { SharedBudget, SharedExpense } from "@/types";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import CurrencyValue from "@/components/CurrencyValue";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { getDateFnsLocale } from "@/lib/utils/months";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import { useRouter } from "next/navigation";
 import DeleteExpenseModal from "@/components/DeleteExpenseModal";
 import { unshareExpenseToPersonal } from "@/lib/firebase/firestore";
@@ -25,10 +27,10 @@ import SharedBudgetModal from "@/components/SharedBudgetModal";
 import { Pencil, X, AlertTriangle } from "lucide-react";
 
 const EXPIRY_OPTIONS = [
-  { label: "1 heure", minutes: 60 },
-  { label: "24 heures", minutes: 1440 },
-  { label: "7 jours", minutes: 10080 },
-];
+  { key: "expiry1h", minutes: 60 },
+  { key: "expiry24h", minutes: 1440 },
+  { key: "expiry7d", minutes: 10080 },
+] as const;
 
 export default function SharedBudgetDetailPage() {
   const { user } = useAuth();
@@ -47,6 +49,11 @@ export default function SharedBudgetDetailPage() {
   const [expiryMinutes, setExpiryMinutes] = useState(1440);
   const [copiedCode, setCopiedCode] = useState(false);
   const { formatCurrency, ready, symbol, toBase, fromBase } = useCurrency(); const confirm = useConfirm();
+  const t = useTranslations("sharedBudgetDetail");
+  const tMembers = useTranslations("sharedBudgetDetail.members");
+  const tExpenses = useTranslations("sharedBudgetDetail.expenses");
+  const { language } = useLanguage();
+  const dateLocale = getDateFnsLocale(language);
   const [visibleSpentCount, setVisibleSpentCount] = useState(10);
   const [visibleMembersCount, setVisibleMembersCount] = useState(5);
   const [memberSearch, setMemberSearch] = useState("");
@@ -167,11 +174,11 @@ export default function SharedBudgetDetailPage() {
 
   const handleSubmitExpense = async () => {
     if (!user || !label || !amount) {
-      setFormError("Tous les champs sont obligatoires");
+      setFormError(t("errors.required"));
       return;
     }
     if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      setFormError("Le montant doit être un nombre positif");
+      setFormError(t("errors.invalidAmount"));
       return;
     }
     setFormLoading(true);
@@ -196,7 +203,7 @@ export default function SharedBudgetDetailPage() {
       closeExpenseForm();
     } catch (err) {
       console.error(err);
-      setFormError("Erreur lors de l'enregistrement");
+      setFormError(t("errors.generic"));
     } finally {
       setFormLoading(false);
     }
@@ -249,9 +256,9 @@ export default function SharedBudgetDetailPage() {
 
   const handleRemoveMember = async (uid: string) => {
     const ok = await confirm({
-      title: "Retirer ce membre ?",
-      message: "Ce membre n'aura plus accès à ce budget partagé.",
-      confirmLabel: "Retirer",
+      title: tMembers("removeConfirm.title"),
+      message: tMembers("removeConfirm.message"),
+      confirmLabel: tMembers("removeConfirm.confirm"),
       danger: true
     });
     if (!ok) return;
@@ -265,9 +272,9 @@ export default function SharedBudgetDetailPage() {
   const handleLeave = async () => {
     if (!user) return;
     const ok = await confirm({
-      title: "Quitter ce budget partagé ?",
-      message: "Tu n'auras plus accès à ce budget partagé.",
-      confirmLabel: "Quitter",
+      title: t("leaveConfirm.title"),
+      message: t("leaveConfirm.message"),
+      confirmLabel: t("leaveConfirm.confirm"),
       danger: true
     });
     if (!ok) return;
@@ -312,7 +319,7 @@ export default function SharedBudgetDetailPage() {
   if (!budget) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500">Budget introuvable</p>
+        <p className="text-gray-500">{t("notFound")}</p>
       </div>
     );
   }
@@ -323,7 +330,7 @@ export default function SharedBudgetDetailPage() {
         type="text"
         value={label}
         onChange={e => setLabel(e.target.value)}
-        placeholder="Description"
+        placeholder={tExpenses("descriptionPlaceholder")}
         className="w-full bg-gray-200 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
       />
       <div className="flex gap-2">
@@ -333,7 +340,7 @@ export default function SharedBudgetDetailPage() {
           min="0"
           step="0.01"
           onChange={e => setAmount(e.target.value)}
-          placeholder="Montant"
+          placeholder={tExpenses("amountPlaceholder")}
           className="flex-1 bg-gray-200 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
         />
         <input
@@ -350,13 +357,13 @@ export default function SharedBudgetDetailPage() {
           disabled={formLoading}
           className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-gray-900 dark:text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
         >
-          {formLoading ? "..." : editingExpense ? "Modifier" : "Ajouter"}
+          {formLoading ? "..." : editingExpense ? tExpenses("formSubmitEdit") : tExpenses("formSubmitAdd")}
         </button>
         <button
           onClick={closeExpenseForm}
           className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm py-2.5 rounded-xl transition-colors"
         >
-          Annuler
+          {tExpenses("cancel")}
         </button>
       </div>
     </div>
@@ -369,7 +376,7 @@ export default function SharedBudgetDetailPage() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{budget.name}</h2>
           <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
-            {budget.category} · {budget.members.length} membre{budget.members.length > 1 ? "s" : ""}
+            {budget.category} · {t("memberCount", { count: budget.members.length })}
           </p>
         </div>
         {isAdmin && (
@@ -378,7 +385,7 @@ export default function SharedBudgetDetailPage() {
             className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 px-3 py-2 rounded-xl transition-colors shrink-0"
           >
             <Pencil className="w-4 h-4" strokeWidth={2} />
-            <span className="hidden sm:inline">Modifier</span>
+            <span className="hidden sm:inline">{t("edit")}</span>
           </button>
         )}
       </div>
@@ -388,7 +395,7 @@ export default function SharedBudgetDetailPage() {
         <div className="flex justify-between items-baseline gap-2 text-sm mb-2">
           <span className={`inline-flex items-center gap-1 min-w-0 ${isOver ? "text-red-600 dark:text-red-400 font-semibold" : "text-gray-900 dark:text-white font-semibold"}`}>
             <CurrencyValue amount={totalSpent} ready={ready} formatCurrency={formatCurrency} />
-            <span className="truncate">dépensé</span>
+            <span className="truncate">{t("spent")}</span>
           </span>
           <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-600 dark:text-gray-400 shrink-0" />
         </div>
@@ -400,8 +407,8 @@ export default function SharedBudgetDetailPage() {
         </div>
         <p className={`text-xs ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-500"}`}>
           {isOver
-            ? <><AlertTriangle className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />Dépassé de <CurrencyValue amount={totalSpent - budget.limit} ready={ready} formatCurrency={formatCurrency} /></>
-            : <><CurrencyValue amount={budget.limit - totalSpent} ready={ready} formatCurrency={formatCurrency} /> restant · {Math.round(percentage)}%</>
+            ? <><AlertTriangle className="w-3.5 h-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />{t("over")} <CurrencyValue amount={totalSpent - budget.limit} ready={ready} formatCurrency={formatCurrency} /></>
+            : <><CurrencyValue amount={budget.limit - totalSpent} ready={ready} formatCurrency={formatCurrency} /> {t("remainingPercent", { percent: Math.round(percentage) })}</>
           }
         </p>
       </div>
@@ -409,13 +416,13 @@ export default function SharedBudgetDetailPage() {
       {/* Membres */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-900 dark:text-white font-semibold">Membres</h3>
+          <h3 className="text-gray-900 dark:text-white font-semibold">{tMembers("title")}</h3>
           {isAdmin && (
             <button
               onClick={() => setShowInvite(!showInvite)}
               className="text-emerald-600 dark:text-emerald-500 text-sm hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             >
-              + Inviter
+              {tMembers("invite")}
             </button>
           )}
         </div>
@@ -425,7 +432,7 @@ export default function SharedBudgetDetailPage() {
             type="text"
             value={memberSearch}
             onChange={e => setMemberSearch(e.target.value)}
-            placeholder="Rechercher un membre..."
+            placeholder={tMembers("searchPlaceholder")}
             className="w-full mb-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
           />
         )}
@@ -440,7 +447,7 @@ export default function SharedBudgetDetailPage() {
                 <span className="text-gray-700 dark:text-gray-300 text-sm">
                   {memberNames[uid] || uid}
                   {uid === budget.createdBy && (
-                    <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Admin</span>
+                    <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">{tMembers("admin")}</span>
                   )}
                 </span>
               </div>
@@ -449,13 +456,13 @@ export default function SharedBudgetDetailPage() {
                   onClick={() => handleRemoveMember(uid)}
                   className="text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors text-sm"
                 >
-                  Retirer
+                  {tMembers("remove")}
                 </button>
               )}
             </div>
           ))}
           {filteredMembers.length === 0 && (
-            <p className="text-gray-500 text-sm">Aucun membre trouvé</p>
+            <p className="text-gray-500 text-sm">{tMembers("empty")}</p>
           )}
         </div>
 
@@ -464,7 +471,7 @@ export default function SharedBudgetDetailPage() {
             onClick={() => setVisibleMembersCount(c => c + 5)}
             className="w-full mt-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
           >
-            Voir plus ({filteredMembers.length - visibleMembersCount} restants)
+            {tMembers("showMore", { count: filteredMembers.length - visibleMembersCount })}
           </button>
         )}
 
@@ -473,7 +480,7 @@ export default function SharedBudgetDetailPage() {
             onClick={() => setVisibleMembersCount(c => c + 5)}
             className="w-full mt-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
           >
-            Voir plus ({budget.members.length - visibleMembersCount} restants)
+            {tMembers("showMore", { count: budget.members.length - visibleMembersCount })}
           </button>
         )}
 
@@ -489,7 +496,7 @@ export default function SharedBudgetDetailPage() {
                     : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-transparent"
                     }`}
                 >
-                  {opt.label}
+                  {tMembers(opt.key)}
                 </button>
               ))}
             </div>
@@ -502,7 +509,7 @@ export default function SharedBudgetDetailPage() {
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
               >
-                🔒 Usage unique
+                {tMembers("singleUse")}
               </button>
               <button
                 onClick={() => setMultipleUse(true)}
@@ -511,7 +518,7 @@ export default function SharedBudgetDetailPage() {
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
               >
-                ♾️ Usages multiples
+                {tMembers("multipleUse")}
               </button>
             </div>
 
@@ -519,7 +526,7 @@ export default function SharedBudgetDetailPage() {
               onClick={handleInvite}
               className="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
             >
-              {copiedCode ? "✅ Lien copié !" : "Générer et copier le lien"}
+              {copiedCode ? tMembers("linkCopied") : tMembers("generateLink")}
             </button>
           </div>
         )}
@@ -528,19 +535,19 @@ export default function SharedBudgetDetailPage() {
       {/* Dépenses */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-gray-900 dark:text-white font-semibold">Dépenses</h3>
+          <h3 className="text-gray-900 dark:text-white font-semibold">{tExpenses("title")}</h3>
           <div className="flex gap-3">
             <button
               onClick={() => setShowMigrateModal(true)}
               className="text-blue-600 dark:text-blue-400 text-sm hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
             >
-              📥 Depuis mes transactions
+              {tExpenses("fromTransactions")}
             </button>
             <button
               onClick={handleToggleAddExpense}
               className="text-emerald-600 dark:text-emerald-500 text-sm hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             >
-              + Ajouter
+              {tExpenses("addButton")}
             </button>
           </div>
         </div>
@@ -556,7 +563,7 @@ export default function SharedBudgetDetailPage() {
         {showAddExpense && renderExpenseForm()}
 
         {expenses.length === 0 ? (
-          <p className="text-gray-500 text-sm">Aucune dépense pour l'instant</p>
+          <p className="text-gray-500 text-sm">{tExpenses("empty")}</p>
         ) : (
           <>
             {expenses.length > 10 && (
@@ -564,7 +571,7 @@ export default function SharedBudgetDetailPage() {
                 type="text"
                 value={expenseSearch}
                 onChange={e => setExpenseSearch(e.target.value)}
-                placeholder="Rechercher une dépense..."
+                placeholder={tExpenses("searchPlaceholder")}
                 className="w-full mb-4 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2 text-gray-900 dark:text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
               />
             )}
@@ -580,7 +587,7 @@ export default function SharedBudgetDetailPage() {
                     <div className="min-w-0">
                       <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{expense.label}</p>
                       <p className="text-gray-500 text-xs truncate">
-                        {expense.addedByName || memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: fr })}
+                        {expense.addedByName || memberNames[expense.addedBy] || expense.addedBy} · {format(expense.date, "d MMM", { locale: dateLocale })}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -606,7 +613,7 @@ export default function SharedBudgetDetailPage() {
                 )
               ))}
               {filteredExpenses.length === 0 && (
-                <p className="text-gray-500 text-sm">Aucune dépense trouvée</p>
+                <p className="text-gray-500 text-sm">{tExpenses("noResults")}</p>
               )}
             </div>
 
@@ -615,7 +622,7 @@ export default function SharedBudgetDetailPage() {
                 onClick={() => setVisibleSpentCount(c => c + 10)}
                 className="w-full mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
               >
-                Voir plus ({filteredExpenses.length - visibleSpentCount} restantes)
+                {tExpenses("showMore", { count: filteredExpenses.length - visibleSpentCount })}
               </button>
             )}
           </>
@@ -626,7 +633,7 @@ export default function SharedBudgetDetailPage() {
           onClick={handleLeave}
           className="w-full mt-6 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-medium py-3 rounded-xl transition-colors border border-red-500/20"
         >
-          Quitter ce budget partagé
+          {t("leave")}
         </button>
       )}
 

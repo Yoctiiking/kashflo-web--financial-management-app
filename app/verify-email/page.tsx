@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { resendVerificationEmail, logoutUser } from "@/lib/firebase/auth";
 import { auth } from "@/lib/firebase/config";
 
 export default function VerifyEmailPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const t = useTranslations("auth.verifyEmail");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -41,9 +43,9 @@ export default function VerifyEmailPage() {
       setTimeout(() => setSent(false), 5000);
     } catch (err: any) {
       if (err.code === "auth/too-many-requests") {
-        setError("Trop de tentatives — réessaie dans quelques minutes.");
+        setError(t("errors.tooManyRequests"));
       } else {
-        setError("Erreur lors de l'envoi. Réessaie dans un instant.");
+        setError(t("errors.generic"));
       }
       console.error(err);
     } finally {
@@ -60,14 +62,17 @@ export default function VerifyEmailPage() {
 
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center">
           <div className="text-4xl mb-4">📧</div>
-          <h2 className="text-gray-900 dark:text-white font-semibold text-xl mb-2">Vérifie ton email</h2>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-xl mb-2">{t("title")}</h2>
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-            On a envoyé un lien de confirmation à <strong className="text-gray-900 dark:text-white">{user?.email}</strong>. Clique sur le lien dans l'email — tu seras redirigé automatiquement ici.
+            {t.rich("message", {
+              email: user?.email || "",
+              strong: (chunks) => <strong className="text-gray-900 dark:text-white">{chunks}</strong>
+            })}
           </p>
 
           <div className="flex items-center justify-center gap-2 mb-6 text-gray-500 text-sm">
             <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            En attente de vérification...
+            {t("waiting")}
           </div>
 
           <button
@@ -75,7 +80,7 @@ export default function VerifyEmailPage() {
             disabled={sending}
             className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors mb-3"
           >
-            {sending ? "Envoi..." : sent ? "✅ Email renvoyé" : "Renvoyer l'email"}
+            {sending ? t("resending") : sent ? t("resent") : t("resend")}
           </button>
 
           {error && <p className="text-red-600 dark:text-red-400 text-sm mb-3">{error}</p>}
@@ -84,7 +89,7 @@ export default function VerifyEmailPage() {
             onClick={() => logoutUser().then(() => router.push("/login"))}
             className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-sm transition-colors"
           >
-            Se déconnecter
+            {t("logout")}
           </button>
         </div>
       </div>
