@@ -16,6 +16,17 @@ const MESSAGES: Record<Language, typeof frMessages> = {
 };
 
 const STORAGE_KEY = "kashflo-language";
+const SUPPORTED_LANGUAGES: Language[] = ["fr", "en"];
+
+export const detectDeviceLanguage = (): Language => {
+  if (typeof navigator === "undefined") return "fr";
+  const locales = navigator.languages?.length ? navigator.languages : [navigator.language];
+  for (const locale of locales) {
+    const primary = locale?.split("-")[0].toLowerCase();
+    if (SUPPORTED_LANGUAGES.includes(primary as Language)) return primary as Language;
+  }
+  return "fr";
+};
 
 interface LanguageContextType {
   language: Language;
@@ -32,12 +43,11 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   const { profile } = useUserProfile();
   const [language, setLanguageState] = useState<Language>("fr");
 
-  // Valeur immédiate depuis le stockage local, avant que le profil Firestore n'arrive
+  // Valeur immédiate depuis le stockage local (choix explicite passé), sinon la langue
+  // de l'appareil — avant que le profil Firestore n'arrive.
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "fr" || stored === "en") {
-      setLanguageState(stored);
-    }
+    setLanguageState(stored === "fr" || stored === "en" ? stored : detectDeviceLanguage());
   }, []);
 
   // Le profil Firestore reste la source de vérité une fois chargé (cohérence multi-appareils)
