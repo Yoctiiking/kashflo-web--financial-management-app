@@ -278,6 +278,7 @@
     "exportCsv": "CSV (shown month)",
     "exportPdf": "PDF (shown month)",
     "exportRange": "Month range...",
+    "importCsv": "Import CSV",
     "add": "+ Add",
     "filters": {
       "all": "All",
@@ -675,5 +676,94 @@
         "description": "Export your transactions as CSV or PDF directly from the Transactions page — handy for tax filing or personal tracking."
       }
     }
+  },
+  "importModal": {
+    "title": "Import transactions",
+    "steps": {
+      "upload": "1. File",
+      "mapping": "2. Mapping",
+      "preview": "3. Preview"
+    },
+    "upload": {
+      "instructions": "Select a CSV or Excel file exported from your bank.",
+      "selectFile": "Choose a CSV or Excel file",
+      "selectedFile": "Selected file: {name}",
+      "parsing": "Parsing file...",
+      "errors": {
+        "invalidFile": "This file doesn't contain valid CSV data.",
+        "emptyFile": "This file is empty.",
+        "noColumns": "No columns were detected in this file.",
+        "readFailed": "Couldn't read this file."
+      }
+    },
+    "mapping": {
+      "instructions": "Match your file's columns to Kash Flo's fields.",
+      "selectPlaceholder": "-- Select --",
+      "date": "Date",
+      "label": "Label / Description",
+      "amount": "Amount",
+      "category": "Category",
+      "typeModeLabel": "Type (expense/income)",
+      "typeModeColumn": "Separate column",
+      "typeModeSigned": "Signed amount (negative = expense)",
+      "typeModeDebitCredit": "Debit and Credit in 2 columns",
+      "typeColumn": "Type column",
+      "expenseLabel": "Value for \"Expense\"",
+      "incomeLabel": "Value for \"Income\"",
+      "debitColumn": "Debit column",
+      "creditColumn": "Credit column",
+      "dateFormatLabel": "Date format",
+      "dateFormatDetected": "Format detected automatically — correct it if needed.",
+      "dateFormatNotDetected": "Format wasn't detected automatically, select it manually.",
+      "dateFormats": {
+        "iso": "YYYY-MM-DD (2025-12-31)",
+        "dmy": "DD/MM/YYYY (31/12/2025)",
+        "mdy": "MM/DD/YYYY (12/31/2025)",
+        "dmy-dash": "DD-MM-YYYY (31-12-2025)",
+        "textMonth": "Text month (Dec 31, 2025)"
+      },
+      "templateApplied": "Mapping restored from a previous import with the same columns.",
+      "example": "Example: {value}",
+      "back": "Back",
+      "next": "Preview",
+      "errors": {
+        "required": "Match all required columns before continuing.",
+        "dateFormatRequired": "Select the Date column's format before continuing."
+      }
+    },
+    "preview": {
+      "instructions": "Review the detected transactions before importing.",
+      "loadingDuplicates": "Checking for duplicates...",
+      "duplicateBadge": "Possible duplicate",
+      "invalidBadge": "Skipped",
+      "reasons": {
+        "invalidDate": "Invalid date",
+        "invalidAmount": "Invalid amount",
+        "unknownType": "Unrecognized type",
+        "missingLabel": "Missing label",
+        "missingCategory": "Missing category",
+        "unrecognizedCategory": "Unrecognized category",
+        "futureDate": "Future date"
+      },
+      "columns": {
+        "date": "Date",
+        "label": "Label",
+        "amount": "Amount",
+        "category": "Category",
+        "type": "Type"
+      },
+      "expense": "Expense",
+      "income": "Income",
+      "selectedCount": "{count, plural, =0 {No rows selected} one {# row selected} other {# rows selected}}",
+      "back": "Back",
+      "import": "Import {count, plural, =0 {0 transactions} one {# transaction} other {# transactions}}",
+      "importing": "Importing...",
+      "errors": {
+        "importFailed": "Something went wrong during the import. Try again."
+      }
+    },
+    "cancel": "Cancel",
+    "close": "Close",
+    "success": "{count, plural, one {# transaction imported} other {# transactions imported}} successfully."
   }
 }

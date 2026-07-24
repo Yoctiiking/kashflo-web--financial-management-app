@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   doc,
   getDoc,
+  setDoc,
   Timestamp,
   updateDoc,
   increment,
@@ -191,6 +192,91 @@ export const addTransaction = async (
     recurrenceId: data.recurrenceId ?? null,
     createdAt: serverTimestamp()
   });
+};
+
+// Toutes les transactions de l'utilisateur, sans filtre de période — utilisé pour
+// la détection de doublons à l'import CSV (un fichier peut couvrir plusieurs mois).
+export const getAllTransactions = async (userId: string): Promise<Transaction[]> => {
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    orderBy("date", "desc"),
+    orderBy("createdAt", "desc")
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    date: (doc.data().date as Timestamp).toDate(),
+    createdAt: (doc.data().createdAt as Timestamp).toDate()
+  })) as Transaction[];
+};
+
+const BATCH_WRITE_LIMIT = 450;
+
+export const addTransactionsBatch = async (
+  userId: string,
+  transactions: {
+    amount: number;
+    type: TransactionType;
+    category: string;
+    label: string;
+    date: Date;
+    addedBy: string;
+  }[]
+) => {
+  const ref = collection(db, "users", userId, "transactions");
+
+  for (let i = 0; i < transactions.length; i += BATCH_WRITE_LIMIT) {
+    const chunk = transactions.slice(i, i + BATCH_WRITE_LIMIT);
+    const batch = writeBatch(db);
+    chunk.forEach((data) => {
+      batch.set(doc(ref), {
+        ...data,
+        date: Timestamp.fromDate(data.date),
+        recurrenceId: null,
+        createdAt: serverTimestamp()
+      });
+    });
+    await batch.commit();
+  }
+};
+
+// Mapping colonnes → champs sauvegardé après un import CSV/Excel réussi, retrouvé au
+// prochain import si le même jeu de colonnes est détecté (voir computeColumnsSignature
+// dans lib/csvImportKeywords.ts). Un template par signature de colonnes, pas par banque.
+export interface ImportMapping {
+  dateColumn: string;
+  labelColumn: string;
+  categoryColumn: string;
+  typeMode: "signedAmount" | "column" | "debitCredit";
+  amountColumn?: string;
+  typeColumn?: string;
+  expenseLabel?: string;
+  incomeLabel?: string;
+  debitColumn?: string;
+  creditColumn?: string;
+  dateFormat: string;
+}
+
+export const saveImportTemplate = async (
+  userId: string,
+  columnsSignature: string,
+  mapping: ImportMapping
+) => {
+  await setDoc(doc(db, "users", userId, "importTemplates", columnsSignature), {
+    mapping,
+    updatedAt: serverTimestamp()
+  });
+};
+
+export const getImportTemplate = async (
+  userId: string,
+  columnsSignature: string
+): Promise<ImportMapping | null> => {
+  const snap = await getDoc(doc(db, "users", userId, "importTemplates", columnsSignature));
+  if (!snap.exists()) return null;
+  return (snap.data().mapping as ImportMapping) ?? null;
 };
 
 export const updateTransaction = async (

@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/providers/AuthProvider";
 import { getMonthTransactions, deleteTransaction } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
 import AddTransactionModal from "@/components/AddTransactionModal";
+import ImportTransactionsModal from "@/components/ImportTransactionsModal";
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";
 import { useCurrency } from "@/lib/hooks/useCurrency";
@@ -14,7 +15,7 @@ import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import { getMonthNames, getDateFnsLocale } from "@/lib/utils/months";
 import { useLanguage } from "@/lib/providers/LanguageProvider";
 import ExportRangeModal from "@/components/ExportRangeModal";
-import { ArrowDownLeft, ArrowUpRight, Pencil, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Pencil, Upload, X } from "lucide-react";
 
 function normalize(str: string) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -45,6 +46,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [filter, setFilter] = useState<"all" | "expense" | "income">("all");
   const [search, setSearch] = useState("");
@@ -307,6 +309,14 @@ export default function TransactionsPage() {
           </div>
 
           <button
+            onClick={() => setShowImportModal(true)}
+            className="hidden sm:flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium px-4 py-2.5 rounded-xl transition-colors text-sm"
+          >
+            <Upload className="w-4 h-4" strokeWidth={2} />
+            {t("importCsv")}
+          </button>
+
+          <button
             onClick={() => setShowModal(true)}
             className="hidden sm:block bg-emerald-500 hover:bg-emerald-400 text-gray-900 dark:text-white font-medium px-4 py-2.5 rounded-xl transition-colors"
           >
@@ -434,6 +444,14 @@ export default function TransactionsPage() {
         <ExportRangeModal
           userId={user.uid}
           onClose={() => setShowExportRangeModal(false)}
+        />
+      )}
+
+      {showImportModal && user && (
+        <ImportTransactionsModal
+          userId={user.uid}
+          onClose={() => setShowImportModal(false)}
+          onSuccess={loadData}
         />
       )}
     </div>

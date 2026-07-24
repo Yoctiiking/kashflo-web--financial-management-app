@@ -19,15 +19,18 @@
     "nanoid": "^5.1.15",
     "next": "^16.2.9",
     "next-intl": "^4.13.4",
+    "papaparse": "^5.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.80.0",
     "recharts": "^3.8.1",
-    "resend": "^6.16.0"
+    "resend": "^6.16.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
