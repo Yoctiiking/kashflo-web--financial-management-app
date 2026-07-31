@@ -148,7 +148,7 @@ export default function TransactionsPage() {
     loadData();
   }, [loadData]);
 
-  const { formatCurrency, fromBase, currency, ready } = useCurrency();
+  const { formatCurrency, displayAmount, fromBase, currency, ready } = useCurrency();
 
   const parsedSearch = parseMonthSearch(search, monthNames);
   const effectiveSearch = parsedSearch !== null ? parsedSearch.remainder : search;
@@ -391,7 +391,7 @@ export default function TransactionsPage() {
                   <CurrencyValue
                     amount={tx.amount}
                     ready={ready}
-                    formatCurrency={formatCurrency}
+                    formatCurrency={(amt) => displayAmount(amt, tx.originalAmount, tx.originalCurrency)}
                     prefix={tx.type === "income" ? "+" : "-"}
                     className={`font-semibold ${tx.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                   />

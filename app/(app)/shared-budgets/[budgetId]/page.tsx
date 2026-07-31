@@ -48,7 +48,14 @@ export default function SharedBudgetDetailPage() {
   const [multipleUse, setMultipleUse] = useState(false);
   const [expiryMinutes, setExpiryMinutes] = useState(1440);
   const [copiedCode, setCopiedCode] = useState(false);
-  const { formatCurrency, ready, symbol, toBase, fromBase } = useCurrency(); const confirm = useConfirm();
+  const { formatCurrency, displayAmount, ready, symbol, currency, toBase, fromBase } = useCurrency(); const confirm = useConfirm();
+
+  // Montant à pré-remplir : la valeur d'origine telle que saisie si la devise active
+  // n'a pas changé depuis (pas de dérive) ; sinon reconversion CAD habituelle.
+  const prefillAmount = (base: number, originalAmount?: number, originalCurrency?: string) =>
+    originalAmount !== undefined && originalCurrency !== undefined && originalCurrency === currency
+      ? originalAmount
+      : fromBase(base);
   const t = useTranslations("sharedBudgetDetail");
   const tMembers = useTranslations("sharedBudgetDetail.members");
   const tExpenses = useTranslations("sharedBudgetDetail.expenses");
@@ -186,10 +193,14 @@ export default function SharedBudgetDetailPage() {
     try {
       const [year, month, day] = date.split("-").map(Number);
       if (editingExpense) {
+        const currentPrefill = prefillAmount(editingExpense.amount, editingExpense.originalAmount, editingExpense.originalCurrency);
+        const amountChanged = parseFloat(amount) !== parseFloat(currentPrefill.toFixed(2));
+
         await updateSharedExpense(budgetId, editingExpense.id, {
           amount: toBase(parseFloat(amount)),
           label,
-          date: new Date(year, month - 1, day)
+          date: new Date(year, month - 1, day),
+          ...(amountChanged && { originalAmount: parseFloat(amount), originalCurrency: currency })
         });
       } else {
         await addSharedExpense(budgetId, {
@@ -197,7 +208,9 @@ export default function SharedBudgetDetailPage() {
           label,
           date: new Date(year, month - 1, day),
           addedBy: user.uid,
-          addedByName: user.displayName || "Utilisateur"
+          addedByName: user.displayName || "Utilisateur",
+          originalAmount: parseFloat(amount),
+          originalCurrency: currency
         });
       }
       closeExpenseForm();
@@ -213,7 +226,7 @@ export default function SharedBudgetDetailPage() {
     setShowAddExpense(false);
     setEditingExpense(expense);
     setLabel(expense.label);
-    setAmount(fromBase(expense.amount).toFixed(2));
+    setAmount(prefillAmount(expense.amount, expense.originalAmount, expense.originalCurrency).toFixed(2));
     setDate(expense.date.toISOString().split("T")[0]);
     setFormError("");
   };
@@ -397,7 +410,7 @@ export default function SharedBudgetDetailPage() {
             <CurrencyValue amount={totalSpent} ready={ready} formatCurrency={formatCurrency} />
             <span className="truncate">{t("spent")}</span>
           </span>
-          <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-600 dark:text-gray-400 shrink-0" />
+          <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={(amt) => displayAmount(amt, budget.originalAmount, budget.originalCurrency)} className="text-gray-600 dark:text-gray-400 shrink-0" />
         </div>
         <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 mb-2">
           <div
@@ -591,7 +604,7 @@ export default function SharedBudgetDetailPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <CurrencyValue amount={expense.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-600 dark:text-red-400 font-semibold text-sm" />
+                      <CurrencyValue amount={expense.amount} ready={ready} formatCurrency={(amt) => displayAmount(amt, expense.originalAmount, expense.originalCurrency)} className="text-red-600 dark:text-red-400 font-semibold text-sm" />
                       {expense.addedBy === user?.uid && (
                         <>
                           <button

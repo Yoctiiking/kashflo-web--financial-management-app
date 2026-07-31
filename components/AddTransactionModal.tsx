@@ -20,14 +20,22 @@ interface Props {
 }
 
 export default function AddTransactionModal({ groupId, transaction, defaultCategory, onClose, onSuccess }: Props) {
-  const { symbol, toBase, fromBase, formatCurrency, ready } = useCurrency(); const { user } = useAuth();
+  const { symbol, currency, toBase, fromBase, formatCurrency, ready } = useCurrency(); const { user } = useAuth();
   const { profile } = useUserProfile();
   const t = useTranslations("transactionModal");
   const isEditing = !!transaction;
   const lockCategory = !isEditing && !!defaultCategory;
+
+  // Montant à pré-remplir : la valeur d'origine telle que saisie si la devise active
+  // n'a pas changé depuis (pas de dérive) ; sinon reconversion CAD habituelle.
+  const prefillAmount = (base: number, originalAmount?: number, originalCurrency?: string) =>
+    originalAmount !== undefined && originalCurrency !== undefined && originalCurrency === currency
+      ? originalAmount
+      : fromBase(base);
+
   const [type, setType] = useState<TransactionType>(transaction?.type || "expense");
   const [amount, setAmount] = useState(
-    transaction && ready ? fromBase(transaction.amount).toFixed(2) : ""
+    transaction && ready ? prefillAmount(transaction.amount, transaction.originalAmount, transaction.originalCurrency).toFixed(2) : ""
   );
   const [label, setLabel] = useState(transaction?.label || "");
   const [category, setCategory] = useState(transaction?.category || defaultCategory || "");
@@ -39,9 +47,10 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
 
   useEffect(() => {
     if (transaction && ready) {
-      setAmount(fromBase(transaction.amount).toFixed(2));
+      setAmount(prefillAmount(transaction.amount, transaction.originalAmount, transaction.originalCurrency).toFixed(2));
     }
-  }, [ready, transaction, fromBase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, transaction, fromBase, currency]);
 
   const categories = type === "expense"
     ? (profile?.expenseCategories ?? DEFAULT_EXPENSE_CATEGORIES)
@@ -63,12 +72,16 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
 
     try {
       if (isEditing) {
+        const currentPrefill = prefillAmount(transaction.amount, transaction.originalAmount, transaction.originalCurrency);
+        const amountChanged = parseFloat(amount) !== parseFloat(currentPrefill.toFixed(2));
+
         await updateTransaction(groupId, transaction.id, {
           amount: toBase(parseFloat(amount)),
           type,
           category,
           label,
-          date: new Date(`${date}T00:00:00`)
+          date: new Date(`${date}T00:00:00`),
+          ...(amountChanged && { originalAmount: parseFloat(amount), originalCurrency: currency })
         });
       } else {
         await addTransaction(groupId, {
@@ -77,7 +90,9 @@ export default function AddTransactionModal({ groupId, transaction, defaultCateg
           category,
           label,
           date: new Date(`${date}T00:00:00`),
-          addedBy: user.uid
+          addedBy: user.uid,
+          originalAmount: parseFloat(amount),
+          originalCurrency: currency
         });
       }
       onSuccess();

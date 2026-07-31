@@ -37,6 +37,7 @@ interface ParsedRow {
   category: string;
   type: TransactionType;
   baseAmount: number | null;
+  originalAmount: number | null;
   hardInvalid: boolean;
   hardReasonKey?: string;
   warningKeys: string[];
@@ -108,7 +109,7 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
   const t = useTranslations("importModal");
   const { user } = useAuth();
   const { language } = useLanguage();
-  const { toBase, fromBase, formatCurrency } = useCurrency();
+  const { toBase, fromBase, formatCurrency, currency } = useCurrency();
   const { profile } = useUserProfile();
 
   const expenseCategories = profile?.expenseCategories ?? DEFAULT_EXPENSE_CATEGORIES;
@@ -351,7 +352,8 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
       else if (!typeKnown) hardReasonKey = "unknownType";
 
       const hardInvalid = !!hardReasonKey;
-      const baseAmount = !hardInvalid && parsedAmount !== null ? toBase(Math.abs(parsedAmount)) : null;
+      const originalAmount = !hardInvalid && parsedAmount !== null ? Math.abs(parsedAmount) : null;
+      const baseAmount = originalAmount !== null ? toBase(originalAmount) : null;
 
       const warningKeys: string[] = [];
       if (!hardInvalid) {
@@ -376,6 +378,7 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
         category,
         type,
         baseAmount,
+        originalAmount,
         hardInvalid,
         hardReasonKey,
         warningKeys,
@@ -409,7 +412,9 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
           category: r.category,
           label: r.label,
           date: r.date as Date,
-          addedBy: user.uid
+          addedBy: user.uid,
+          originalAmount: r.originalAmount as number,
+          originalCurrency: currency
         }));
 
       await addTransactionsBatch(userId, toImport);

@@ -92,7 +92,7 @@ export default function DashboardPage() {
 
     const balance = totalIncome - totalExpenses;
 
-    const { formatCurrency, ready } = useCurrency();
+    const { formatCurrency, displayAmount, ready } = useCurrency();
 
     const currentMonth = format(new Date(), "MMMM yyyy", { locale: dateLocale });
 
@@ -171,7 +171,7 @@ export default function DashboardPage() {
                                             <CurrencyValue
                                                 amount={r.amount}
                                                 ready={ready}
-                                                formatCurrency={formatCurrency}
+                                                formatCurrency={(amt) => displayAmount(amt, r.originalAmount, r.originalCurrency)}
                                                 prefix={r.type === "income" ? "+" : "-"}
                                                 className={`shrink-0 ${r.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                                             />
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                                     <CurrencyValue
                                         amount={tx.amount}
                                         ready={ready}
-                                        formatCurrency={formatCurrency}
+                                        formatCurrency={(amt) => displayAmount(amt, tx.originalAmount, tx.originalCurrency)}
                                         prefix={tx.type === "income" ? "+" : "-"}
                                         className={`font-semibold text-sm shrink-0 ${tx.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                                     />
@@ -282,7 +282,7 @@ export default function DashboardPage() {
                                                 <span className={`inline-flex items-center gap-1 shrink-0 ${isOver ? "text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400"}`}>
                                                     <CurrencyValue amount={spent} ready={ready} formatCurrency={formatCurrency} />
                                                     <span>/</span>
-                                                    <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} />
+                                                    <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={(amt) => displayAmount(amt, budget.originalAmount, budget.originalCurrency)} />
                                                 </span>
                                             </div>
                                             <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
@@ -326,7 +326,7 @@ export default function DashboardPage() {
                                     <CurrencyValue
                                         amount={r.amount}
                                         ready={ready}
-                                        formatCurrency={formatCurrency}
+                                        formatCurrency={(amt) => displayAmount(amt, r.originalAmount, r.originalCurrency)}
                                         prefix={r.type === "income" ? "+" : "-"}
                                         className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                                     />

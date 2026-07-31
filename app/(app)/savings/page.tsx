@@ -27,7 +27,7 @@ export default function SavingsPage() {
   const { language } = useLanguage();
   const dateLocale = getDateFnsLocale(language);
 
-  const { formatCurrency, ready, toBase } = useCurrency();
+  const { formatCurrency, displayAmount, ready, toBase, currency } = useCurrency();
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -67,7 +67,15 @@ export default function SavingsPage() {
   const amount = parseFloat(addAmount);
   if (isNaN(amount) || amount <= 0) return;
   try {
-    await addToSavingsGoal(user.uid, goalId, toBase(amount));
+    const goal = goals.find(g => g.id === goalId);
+    // Si la devise active n'a pas changé depuis la dernière saisie, on prolonge le
+    // montant d'origine du même delta pour ne pas réintroduire de dérive. Sinon, on
+    // laisse le montant d'origine existant tel quel (il retombera sur le fallback CAD).
+    const original = goal && goal.originalCurrentCurrency === currency && goal.originalCurrentAmount !== undefined
+      ? { originalCurrentAmount: goal.originalCurrentAmount + amount, originalCurrentCurrency: currency }
+      : undefined;
+
+    await addToSavingsGoal(user.uid, goalId, toBase(amount), original);
     setAddingTo(null);
     setAddAmount("");
     await loadData();
@@ -140,8 +148,8 @@ export default function SavingsPage() {
 
                 <div className="mb-3">
                   <div className="flex justify-between text-sm mb-1.5">
-                    <CurrencyValue amount={goal.currentAmount} ready={ready} formatCurrency={formatCurrency} className={isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-gray-700 dark:text-gray-300"} />
-                    <CurrencyValue amount={goal.targetAmount} ready={ready} formatCurrency={formatCurrency} className="text-gray-500" />
+                    <CurrencyValue amount={goal.currentAmount} ready={ready} formatCurrency={(amt) => displayAmount(amt, goal.originalCurrentAmount, goal.originalCurrentCurrency)} className={isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-gray-700 dark:text-gray-300"} />
+                    <CurrencyValue amount={goal.targetAmount} ready={ready} formatCurrency={(amt) => displayAmount(amt, goal.originalTargetAmount, goal.originalTargetCurrency)} className="text-gray-500" />
                   </div>
                   <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
                     <div

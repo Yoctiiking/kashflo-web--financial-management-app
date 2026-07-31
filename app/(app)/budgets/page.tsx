@@ -65,7 +65,7 @@ export default function BudgetsPage() {
 
   const getSpent = (budget: Budget) => getBudgetSpent(transactions, budget);
 
-  const { formatCurrency, ready } = useCurrency();
+  const { formatCurrency, displayAmount, ready } = useCurrency();
 
   const periodLabel: Record<string, string> = {
     daily: tPeriod("daily"),
@@ -146,7 +146,7 @@ export default function BudgetsPage() {
                       <CurrencyValue amount={spent} ready={ready} formatCurrency={formatCurrency} />
                       <span className="truncate">{t("spent")}</span>
                     </span>
-                    <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-500 shrink-0" />
+                    <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={(amt) => displayAmount(amt, budget.originalAmount, budget.originalCurrency)} className="text-gray-500 shrink-0" />
                   </div>
                   <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
                     <div

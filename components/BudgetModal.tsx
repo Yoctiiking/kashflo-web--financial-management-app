@@ -24,18 +24,27 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
   const [period, setPeriod] = useState<BudgetPeriod>(budget?.period || "monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { symbol, toBase, fromBase, ready } = useCurrency();
+  const { symbol, currency, toBase, fromBase, ready } = useCurrency();
   const [category, setCategory] = useState(budget?.category || "");
   const categories = profile?.expenseCategories ?? DEFAULT_EXPENSE_CATEGORIES;
+
+  // Montant à pré-remplir : la valeur d'origine telle que saisie si la devise active
+  // n'a pas changé depuis (pas de dérive) ; sinon reconversion CAD habituelle.
+  const prefillAmount = (base: number, originalAmount?: number, originalCurrency?: string) =>
+    originalAmount !== undefined && originalCurrency !== undefined && originalCurrency === currency
+      ? originalAmount
+      : fromBase(base);
+
   const [limit, setLimit] = useState(
-    budget && ready ? fromBase(budget.limit).toFixed(2) : ""
+    budget && ready ? prefillAmount(budget.limit, budget.originalAmount, budget.originalCurrency).toFixed(2) : ""
   );
 
   useEffect(() => {
     if (budget && ready) {
-      setLimit(fromBase(budget.limit).toFixed(2));
+      setLimit(prefillAmount(budget.limit, budget.originalAmount, budget.originalCurrency).toFixed(2));
     }
-  }, [ready, budget, fromBase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, budget, fromBase, currency]);
 
   const isEditing = !!budget;
 
@@ -54,16 +63,22 @@ export default function BudgetModal({ groupId, budget, onClose, onSuccess }: Pro
 
     try {
       if (isEditing) {
+        const currentPrefill = prefillAmount(budget.limit, budget.originalAmount, budget.originalCurrency);
+        const amountChanged = parseFloat(limit) !== parseFloat(currentPrefill.toFixed(2));
+
         await updateBudget(groupId, budget.id, {
           category,
           limit: toBase(parseFloat(limit)),
-          period
+          period,
+          ...(amountChanged && { originalAmount: parseFloat(limit), originalCurrency: currency })
         });
       } else {
         await addBudget(groupId, {
           category,
           limit: toBase(parseFloat(limit)),
-          period
+          period,
+          originalAmount: parseFloat(limit),
+          originalCurrency: currency
         });
       }
       onSuccess();
