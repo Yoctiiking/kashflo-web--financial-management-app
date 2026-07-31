@@ -20,7 +20,7 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
   const t = useTranslations("addRecurrenceModal");
   const tFrequency = useTranslations("common.frequency");
   const { profile } = useUserProfile();
-  const { symbol, toBase } = useCurrency();
+  const { symbol, toBase, currency } = useCurrency();
   const [step, setStep] = useState<1 | 2>(1);
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
@@ -78,7 +78,9 @@ export default function AddRecurrenceModal({ groupId, onClose, onSuccess }: Prop
         label,
         frequency,
         customDays: frequency === "custom" ? parseInt(customDays) : undefined,
-        nextOccurrence: new Date(year, month - 1, day)
+        nextOccurrence: new Date(year, month - 1, day),
+        originalAmount: parseFloat(amount),
+        originalCurrency: currency
       });
       onSuccess();
       onClose();

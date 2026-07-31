@@ -14,6 +14,8 @@ export interface Transaction {
   addedBy: string;
   recurrenceId?: string;
   createdAt: Date;
+  originalAmount?: number;
+  originalCurrency?: string;
 }
 
 export interface Budget {
@@ -22,6 +24,8 @@ export interface Budget {
   limit: number;
   period: BudgetPeriod;
   createdAt: Date;
+  originalAmount?: number;
+  originalCurrency?: string;
 }
 
 export interface Recurrence {
@@ -35,6 +39,8 @@ export interface Recurrence {
   nextOccurrence: Date;
   isActive: boolean;
   createdAt: Date;
+  originalAmount?: number;
+  originalCurrency?: string;
 }
 
 export interface Group {
@@ -65,6 +71,10 @@ export interface SavingsGoal {
   currentAmount: number;
   targetDate?: Date;
   createdAt: Date;
+  originalTargetAmount?: number;
+  originalTargetCurrency?: string;
+  originalCurrentAmount?: number;
+  originalCurrentCurrency?: string;
 }
 
 export interface SharedBudget {
@@ -76,6 +86,8 @@ export interface SharedBudget {
   createdBy: string;
   members: string[];
   createdAt: Date;
+  originalAmount?: number;
+  originalCurrency?: string;
 }
 
 export interface SharedExpense {
@@ -86,4 +98,6 @@ export interface SharedExpense {
   addedBy: string;
   addedByName: string;
   createdAt: Date;
+  originalAmount?: number;
+  originalCurrency?: string;
 }

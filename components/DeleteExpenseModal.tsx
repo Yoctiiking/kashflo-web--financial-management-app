@@ -37,6 +37,7 @@ export default function DeleteExpenseModal({ expenseLabel, onDeletePermanently, 
 
           <button
             onClick={onCancel}
+            data-escape-cancel
             className="w-full bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium py-3 rounded-xl transition-colors text-sm"
           >
             {t("cancel")}

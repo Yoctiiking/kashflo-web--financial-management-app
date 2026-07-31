@@ -55,8 +55,10 @@ export default function StatsPage() {
   }, [loadData]);
 
   const barData = Array.from({ length: 6 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (5 - i));
+    const now = new Date();
+    // Jour fixé à 1 : sinon setMonth() sur le jour du mois actuel (ex. 31) déborde
+    // sur le mois suivant pour les mois plus courts (fév., avr., juin...).
+    const date = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
     const month = format(date, "MMM", { locale: dateLocale });
     const year = date.getFullYear();
     const monthNum = date.getMonth();

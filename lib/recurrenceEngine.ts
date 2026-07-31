@@ -51,7 +51,9 @@ export const processRecurrence = async (
       label: recurrence.label,
       date: nextOccurrence,
       addedBy,
-      recurrenceId: recurrence.id
+      recurrenceId: recurrence.id,
+      originalAmount: recurrence.originalAmount,
+      originalCurrency: recurrence.originalCurrency
     });
 
     nextOccurrence = getNextOccurrence(nextOccurrence, recurrence.frequency, recurrence.customDays);

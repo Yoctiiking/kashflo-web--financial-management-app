@@ -278,6 +278,7 @@
     "exportCsv": "CSV (mois affiché)",
     "exportPdf": "PDF (mois affiché)",
     "exportRange": "Plage de mois...",
+    "importCsv": "Importer un CSV",
     "add": "+ Ajouter",
     "filters": {
       "all": "Tout",
@@ -675,5 +676,94 @@
         "description": "Exporte tes transactions en CSV ou PDF directement depuis la page Transactions — pratique pour tes déclarations ou ton suivi personnel."
       }
     }
+  },
+  "importModal": {
+    "title": "Importer des transactions",
+    "steps": {
+      "upload": "1. Fichier",
+      "mapping": "2. Correspondance",
+      "preview": "3. Aperçu"
+    },
+    "upload": {
+      "instructions": "Sélectionne un fichier CSV ou Excel exporté depuis ta banque.",
+      "selectFile": "Choisir un fichier CSV ou Excel",
+      "selectedFile": "Fichier sélectionné : {name}",
+      "parsing": "Analyse du fichier...",
+      "errors": {
+        "invalidFile": "Ce fichier ne contient pas de données CSV valides.",
+        "emptyFile": "Ce fichier est vide.",
+        "noColumns": "Aucune colonne n'a été détectée dans ce fichier.",
+        "readFailed": "Impossible de lire ce fichier."
+      }
+    },
+    "mapping": {
+      "instructions": "Associe les colonnes de ton fichier aux champs de Kash Flo.",
+      "selectPlaceholder": "-- Sélectionner --",
+      "date": "Date",
+      "label": "Libellé / Description",
+      "amount": "Montant",
+      "category": "Catégorie",
+      "typeModeLabel": "Type (dépense/revenu)",
+      "typeModeColumn": "Colonne séparée",
+      "typeModeSigned": "Montant signé (négatif = dépense)",
+      "typeModeDebitCredit": "Débit et Crédit sur 2 colonnes",
+      "typeColumn": "Colonne du type",
+      "expenseLabel": "Valeur pour \"Dépense\"",
+      "incomeLabel": "Valeur pour \"Revenu\"",
+      "debitColumn": "Colonne Débit",
+      "creditColumn": "Colonne Crédit",
+      "dateFormatLabel": "Format de la date",
+      "dateFormatDetected": "Format détecté automatiquement — corrige-le si besoin.",
+      "dateFormatNotDetected": "Format non détecté automatiquement, sélectionne-le manuellement.",
+      "dateFormats": {
+        "iso": "AAAA-MM-JJ (2025-12-31)",
+        "dmy": "JJ/MM/AAAA (31/12/2025)",
+        "mdy": "MM/JJ/AAAA (12/31/2025)",
+        "dmy-dash": "JJ-MM-AAAA (31-12-2025)",
+        "textMonth": "Mois en texte (31 déc 2025)"
+      },
+      "templateApplied": "Mapping retrouvé d'un import précédent avec les mêmes colonnes.",
+      "example": "Exemple : {value}",
+      "back": "Retour",
+      "next": "Aperçu",
+      "errors": {
+        "required": "Associe toutes les colonnes obligatoires avant de continuer.",
+        "dateFormatRequired": "Sélectionne le format de la colonne Date avant de continuer."
+      }
+    },
+    "preview": {
+      "instructions": "Vérifie les transactions détectées avant l'import.",
+      "loadingDuplicates": "Vérification des doublons...",
+      "duplicateBadge": "Possible doublon",
+      "invalidBadge": "Ignorée",
+      "reasons": {
+        "invalidDate": "Date invalide",
+        "invalidAmount": "Montant invalide",
+        "unknownType": "Type non reconnu",
+        "missingLabel": "Libellé manquant",
+        "missingCategory": "Catégorie manquante",
+        "unrecognizedCategory": "Catégorie non reconnue",
+        "futureDate": "Date dans le futur"
+      },
+      "columns": {
+        "date": "Date",
+        "label": "Libellé",
+        "amount": "Montant",
+        "category": "Catégorie",
+        "type": "Type"
+      },
+      "expense": "Dépense",
+      "income": "Revenu",
+      "selectedCount": "{count, plural, =0 {Aucune ligne sélectionnée} one {# ligne sélectionnée} other {# lignes sélectionnées}}",
+      "back": "Retour",
+      "import": "Importer {count, plural, =0 {0 transaction} one {# transaction} other {# transactions}}",
+      "importing": "Import en cours...",
+      "errors": {
+        "importFailed": "Une erreur est survenue pendant l'import. Réessaie."
+      }
+    },
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "success": "{count, plural, one {# transaction importée} other {# transactions importées}} avec succès."
   }
 }
