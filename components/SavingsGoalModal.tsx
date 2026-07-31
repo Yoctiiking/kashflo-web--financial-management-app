@@ -16,13 +16,21 @@ interface Props {
 
 export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: Props) {
   const t = useTranslations("savingsGoalModal");
-  const { symbol, toBase, fromBase, ready } = useCurrency();
+  const { symbol, currency, toBase, fromBase, ready } = useCurrency();
+
+  // Montant à pré-remplir : la valeur d'origine telle que saisie si la devise active
+  // n'a pas changé depuis (pas de dérive) ; sinon reconversion CAD habituelle.
+  const prefillAmount = (base: number, originalAmount?: number, originalCurrency?: string) =>
+    originalAmount !== undefined && originalCurrency !== undefined && originalCurrency === currency
+      ? originalAmount
+      : fromBase(base);
+
   const [name, setName] = useState(goal?.name || "");
   const [targetAmount, setTargetAmount] = useState(
-    goal && ready ? fromBase(goal.targetAmount).toFixed(2) : ""
+    goal && ready ? prefillAmount(goal.targetAmount, goal.originalTargetAmount, goal.originalTargetCurrency).toFixed(2) : ""
   );
   const [currentAmount, setCurrentAmount] = useState(
-    goal && ready ? fromBase(goal.currentAmount).toFixed(2) : "0"
+    goal && ready ? prefillAmount(goal.currentAmount, goal.originalCurrentAmount, goal.originalCurrentCurrency).toFixed(2) : "0"
   );
   const [targetDate, setTargetDate] = useState(
     goal?.targetDate ? goal.targetDate.toISOString().split("T")[0] : ""
@@ -32,10 +40,11 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
 
   useEffect(() => {
     if (goal && ready) {
-      setTargetAmount(fromBase(goal.targetAmount).toFixed(2));
-      setCurrentAmount(fromBase(goal.currentAmount).toFixed(2));
+      setTargetAmount(prefillAmount(goal.targetAmount, goal.originalTargetAmount, goal.originalTargetCurrency).toFixed(2));
+      setCurrentAmount(prefillAmount(goal.currentAmount, goal.originalCurrentAmount, goal.originalCurrentCurrency).toFixed(2));
     }
-  }, [ready, goal, fromBase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, goal, fromBase, currency]);
 
   const isEditing = !!goal;
 
@@ -67,9 +76,24 @@ export default function SavingsGoalModal({ groupId, goal, onClose, onSuccess }: 
       };
 
       if (isEditing) {
-        await updateSavingsGoal(groupId, goal.id, data);
+        const targetPrefill = prefillAmount(goal.targetAmount, goal.originalTargetAmount, goal.originalTargetCurrency);
+        const currentPrefill = prefillAmount(goal.currentAmount, goal.originalCurrentAmount, goal.originalCurrentCurrency);
+        const targetChanged = parseFloat(targetAmount) !== parseFloat(targetPrefill.toFixed(2));
+        const currentChanged = (parseFloat(currentAmount) || 0) !== parseFloat(currentPrefill.toFixed(2));
+
+        await updateSavingsGoal(groupId, goal.id, {
+          ...data,
+          ...(targetChanged && { originalTargetAmount: parseFloat(targetAmount), originalTargetCurrency: currency }),
+          ...(currentChanged && { originalCurrentAmount: parseFloat(currentAmount) || 0, originalCurrentCurrency: currency })
+        });
       } else {
-        await addSavingsGoal(groupId, data);
+        await addSavingsGoal(groupId, {
+          ...data,
+          originalTargetAmount: parseFloat(targetAmount),
+          originalTargetCurrency: currency,
+          originalCurrentAmount: parseFloat(currentAmount) || 0,
+          originalCurrentCurrency: currency
+        });
       }
       onSuccess();
       onClose();

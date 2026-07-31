@@ -7,6 +7,7 @@ import { UserProfileProvider } from "@/lib/providers/UserProfileProvider";
 import { LanguageProvider } from "@/lib/providers/LanguageProvider";
 import { ThemeProvider } from "@/lib/providers/ThemeProvider";
 import EnterKeyNavigation from "@/components/EnterKeyNavigation";
+import EscapeKeyClose from "@/components/EscapeKeyClose";
 
 // Applique le thème stocké avant le premier rendu pour éviter un flash du mauvais thème.
 // Le mode sombre reste la valeur par défaut (className="dark" sur <html>) tant que
@@ -47,6 +48,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
           <EnterKeyNavigation />
+          <EscapeKeyClose />
           <AuthProvider>
             <UserProfileProvider>
               <LanguageProvider>

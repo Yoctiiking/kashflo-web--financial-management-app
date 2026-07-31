@@ -24,19 +24,28 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
   const [period, setPeriod] = useState<BudgetPeriod>(budget?.period || "monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { symbol, toBase, fromBase, ready } = useCurrency();
+  const { symbol, currency, toBase, fromBase, ready } = useCurrency();
   const [name, setName] = useState(budget?.name || "");
   const [category, setCategory] = useState(budget?.category || "");
   const categories = profile?.expenseCategories ?? DEFAULT_EXPENSE_CATEGORIES;
+
+  // Montant à pré-remplir : la valeur d'origine telle que saisie si la devise active
+  // n'a pas changé depuis (pas de dérive) ; sinon reconversion CAD habituelle.
+  const prefillAmount = (base: number, originalAmount?: number, originalCurrency?: string) =>
+    originalAmount !== undefined && originalCurrency !== undefined && originalCurrency === currency
+      ? originalAmount
+      : fromBase(base);
+
   const [limit, setLimit] = useState(
-    budget && ready ? fromBase(budget.limit).toFixed(2) : ""
+    budget && ready ? prefillAmount(budget.limit, budget.originalAmount, budget.originalCurrency).toFixed(2) : ""
   );
 
   useEffect(() => {
     if (budget && ready) {
-      setLimit(fromBase(budget.limit).toFixed(2));
+      setLimit(prefillAmount(budget.limit, budget.originalAmount, budget.originalCurrency).toFixed(2));
     }
-  }, [ready, budget, fromBase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, budget, fromBase, currency]);
 
   const isEditing = !!budget;
 
@@ -57,9 +66,26 @@ export default function SharedBudgetModal({ userId, budget, onClose, onSuccess }
 
     try {
       if (isEditing) {
-        await updateSharedBudget(budget.id, { name, category, limit: toBase(parseFloat(limit)), period });
+        const currentPrefill = prefillAmount(budget.limit, budget.originalAmount, budget.originalCurrency);
+        const amountChanged = parseFloat(limit) !== parseFloat(currentPrefill.toFixed(2));
+
+        await updateSharedBudget(budget.id, {
+          name,
+          category,
+          limit: toBase(parseFloat(limit)),
+          period,
+          ...(amountChanged && { originalAmount: parseFloat(limit), originalCurrency: currency })
+        });
       } else {
-        await createSharedBudget({ name, category, limit: toBase(parseFloat(limit)), period, createdBy: userId });
+        await createSharedBudget({
+          name,
+          category,
+          limit: toBase(parseFloat(limit)),
+          period,
+          createdBy: userId,
+          originalAmount: parseFloat(limit),
+          originalCurrency: currency
+        });
       }
       onSuccess();
       onClose();

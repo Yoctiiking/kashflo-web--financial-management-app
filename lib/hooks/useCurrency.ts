@@ -40,19 +40,25 @@ export function useCurrency() {
     load();
   }, [user]);
 
-  const formatCurrency = useCallback((amount: number) => {
-    const converted = amount * rate;
-    if (Math.abs(converted) >= 1_000_000) {
+  // Formate une valeur déjà exprimée dans `currency` (aucune conversion appliquée) —
+  // utilisé directement par formatCurrency (après conversion CAD → devise affichée)
+  // et par displayAmount quand le montant d'origine est réutilisé tel quel.
+  const formatRaw = useCallback((value: number) => {
+    if (Math.abs(value) >= 1_000_000) {
       return new Intl.NumberFormat("fr-CA", {
         style: "currency",
         currency,
         notation: "compact",
         compactDisplay: "short",
         maximumFractionDigits: 3,
-      }).format(converted);
+      }).format(value);
     }
-    return new Intl.NumberFormat("fr-CA", { style: "currency", currency }).format(converted);
-  }, [currency, rate]);
+    return new Intl.NumberFormat("fr-CA", { style: "currency", currency }).format(value);
+  }, [currency]);
+
+  const formatCurrency = useCallback((amount: number) => {
+    return formatRaw(amount * rate);
+  }, [formatRaw, rate]);
 
   // Montant saisi dans la devise affichée → CAD à stocker
   const toBase = useCallback((amount: number) => {
@@ -64,5 +70,17 @@ export function useCurrency() {
     return amount * rate;
   }, [rate]);
 
-  return { currency, formatCurrency, toBase, fromBase, ready, symbol: getCurrencySymbol(currency) };
+  // Affiche un montant sans dérive dans le temps : si la devise active de l'utilisateur
+  // n'a pas changé depuis la création (originalCurrency === currency), on réaffiche
+  // originalAmount tel quel (pas de repassage par le taux de change actuel). Sinon, ou
+  // si les champs d'origine sont absents (données créées avant cette fonctionnalité),
+  // on retombe sur la conversion CAD habituelle — comportement inchangé.
+  const displayAmount = useCallback((amount: number, originalAmount?: number, originalCurrency?: string) => {
+    if (originalAmount !== undefined && originalCurrency !== undefined && originalCurrency === currency) {
+      return formatRaw(originalAmount);
+    }
+    return formatCurrency(amount);
+  }, [formatRaw, formatCurrency, currency]);
+
+  return { currency, formatCurrency, displayAmount, toBase, fromBase, ready, symbol: getCurrencySymbol(currency) };
 }

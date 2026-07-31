@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   doc,
   getDoc,
+  setDoc,
   Timestamp,
   updateDoc,
   increment,
@@ -182,6 +183,12 @@ export const addTransaction = async (
     date: Date;
     addedBy: string;
     recurrenceId?: string;
+    // Optionnels (contrairement aux autres créations, toujours écrits) car les
+    // transactions générées automatiquement par une récurrence (lib/recurrenceEngine.ts)
+    // reprennent ceux de la récurrence elle-même, qui peuvent être absents pour les
+    // récurrences créées avant l'ajout de ce champ — fallback CAD habituel dans ce cas.
+    originalAmount?: number;
+    originalCurrency?: string;
   }
 ) => {
   const ref = collection(db, "users", userId, "transactions");
@@ -193,6 +200,93 @@ export const addTransaction = async (
   });
 };
 
+// Toutes les transactions de l'utilisateur, sans filtre de période — utilisé pour
+// la détection de doublons à l'import CSV (un fichier peut couvrir plusieurs mois).
+export const getAllTransactions = async (userId: string): Promise<Transaction[]> => {
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    orderBy("date", "desc"),
+    orderBy("createdAt", "desc")
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    date: (doc.data().date as Timestamp).toDate(),
+    createdAt: (doc.data().createdAt as Timestamp).toDate()
+  })) as Transaction[];
+};
+
+const BATCH_WRITE_LIMIT = 450;
+
+export const addTransactionsBatch = async (
+  userId: string,
+  transactions: {
+    amount: number;
+    type: TransactionType;
+    category: string;
+    label: string;
+    date: Date;
+    addedBy: string;
+    originalAmount?: number;
+    originalCurrency?: string;
+  }[]
+) => {
+  const ref = collection(db, "users", userId, "transactions");
+
+  for (let i = 0; i < transactions.length; i += BATCH_WRITE_LIMIT) {
+    const chunk = transactions.slice(i, i + BATCH_WRITE_LIMIT);
+    const batch = writeBatch(db);
+    chunk.forEach((data) => {
+      batch.set(doc(ref), {
+        ...data,
+        date: Timestamp.fromDate(data.date),
+        recurrenceId: null,
+        createdAt: serverTimestamp()
+      });
+    });
+    await batch.commit();
+  }
+};
+
+// Mapping colonnes → champs sauvegardé après un import CSV/Excel réussi, retrouvé au
+// prochain import si le même jeu de colonnes est détecté (voir computeColumnsSignature
+// dans lib/csvImportKeywords.ts). Un template par signature de colonnes, pas par banque.
+export interface ImportMapping {
+  dateColumn: string;
+  labelColumn: string;
+  categoryColumn: string;
+  typeMode: "signedAmount" | "column" | "debitCredit";
+  amountColumn?: string;
+  typeColumn?: string;
+  expenseLabel?: string;
+  incomeLabel?: string;
+  debitColumn?: string;
+  creditColumn?: string;
+  dateFormat: string;
+}
+
+export const saveImportTemplate = async (
+  userId: string,
+  columnsSignature: string,
+  mapping: ImportMapping
+) => {
+  await setDoc(doc(db, "users", userId, "importTemplates", columnsSignature), {
+    mapping,
+    updatedAt: serverTimestamp()
+  });
+};
+
+export const getImportTemplate = async (
+  userId: string,
+  columnsSignature: string
+): Promise<ImportMapping | null> => {
+  const snap = await getDoc(doc(db, "users", userId, "importTemplates", columnsSignature));
+  if (!snap.exists()) return null;
+  return (snap.data().mapping as ImportMapping) ?? null;
+};
+
 export const updateTransaction = async (
   userId: string,
   transactionId: string,
@@ -202,6 +296,8 @@ export const updateTransaction = async (
     category: string;
     label: string;
     date: Date;
+    originalAmount?: number;
+    originalCurrency?: string;
   }
 ) => {
   await updateDoc(doc(db, "users", userId, "transactions", transactionId), {
@@ -228,7 +324,7 @@ export const getBudgets = async (userId: string): Promise<Budget[]> => {
 
 export const addBudget = async (
   userId: string,
-  data: { category: string; limit: number; period: BudgetPeriod }
+  data: { category: string; limit: number; period: BudgetPeriod; originalAmount: number; originalCurrency: string }
 ) => {
   const ref = collection(db, "users", userId, "budgets");
   await addDoc(ref, { ...data, createdAt: serverTimestamp() });
@@ -237,7 +333,7 @@ export const addBudget = async (
 export const updateBudget = async (
   userId: string,
   budgetId: string,
-  data: { category: string; limit: number; period: BudgetPeriod }
+  data: { category: string; limit: number; period: BudgetPeriod; originalAmount?: number; originalCurrency?: string }
 ) => {
   await updateDoc(doc(db, "users", userId, "budgets", budgetId), data);
 };
@@ -275,6 +371,8 @@ export const addRecurrence = async (
     frequency: RecurrenceFrequency;
     nextOccurrence: Date;
     customDays?: number;
+    originalAmount: number;
+    originalCurrency: string;
   }
 ) => {
   const ref = collection(db, "users", userId, "recurrences");
@@ -328,7 +426,16 @@ export const getSavingsGoals = async (userId: string): Promise<SavingsGoal[]> =>
 
 export const addSavingsGoal = async (
   userId: string,
-  data: { name: string; targetAmount: number; currentAmount: number; targetDate?: Date }
+  data: {
+    name: string;
+    targetAmount: number;
+    currentAmount: number;
+    targetDate?: Date;
+    originalTargetAmount: number;
+    originalTargetCurrency: string;
+    originalCurrentAmount: number;
+    originalCurrentCurrency: string;
+  }
 ) => {
   const ref = collection(db, "users", userId, "savingsGoals");
   const { targetDate, ...rest } = data;
@@ -342,7 +449,16 @@ export const addSavingsGoal = async (
 export const updateSavingsGoal = async (
   userId: string,
   goalId: string,
-  data: { name: string; targetAmount: number; currentAmount: number; targetDate?: Date }
+  data: {
+    name: string;
+    targetAmount: number;
+    currentAmount: number;
+    targetDate?: Date;
+    originalTargetAmount?: number;
+    originalTargetCurrency?: string;
+    originalCurrentAmount?: number;
+    originalCurrentCurrency?: string;
+  }
 ) => {
   const { targetDate, ...rest } = data;
   await updateDoc(doc(db, "users", userId, "savingsGoals", goalId), {
@@ -355,9 +471,18 @@ export const deleteSavingsGoal = async (userId: string, goalId: string) => {
   await deleteDoc(doc(db, "users", userId, "savingsGoals", goalId));
 };
 
-export const addToSavingsGoal = async (userId: string, goalId: string, amount: number) => {
+export const addToSavingsGoal = async (
+  userId: string,
+  goalId: string,
+  amount: number,
+  original?: { originalCurrentAmount: number; originalCurrentCurrency: string }
+) => {
   await updateDoc(doc(db, "users", userId, "savingsGoals", goalId), {
-    currentAmount: increment(amount)
+    currentAmount: increment(amount),
+    ...(original && {
+      originalCurrentAmount: original.originalCurrentAmount,
+      originalCurrentCurrency: original.originalCurrentCurrency
+    })
   });
 };
 
@@ -378,7 +503,15 @@ export const getSharedBudgets = async (userId: string): Promise<SharedBudget[]> 
 };
 
 export const createSharedBudget = async (
-  data: { name: string; limit: number; period: BudgetPeriod; category: string; createdBy: string }
+  data: {
+    name: string;
+    limit: number;
+    period: BudgetPeriod;
+    category: string;
+    createdBy: string;
+    originalAmount: number;
+    originalCurrency: string;
+  }
 ) => {
   const ref = collection(db, "sharedBudgets");
   const docRef = await addDoc(ref, {
@@ -391,7 +524,7 @@ export const createSharedBudget = async (
 
 export const updateSharedBudget = async (
   budgetId: string,
-  data: { name: string; limit: number; period: BudgetPeriod; category: string }
+  data: { name: string; limit: number; period: BudgetPeriod; category: string; originalAmount?: number; originalCurrency?: string }
 ) => {
   await updateDoc(doc(db, "sharedBudgets", budgetId), data);
 };
@@ -492,7 +625,15 @@ export const getSharedExpenses = async (budgetId: string): Promise<SharedExpense
 
 export const addSharedExpense = async (
   budgetId: string,
-  data: { amount: number; label: string; date: Date; addedBy: string; addedByName: string }
+  data: {
+    amount: number;
+    label: string;
+    date: Date;
+    addedBy: string;
+    addedByName: string;
+    originalAmount: number;
+    originalCurrency: string;
+  }
 ) => {
   const ref = collection(db, "sharedBudgets", budgetId, "expenses");
   await addDoc(ref, {
@@ -505,7 +646,7 @@ export const addSharedExpense = async (
 export const updateSharedExpense = async (
   budgetId: string,
   expenseId: string,
-  data: { amount: number; label: string; date: Date }
+  data: { amount: number; label: string; date: Date; originalAmount?: number; originalCurrency?: string }
 ) => {
   await updateDoc(doc(db, "sharedBudgets", budgetId, "expenses", expenseId), {
     ...data,

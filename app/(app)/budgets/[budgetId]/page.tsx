@@ -28,7 +28,7 @@ export default function BudgetDetailPage() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [visibleCount, setVisibleCount] = useState(10);
   const [search, setSearch] = useState("");
-  const { formatCurrency, ready } = useCurrency();
+  const { formatCurrency, displayAmount, ready } = useCurrency();
   const confirm = useConfirm();
   const t = useTranslations("budgetDetail");
   const tPeriod = useTranslations("common.period");
@@ -137,7 +137,7 @@ export default function BudgetDetailPage() {
             <CurrencyValue amount={spent} ready={ready} formatCurrency={formatCurrency} />
             <span className="truncate">{t("spent")}</span>
           </span>
-          <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={formatCurrency} className="text-gray-600 dark:text-gray-400 shrink-0" />
+          <CurrencyValue amount={budget.limit} ready={ready} formatCurrency={(amt) => displayAmount(amt, budget.originalAmount, budget.originalCurrency)} className="text-gray-600 dark:text-gray-400 shrink-0" />
         </div>
         <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 mb-2">
           <div
@@ -187,7 +187,7 @@ export default function BudgetDetailPage() {
                     <p className="text-gray-500 text-xs truncate">{format(tx.date, "d MMM", { locale: dateLocale })}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <CurrencyValue amount={tx.amount} ready={ready} formatCurrency={formatCurrency} className="text-red-600 dark:text-red-400 font-semibold text-sm" />
+                    <CurrencyValue amount={tx.amount} ready={ready} formatCurrency={(amt) => displayAmount(amt, tx.originalAmount, tx.originalCurrency)} className="text-red-600 dark:text-red-400 font-semibold text-sm" />
                     <button
                       onClick={() => setEditingTransaction(tx)}
                       className="text-gray-400 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"

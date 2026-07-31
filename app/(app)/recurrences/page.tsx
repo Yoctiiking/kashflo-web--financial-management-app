@@ -97,7 +97,7 @@ export default function RecurrencesPage() {
     }
   };
 
-  const { formatCurrency, ready } = useCurrency();
+  const { displayAmount, ready } = useCurrency();
 
   if (loading) {
     return (
@@ -178,7 +178,7 @@ export default function RecurrencesPage() {
                   <CurrencyValue
                     amount={r.amount}
                     ready={ready}
-                    formatCurrency={formatCurrency}
+                    formatCurrency={(amt) => displayAmount(amt, r.originalAmount, r.originalCurrency)}
                     prefix={r.type === "income" ? "+" : "-"}
                     className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                   />

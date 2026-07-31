@@ -31,6 +31,7 @@ export default function ConfirmModal({
         <div className="flex gap-3">
           <button
             onClick={onCancel}
+            data-escape-cancel
             className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
           >
             {cancelLabel ?? t("cancel")}
