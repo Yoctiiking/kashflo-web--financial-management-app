@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getMonthTransactions, getRecentTransactions, getBudgets, getRecurrences, updateOnboardingVersion } from "@/lib/firebase/firestore";
+import { getUserProfile, getMonthTransactions, getBudgets, getRecurrences, updateOnboardingVersion } from "@/lib/firebase/firestore";
 import { Transaction, Budget, Recurrence } from "@/types";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
@@ -11,6 +12,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 import { useLanguage } from "@/lib/providers/LanguageProvider";
+import { getMonthNames } from "@/lib/utils/months";
 import CurrencyValue from "@/components/CurrencyValue";
 import OnboardingCarousel from "@/components/OnboardingCarousel";
 import { ONBOARDING_SLIDES, ONBOARDING_VERSION } from "@/lib/onboardingSlides";
@@ -27,17 +29,22 @@ export default function DashboardPage() {
     const { language } = useLanguage();
     const dateLocale = language === "en" ? enUS : fr;
     const t = useTranslations("dashboard");
+    const now0 = new Date();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
     const [loading, setLoading] = useState(true);
     const [onboardingSlides, setOnboardingSlides] = useState<typeof ONBOARDING_SLIDES>([]);
+    const [currentYear, setCurrentYear] = useState(now0.getFullYear());
+    const [currentMonth, setCurrentMonth] = useState(now0.getMonth());
+    const [pickerYear, setPickerYear] = useState(currentYear);
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+    const monthNames = getMonthNames(language);
 
     useEffect(() => {
         if (!user) return;
 
-        const loadData = async () => {
+        const loadStaticData = async () => {
             try {
                 const userProfile = await getUserProfile(user.uid);
                 if (!userProfile) return;
@@ -50,26 +57,61 @@ export default function DashboardPage() {
                     }
                 }
 
-                const [monthTx, recentTx, userBudgets, userRecurrences] = await Promise.all([
-                    getMonthTransactions(user.uid),
-                    getRecentTransactions(user.uid),
+                const [userBudgets, userRecurrences] = await Promise.all([
                     getBudgets(user.uid),
                     getRecurrences(user.uid)
                 ]);
 
-                setTransactions(monthTx);
-                setRecentTransactions(recentTx);
                 setBudgets(userBudgets);
                 setRecurrences(userRecurrences);
             } catch (error) {
                 console.error("Erreur chargement dashboard:", error);
-            } finally {
-                setLoading(false);
             }
         };
 
-        loadData();
+        loadStaticData();
     }, [user]);
+
+    const loadTransactions = useCallback(async () => {
+        if (!user) return;
+        try {
+            const monthTx = await getMonthTransactions(user.uid, currentYear, currentMonth);
+            setTransactions(monthTx);
+        } catch (error) {
+            console.error("Erreur chargement transactions:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user, currentYear, currentMonth]);
+
+    useEffect(() => {
+        loadTransactions();
+    }, [loadTransactions]);
+
+    const openMonthPicker = () => {
+        setPickerYear(currentYear);
+        setShowMonthPicker(true);
+    };
+
+    const goToPreviousMonth = () => {
+        if (currentMonth === 0) {
+            setCurrentMonth(11);
+            setCurrentYear(y => y - 1);
+        } else {
+            setCurrentMonth(m => m - 1);
+        }
+    };
+
+    const goToNextMonth = () => {
+        const isCurrentMonth = currentYear === now0.getFullYear() && currentMonth === now0.getMonth();
+        if (isCurrentMonth) return;
+        if (currentMonth === 11) {
+            setCurrentMonth(0);
+            setCurrentYear(y => y + 1);
+        } else {
+            setCurrentMonth(m => m + 1);
+        }
+    };
 
     const handleOnboardingComplete = async () => {
         setOnboardingSlides([]);
@@ -94,14 +136,19 @@ export default function DashboardPage() {
 
     const { formatCurrency, displayAmount, ready } = useCurrency();
 
-    const currentMonth = format(new Date(), "MMMM yyyy", { locale: dateLocale });
+    const currentMonthLabel = format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: dateLocale });
+
+    const recentTransactions = [...transactions]
+        .sort((a, b) => b.date.getTime() - a.date.getTime() || b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, 5);
 
     const now = new Date();
-    const monthRecurrences = recurrences.filter(r => {
-        return r.isActive &&
-            r.nextOccurrence.getMonth() === now.getMonth() &&
-            r.nextOccurrence.getFullYear() === now.getFullYear();
-    });
+    // Transactions du mois affiché générées par une récurrence — reflète ce qui a
+    // réellement eu lieu pendant le mois consulté (transactions déjà période-scopées),
+    // plutôt que recurrence.nextOccurrence qui ne suit que le mois réel actuel.
+    const recurringTransactions = transactions
+        .filter(t => t.recurrenceId)
+        .sort((a, b) => b.date.getTime() - a.date.getTime());
 
     const upcomingRecurrences = recurrences.filter(r => {
         if (!r.isActive) return false;
@@ -148,7 +195,90 @@ export default function DashboardPage() {
 
             {/* Header */}
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">{currentMonth}</h2>
+                <div className="flex items-center gap-3 relative">
+                    <button
+                        onClick={goToPreviousMonth}
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        aria-label={t("prevMonth")}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                    </button>
+
+                    <button
+                        onClick={openMonthPicker}
+                        className="text-2xl font-bold text-gray-900 dark:text-white capitalize hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                    >
+                        {currentMonthLabel}
+                    </button>
+
+                    <button
+                        onClick={goToNextMonth}
+                        disabled={currentYear === now0.getFullYear() && currentMonth === now0.getMonth()}
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        aria-label={t("nextMonth")}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+
+                    {showMonthPicker && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setShowMonthPicker(false)}
+                            />
+
+                            <div className="absolute top-full left-0 mt-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl p-4 z-20 w-64">
+                                <div className="flex items-center justify-between mb-3">
+                                    <button
+                                        onClick={() => setPickerYear(y => y - 1)}
+                                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="15 18 9 12 15 6" />
+                                        </svg>
+                                    </button>
+                                    <span className="text-gray-900 dark:text-white text-sm font-medium">{pickerYear}</span>
+                                    <button
+                                        onClick={() => setPickerYear(y => y + 1)}
+                                        disabled={pickerYear >= now0.getFullYear()}
+                                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="9 18 15 12 9 6" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {monthNames.map((m, i) => {
+                                        const isFuture = pickerYear === now0.getFullYear() && i > now0.getMonth();
+                                        const isSelected = pickerYear === currentYear && i === currentMonth;
+                                        return (
+                                            <button
+                                                key={m}
+                                                disabled={isFuture}
+                                                onClick={() => {
+                                                    setCurrentMonth(i);
+                                                    setCurrentYear(pickerYear);
+                                                    setShowMonthPicker(false);
+                                                }}
+                                                className={`py-2 rounded-lg text-xs font-medium capitalize transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isSelected
+                                                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                    }`}
+                                            >
+                                                {m.slice(0, 3)}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">{t("greeting", { name: profile?.displayName || user?.displayName || "" })}</p>
             </div>
 
@@ -230,6 +360,12 @@ export default function DashboardPage() {
                             ))}
                         </div>
                     )}
+                    <Link
+                        href={`/transactions?year=${currentYear}&month=${currentMonth}`}
+                        className="block w-full mt-4 text-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                    >
+                        {t("seeMore")}
+                    </Link>
                 </div>
 
                 {/* Budgets */}
@@ -241,26 +377,12 @@ export default function DashboardPage() {
                         <div className="space-y-4">
                             {budgets
                                 .map(budget => {
+                                    // Somme sur tout le mois affiché pour tous les types de période (journalier/
+                                    // hebdomadaire inclus) — "aujourd'hui"/"cette semaine" réels n'ont pas de sens
+                                    // une fois qu'on peut naviguer vers un mois passé. Comportement volontairement
+                                    // différent de lib/utils/budgetUtils.ts (pages Budgets, sans navigation de période).
                                     const spent = transactions
-                                        .filter(t => {
-                                            if (t.type !== "expense" || t.category !== budget.category) return false;
-                                            if (budget.period === "daily") {
-                                                const today = new Date();
-                                                return (
-                                                    t.date.getDate() === today.getDate() &&
-                                                    t.date.getMonth() === today.getMonth() &&
-                                                    t.date.getFullYear() === today.getFullYear()
-                                                );
-                                            }
-                                            if (budget.period === "weekly") {
-                                                const now = new Date();
-                                                const startOfWeek = new Date(now);
-                                                startOfWeek.setDate(now.getDate() - now.getDay());
-                                                startOfWeek.setHours(0, 0, 0, 0);
-                                                return t.date >= startOfWeek;
-                                            }
-                                            return true;
-                                        })
+                                        .filter(t => t.type === "expense" && t.category === budget.category)
                                         .reduce((sum, t) => sum + t.amount, 0);
                                     return { ...budget, spent };
                                 })
@@ -297,43 +419,55 @@ export default function DashboardPage() {
                             }
                         </div>
                     )}
+                    <Link
+                        href={`/budgets?year=${currentYear}&month=${currentMonth}`}
+                        className="block w-full mt-4 text-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                    >
+                        {t("seeMore")}
+                    </Link>
                 </div>
 
                 {/* Récurrences du mois */}
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
                     <h3 className="text-gray-900 dark:text-white font-semibold mb-4">{t("monthRecurrences.title")}</h3>
-                    {monthRecurrences.length === 0 ? (
+                    {recurringTransactions.length === 0 ? (
                         <p className="text-gray-500 text-sm">{t("monthRecurrences.empty")}</p>
                     ) : (
                         <div className="space-y-3">
-                            {monthRecurrences.map(r => (
-                                <div key={r.id} className="flex items-center justify-between gap-3">
+                            {recurringTransactions.map(tx => (
+                                <div key={tx.id} className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${r.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${tx.type === "income" ? "bg-emerald-500/10" : "bg-red-500/10"
                                             }`}>
-                                            {r.type === "income"
+                                            {tx.type === "income"
                                                 ? <ArrowDownLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
                                                 : <ArrowUpRight className="w-4 h-4 text-red-600 dark:text-red-400" strokeWidth={2} />
                                             }
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{r.label}</p>
+                                            <p className="text-gray-900 dark:text-white text-sm font-medium truncate">{tx.label}</p>
                                             <p className="text-gray-500 text-xs">
-                                                {format(r.nextOccurrence, "d MMM", { locale: dateLocale })}
+                                                {format(tx.date, "d MMM", { locale: dateLocale })}
                                             </p>
                                         </div>
                                     </div>
                                     <CurrencyValue
-                                        amount={r.amount}
+                                        amount={tx.amount}
                                         ready={ready}
-                                        formatCurrency={(amt) => displayAmount(amt, r.originalAmount, r.originalCurrency)}
-                                        prefix={r.type === "income" ? "+" : "-"}
-                                        className={`font-semibold text-sm shrink-0 ${r.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                                        formatCurrency={(amt) => displayAmount(amt, tx.originalAmount, tx.originalCurrency)}
+                                        prefix={tx.type === "income" ? "+" : "-"}
+                                        className={`font-semibold text-sm shrink-0 ${tx.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                                     />
                                 </div>
                             ))}
                         </div>
                     )}
+                    <Link
+                        href={`/transactions?year=${currentYear}&month=${currentMonth}&recurring=1`}
+                        className="block w-full mt-4 text-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                    >
+                        {t("seeMore")}
+                    </Link>
                 </div>
 
                 {/* Pie chart */}

@@ -237,6 +237,9 @@
   },
   "dashboard": {
     "greeting": "Hi, {name} 👋",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "seeMore": "See more",
     "upcomingPayments": "{count, plural, one {# upcoming payment} other {# upcoming payments}}",
     "dayLabel": {
       "today": "Today",
@@ -283,7 +286,8 @@
     "filters": {
       "all": "All",
       "expense": "Expenses",
-      "income": "Income"
+      "income": "Income",
+      "recurring": "Recurring"
     },
     "empty": "No transactions",
     "deleteConfirm": {
@@ -325,6 +329,8 @@
   "budgets": {
     "title": "Budgets",
     "activeCount": "{count, plural, one {# active budget} other {# active budgets}}",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
     "new": "+ New budget",
     "emptyTitle": "No budget set",
     "emptyDescription": "Create a budget to track your spending by category",
