@@ -694,6 +694,8 @@
       "instructions": "Select a CSV or Excel file exported from your bank.",
       "selectFile": "Choose a CSV or Excel file",
       "selectedFile": "Selected file: {name}",
+      "chooseSheet": "This workbook has multiple sheets — choose which one to import.",
+      "chooseAnotherFile": "Choose a different file",
       "parsing": "Parsing file...",
       "errors": {
         "invalidFile": "This file doesn't contain valid CSV data.",
@@ -709,6 +711,9 @@
       "label": "Label / Description",
       "amount": "Amount",
       "category": "Category",
+      "categoryOptional": "Category (optional)",
+      "categoryPlaceholder": "-- None (uses \"Autre\") --",
+      "categoryOptionalHint": "If no column is matched, the \"Autre\" category will be used for every imported row.",
       "typeModeLabel": "Type (expense/income)",
       "typeModeColumn": "Separate column",
       "typeModeSigned": "Signed amount (negative = expense)",
@@ -729,6 +734,7 @@
         "textMonth": "Text month (Dec 31, 2025)"
       },
       "templateApplied": "Mapping restored from a previous import with the same columns.",
+      "headerRowDetected": "Headers detected on row {row} (not the first).",
       "example": "Example: {value}",
       "back": "Back",
       "next": "Preview",
