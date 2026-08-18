@@ -64,25 +64,62 @@ const cellToString = (value: unknown): string => {
   return String(value);
 };
 
-const parseExcelFile = async (file: File): Promise<ParsedFile | null> => {
+type RawMatrix = string[][];
+
+// CSV lu en mode "matrice brute" (pas de header:true) : permet d'appliquer la même
+// détection de ligne d'en-têtes que pour Excel, au cas où le fichier a lui aussi
+// une ligne de titre avant les vraies colonnes.
+const csvToMatrix = (file: File): Promise<RawMatrix> => new Promise((resolve, reject) => {
+  Papa.parse<string[]>(file, {
+    header: false,
+    skipEmptyLines: true,
+    complete: (results) => resolve(results.data.map((row) => row.map((c) => (c ?? "").toString()))),
+    error: reject
+  });
+});
+
+const readExcelWorkbook = async (file: File): Promise<XLSX.WorkBook> => {
   const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
-  const sheetName = workbook.SheetNames[0];
-  if (!sheetName) return null;
+  return XLSX.read(buffer, { type: "array", cellDates: true });
+};
 
+const excelSheetToMatrix = (workbook: XLSX.WorkBook, sheetName: string): RawMatrix => {
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[sheetName], { header: 1, blankrows: false });
-  if (matrix.length === 0) return null;
+  return matrix.map((row) => (row as unknown[]).map(cellToString));
+};
 
-  const headerCells = matrix[0] as unknown[];
-  const fields = headerCells.map(cellToString);
+// Certains exports (ex. tableurs personnels) ont un titre et/ou une ligne vide avant
+// les vraies colonnes. Cherche, parmi les 10 premières lignes, la première qui
+// ressemble à un en-tête (majoritairement du texte, au moins 2 cellules) et dont la
+// ligne suivante contient des données.
+const detectHeaderRowIndex = (matrix: RawMatrix): number => {
+  const limit = Math.min(matrix.length, 10);
+  for (let i = 0; i < limit; i++) {
+    const row = matrix[i];
+    const nonEmpty = row.filter((c) => c.trim() !== "");
+    if (nonEmpty.length < 2) continue;
+    const numericCount = nonEmpty.filter((c) => !isNaN(Number(c.replace(",", ".")))).length;
+    const textRatio = (nonEmpty.length - numericCount) / nonEmpty.length;
+    if (textRatio >= 0.6) {
+      const nextRow = matrix[i + 1];
+      if (nextRow && nextRow.some((c) => c.trim() !== "")) return i;
+    }
+  }
+  return 0;
+};
+
+const buildParsedFile = (matrix: RawMatrix, headerRowIndex: number): ParsedFile | null => {
+  const headerRow = matrix[headerRowIndex];
+  if (!headerRow) return null;
+  const fields = headerRow.map((c) => c.trim());
   if (fields.every((f) => f === "")) return null;
 
-  const rows = matrix.slice(1)
+  const rows = matrix.slice(headerRowIndex + 1)
     .map((rawRow) => {
       const record: Record<string, string> = {};
       fields.forEach((field, i) => {
         if (field === "") return;
-        record[field] = cellToString((rawRow as unknown[])[i]);
+        record[field] = (rawRow[i] ?? "").trim();
       });
       return record;
     })
@@ -124,6 +161,11 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
   const [sourceRows, setSourceRows] = useState<Record<string, string>[]>([]);
   const [columnsSignature, setColumnsSignature] = useState("");
   const [templateApplied, setTemplateApplied] = useState(false);
+  const [rawMatrix, setRawMatrix] = useState<RawMatrix>([]);
+  const [headerRowIndex, setHeaderRowIndex] = useState(0);
+  const [excelWorkbook, setExcelWorkbook] = useState<XLSX.WorkBook | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [availableSheets, setAvailableSheets] = useState<string[]>([]);
 
   const [dateColumn, setDateColumn] = useState("");
   const [labelColumn, setLabelColumn] = useState("");
@@ -196,7 +238,16 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
     }
   };
 
-  const applyParsedFile = async (file: File, parsed: ParsedFile | null) => {
+  const finalizeMatrix = async (file: File, matrix: RawMatrix) => {
+    if (matrix.length === 0) {
+      setParsing(false);
+      setError(t("upload.errors.emptyFile"));
+      return;
+    }
+
+    const headerIdx = detectHeaderRowIndex(matrix);
+    const parsed = buildParsedFile(matrix, headerIdx);
+
     if (!parsed || parsed.fields.length === 0) {
       setParsing(false);
       setError(t("upload.errors.noColumns"));
@@ -208,14 +259,38 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
       return;
     }
 
+    setRawMatrix(matrix);
+    setHeaderRowIndex(headerIdx);
     setFileName(file.name);
     setColumns(parsed.fields);
     setSourceRows(parsed.rows);
+    setPendingFile(null);
+    setExcelWorkbook(null);
+    setAvailableSheets([]);
 
     await resolveMapping(parsed.fields, parsed.rows);
 
     setParsing(false);
     setStep("mapping");
+  };
+
+  const loadSheet = (file: File, workbook: XLSX.WorkBook, sheetName: string) => {
+    setError("");
+    setParsing(true);
+    finalizeMatrix(file, excelSheetToMatrix(workbook, sheetName));
+  };
+
+  // Ajuste manuellement la ligne d'en-têtes détectée (bouton +/- dans l'étape mapping)
+  // et reconstruit colonnes/lignes + relance la détection de mapping en conséquence.
+  const applyHeaderRowIndex = async (newIndex: number) => {
+    if (newIndex < 0 || newIndex >= rawMatrix.length) return;
+    const parsed = buildParsedFile(rawMatrix, newIndex);
+    if (!parsed || parsed.fields.length === 0) return;
+
+    setHeaderRowIndex(newIndex);
+    setColumns(parsed.fields);
+    setSourceRows(parsed.rows);
+    await resolveMapping(parsed.fields, parsed.rows);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,38 +299,38 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
 
     setError("");
     setParsing(true);
+    e.target.value = "";
 
     if (isExcelFile(file)) {
-      parseExcelFile(file)
-        .then((parsed) => applyParsedFile(file, parsed))
+      readExcelWorkbook(file)
+        .then((workbook) => {
+          if (workbook.SheetNames.length === 0) {
+            setParsing(false);
+            setError(t("upload.errors.noColumns"));
+            return;
+          }
+          if (workbook.SheetNames.length === 1) {
+            finalizeMatrix(file, excelSheetToMatrix(workbook, workbook.SheetNames[0]));
+            return;
+          }
+          setParsing(false);
+          setPendingFile(file);
+          setExcelWorkbook(workbook);
+          setAvailableSheets(workbook.SheetNames);
+        })
         .catch(() => {
           setParsing(false);
           setError(t("upload.errors.readFailed"));
         });
-      e.target.value = "";
       return;
     }
 
-    Papa.parse<Record<string, string>>(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const fields = results.meta.fields ?? [];
-        if (results.errors.length > 0 && fields.length === 0) {
-          setParsing(false);
-          setError(t("upload.errors.invalidFile"));
-          return;
-        }
-        const data = results.data.filter((row) => Object.values(row).some((v) => (v ?? "").toString().trim() !== ""));
-        applyParsedFile(file, { fields, rows: data });
-      },
-      error: () => {
+    csvToMatrix(file)
+      .then((matrix) => finalizeMatrix(file, matrix))
+      .catch(() => {
         setParsing(false);
         setError(t("upload.errors.readFailed"));
-      }
-    });
-
-    e.target.value = "";
+      });
   };
 
   const handleDateColumnChange = (col: string) => {
@@ -269,7 +344,7 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
   };
 
   const canProceedMapping =
-    !!dateColumn && !!labelColumn && !!categoryColumn && !!dateFormat &&
+    !!dateColumn && !!labelColumn && !!dateFormat &&
     (
       (typeMode === "signedAmount" && !!amountColumn) ||
       (typeMode === "column" && !!amountColumn && !!typeColumn) ||
@@ -277,7 +352,7 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
     );
 
   const missingOnlyDateFormat =
-    !!dateColumn && !!labelColumn && !!categoryColumn && !dateFormat &&
+    !!dateColumn && !!labelColumn && !dateFormat &&
     (
       (typeMode === "signedAmount" && !!amountColumn) ||
       (typeMode === "column" && !!amountColumn && !!typeColumn) ||
@@ -318,7 +393,9 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
     const parsed: ParsedRow[] = sourceRows.map((raw, index) => {
       const date = parseDateWithFormat(raw[dateColumn] ?? "", dateFormat as DateFormatId);
       const label = (raw[labelColumn] ?? "").trim();
-      const category = (raw[categoryColumn] ?? "").trim();
+      // Colonne Catégorie optionnelle : si aucune n'est associée, "Autre" est utilisé
+      // pour toutes les lignes (sentinelle déjà utilisée ailleurs dans l'app).
+      const category = categoryColumn ? (raw[categoryColumn] ?? "").trim() : "Autre";
 
       let parsedAmount: number | null = null;
       let type: TransactionType = "expense";
@@ -358,8 +435,10 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
       const warningKeys: string[] = [];
       if (!hardInvalid) {
         if (date && date.getTime() > now.getTime()) warningKeys.push("futureDate");
-        if (!category) warningKeys.push("missingCategory");
-        else {
+        // Pas d'avertissement catégorie quand aucune colonne n'est associée : "Autre"
+        // est alors le comportement attendu, pas une anomalie ligne par ligne.
+        if (categoryColumn && !category) warningKeys.push("missingCategory");
+        else if (categoryColumn) {
           const knownCategories = type === "expense" ? expenseCategories : incomeCategories;
           if (!knownCategories.includes(category)) warningKeys.push("unrecognizedCategory");
         }
@@ -441,6 +520,11 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
     setSourceRows([]);
     setColumnsSignature("");
     setTemplateApplied(false);
+    setRawMatrix([]);
+    setHeaderRowIndex(0);
+    setExcelWorkbook(null);
+    setPendingFile(null);
+    setAvailableSheets([]);
     setDateColumn("");
     setLabelColumn("");
     setAmountColumn("");
@@ -498,22 +582,51 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
           {/* ÉTAPE 1 — UPLOAD */}
           {step === "upload" && (
             <div className="space-y-4">
-              <p className="text-gray-600 dark:text-gray-400 text-sm">{t("upload.instructions")}</p>
-              <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl px-4 py-10 cursor-pointer hover:border-emerald-500 transition-colors">
-                <Upload className="w-6 h-6 text-gray-500 dark:text-gray-400" strokeWidth={2} />
-                <span className="text-gray-900 dark:text-white font-medium text-sm">
-                  {parsing ? t("upload.parsing") : t("upload.selectFile")}
-                </span>
-                <input
-                  type="file"
-                  accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  disabled={parsing}
-                />
-              </label>
-              {fileName && (
-                <p className="text-gray-500 dark:text-gray-500 text-xs">{t("upload.selectedFile", { name: fileName })}</p>
+              {availableSheets.length > 0 ? (
+                <>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">{t("upload.chooseSheet")}</p>
+                  <div className="space-y-2">
+                    {availableSheets.map((sheetName) => (
+                      <button
+                        key={sheetName}
+                        onClick={() => {
+                          if (!pendingFile || !excelWorkbook) return;
+                          loadSheet(pendingFile, excelWorkbook, sheetName);
+                        }}
+                        disabled={parsing}
+                        className="w-full text-left px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-900 dark:text-white text-sm transition-colors"
+                      >
+                        {sheetName}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => { setPendingFile(null); setExcelWorkbook(null); setAvailableSheets([]); }}
+                    className="text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors"
+                  >
+                    {t("upload.chooseAnotherFile")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">{t("upload.instructions")}</p>
+                  <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl px-4 py-10 cursor-pointer hover:border-emerald-500 transition-colors">
+                    <Upload className="w-6 h-6 text-gray-500 dark:text-gray-400" strokeWidth={2} />
+                    <span className="text-gray-900 dark:text-white font-medium text-sm">
+                      {parsing ? t("upload.parsing") : t("upload.selectFile")}
+                    </span>
+                    <input
+                      type="file"
+                      accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      disabled={parsing}
+                    />
+                  </label>
+                  {fileName && (
+                    <p className="text-gray-500 dark:text-gray-500 text-xs">{t("upload.selectedFile", { name: fileName })}</p>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -527,6 +640,28 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
                 <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm px-4 py-2.5 rounded-xl">
                   <Check className="w-4 h-4 shrink-0" strokeWidth={2} />
                   {t("mapping.templateApplied")}
+                </div>
+              )}
+
+              {headerRowIndex > 0 && (
+                <div className="flex items-center justify-between gap-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm px-4 py-2.5 rounded-xl">
+                  <span>{t("mapping.headerRowDetected", { row: headerRowIndex + 1 })}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => applyHeaderRowIndex(headerRowIndex - 1)}
+                      disabled={headerRowIndex <= 0}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-500/10 hover:bg-blue-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      −
+                    </button>
+                    <button
+                      onClick={() => applyHeaderRowIndex(headerRowIndex + 1)}
+                      disabled={headerRowIndex >= rawMatrix.length - 1}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-500/10 hover:bg-blue-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -552,7 +687,10 @@ export default function ImportTransactionsModal({ userId, onClose, onSuccess }: 
               )}
 
               <ColumnSelect label={t("mapping.label")} value={labelColumn} onChange={setLabelColumn} columns={columns} placeholder={t("mapping.selectPlaceholder")} example={firstRow} exampleLabel={t("mapping.example", { value: labelColumn && firstRow ? firstRow[labelColumn] : "" })} />
-              <ColumnSelect label={t("mapping.category")} value={categoryColumn} onChange={setCategoryColumn} columns={columns} placeholder={t("mapping.selectPlaceholder")} example={firstRow} exampleLabel={t("mapping.example", { value: categoryColumn && firstRow ? firstRow[categoryColumn] : "" })} />
+              <ColumnSelect label={t("mapping.categoryOptional")} value={categoryColumn} onChange={setCategoryColumn} columns={columns} placeholder={t("mapping.categoryPlaceholder")} example={firstRow} exampleLabel={t("mapping.example", { value: categoryColumn && firstRow ? firstRow[categoryColumn] : "" })} />
+              {!categoryColumn && (
+                <p className="text-gray-500 dark:text-gray-500 text-xs -mt-2">{t("mapping.categoryOptionalHint")}</p>
+              )}
 
               <div>
                 <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">{t("mapping.typeModeLabel")}</label>

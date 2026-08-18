@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { getMonthTransactions, deleteTransaction } from "@/lib/firebase/firestore";
 import { Transaction } from "@/types";
@@ -15,7 +16,7 @@ import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import { getMonthNames, getDateFnsLocale } from "@/lib/utils/months";
 import { useLanguage } from "@/lib/providers/LanguageProvider";
 import ExportRangeModal from "@/components/ExportRangeModal";
-import { ArrowDownLeft, ArrowUpRight, Pencil, Upload, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Pencil, RefreshCw, Upload, X } from "lucide-react";
 
 function normalize(str: string) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -40,23 +41,36 @@ function parseMonthSearch(search: string, monthNames: string[]): { month: number
   return null;
 }
 
-export default function TransactionsPage() {
+function TransactionsPageContent() {
   const { user } = useAuth();
   const now = new Date();
+  const searchParams = useSearchParams();
+  // ?year=&month= — passé par le bouton "Voir plus" du dashboard pour arriver
+  // directement sur le mois qui y était affiché. Retombe sur le mois réel actuel
+  // si absent ou invalide.
+  const yearParam = parseInt(searchParams.get("year") ?? "", 10);
+  const monthParam = parseInt(searchParams.get("month") ?? "", 10);
+  const initialYear = !isNaN(yearParam) ? yearParam : now.getFullYear();
+  const initialMonth = !isNaN(monthParam) && monthParam >= 0 && monthParam <= 11 ? monthParam : now.getMonth();
+  // ?recurring=1 — passé par la carte "Récurrences du mois" du dashboard pour
+  // n'afficher que les transactions générées par une récurrence.
+  const initialRecurringOnly = searchParams.get("recurring") === "1";
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [filter, setFilter] = useState<"all" | "expense" | "income">("all");
+  const [recurringOnly, setRecurringOnly] = useState(initialRecurringOnly);
   const [search, setSearch] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showExportRangeModal, setShowExportRangeModal] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [currentYear, setCurrentYear] = useState(now.getFullYear());
-  const [pickerYear, setPickerYear] = useState(currentYear);
+  const [currentYear, setCurrentYear] = useState(initialYear);
+  const [pickerYear, setPickerYear] = useState(initialYear);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+  const [currentMonth, setCurrentMonth] = useState(initialMonth);
   const confirm = useConfirm();
   const t = useTranslations("transactions");
   const { language } = useLanguage();
@@ -155,10 +169,11 @@ export default function TransactionsPage() {
 
   const filtered = transactions.filter(t => {
     const matchesFilter = filter === "all" ? true : t.type === filter;
+    const matchesRecurring = !recurringOnly || !!t.recurrenceId;
     const matchesSearch = effectiveSearch === "" ||
       t.label.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
       t.category.toLowerCase().includes(effectiveSearch.toLowerCase());
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesRecurring && matchesSearch;
   });
 
   if (loading) {
@@ -340,6 +355,16 @@ export default function TransactionsPage() {
               {f === "all" ? t("filters.all") : f === "expense" ? t("filters.expense") : t("filters.income")}
             </button>
           ))}
+          {recurringOnly && (
+            <button
+              onClick={() => setRecurringOnly(false)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" strokeWidth={2} />
+              {t("filters.recurring")}
+              <X className="w-3.5 h-3.5" strokeWidth={2} />
+            </button>
+          )}
         </div>
 
         <div className={`relative sm:ml-auto ${showSearch ? "block" : "hidden sm:block"}`}>
@@ -455,5 +480,17 @@ export default function TransactionsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function TransactionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full">
+        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <TransactionsPageContent />
+    </Suspense>
   );
 }

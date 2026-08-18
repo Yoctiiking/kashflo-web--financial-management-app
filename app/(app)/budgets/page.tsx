@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { format } from "date-fns";
 import { useAuth } from "@/lib/providers/AuthProvider";
 import { getBudgets, getMonthTransactions, deleteBudget } from "@/lib/firebase/firestore";
 import { Budget, Transaction } from "@/types";
@@ -10,27 +12,44 @@ import BudgetModal from "@/components/BudgetModal";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useConfirm } from "@/lib/providers/ConfirmProvider";
 import CurrencyValue from "@/components/CurrencyValue";
-import { getBudgetSpent } from "@/lib/utils/budgetUtils";
+import { getMonthNames, getDateFnsLocale } from "@/lib/utils/months";
+import { useLanguage } from "@/lib/providers/LanguageProvider";
 import { Pencil, X, AlertTriangle } from "lucide-react";
 
-export default function BudgetsPage() {
+function BudgetsPageContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const now = new Date();
+  // ?year=&month= — passé par le bouton "Voir plus" du dashboard pour arriver
+  // directement sur le mois qui y était affiché. Retombe sur le mois réel actuel
+  // si absent ou invalide ; navigable ensuite depuis cette page.
+  const yearParam = parseInt(searchParams.get("year") ?? "", 10);
+  const monthParam = parseInt(searchParams.get("month") ?? "", 10);
+  const initialYear = !isNaN(yearParam) ? yearParam : now.getFullYear();
+  const initialMonth = !isNaN(monthParam) && monthParam >= 0 && monthParam <= 11 ? monthParam : now.getMonth();
+
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [currentYear, setCurrentYear] = useState(initialYear);
+  const [currentMonth, setCurrentMonth] = useState(initialMonth);
+  const [pickerYear, setPickerYear] = useState(initialYear);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
   const confirm = useConfirm();
   const t = useTranslations("budgets");
   const tPeriod = useTranslations("common.period");
-
+  const { language } = useLanguage();
+  const monthNames = getMonthNames(language);
+  const dateLocale = getDateFnsLocale(language);
 
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
       const [userBudgets, monthTx] = await Promise.all([
         getBudgets(user.uid),
-        getMonthTransactions(user.uid)
+        getMonthTransactions(user.uid, currentYear, currentMonth)
       ]);
 
       setBudgets(userBudgets);
@@ -40,11 +59,36 @@ export default function BudgetsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, currentYear, currentMonth]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const openMonthPicker = () => {
+    setPickerYear(currentYear);
+    setShowMonthPicker(true);
+  };
+
+  const goToPreviousMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(y => y - 1);
+    } else {
+      setCurrentMonth(m => m - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    const isCurrentMonth = currentYear === now.getFullYear() && currentMonth === now.getMonth();
+    if (isCurrentMonth) return;
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(y => y + 1);
+    } else {
+      setCurrentMonth(m => m + 1);
+    }
+  };
 
   const handleDelete = async (budgetId: string) => {
     if (!user) return;
@@ -63,7 +107,14 @@ export default function BudgetsPage() {
     }
   };
 
-  const getSpent = (budget: Budget) => getBudgetSpent(transactions, budget);
+  // Somme sur tout le mois affiché pour tous les types de période (journalier/
+  // hebdomadaire inclus) — "aujourd'hui"/"cette semaine" réels n'ont pas de sens
+  // une fois qu'on peut naviguer vers un mois passé. Comportement volontairement
+  // différent de lib/utils/budgetUtils.ts (page détail budget, sans navigation).
+  const getSpent = (budget: Budget) =>
+    transactions
+      .filter(t => t.type === "expense" && t.category === budget.category)
+      .reduce((sum, t) => sum + t.amount, 0);
 
   const { formatCurrency, displayAmount, ready } = useCurrency();
 
@@ -88,6 +139,90 @@ export default function BudgetsPage() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h2>
           <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{t("activeCount", { count: budgets.length })}</p>
+          <div className="flex items-center gap-3 mt-2 relative">
+            <button
+              onClick={goToPreviousMonth}
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              aria-label={t("prevMonth")}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+
+            <button
+              onClick={openMonthPicker}
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm capitalize transition-colors"
+            >
+              {format(new Date(currentYear, currentMonth), "MMMM yyyy", { locale: dateLocale })}
+            </button>
+
+            <button
+              onClick={goToNextMonth}
+              disabled={currentYear === now.getFullYear() && currentMonth === now.getMonth()}
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              aria-label={t("nextMonth")}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+
+            {showMonthPicker && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowMonthPicker(false)}
+                />
+
+                <div className="absolute top-full left-0 mt-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl p-4 z-20 w-64">
+                  <div className="flex items-center justify-between mb-3">
+                    <button
+                      onClick={() => setPickerYear(y => y - 1)}
+                      className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </button>
+                    <span className="text-gray-900 dark:text-white text-sm font-medium">{pickerYear}</span>
+                    <button
+                      onClick={() => setPickerYear(y => y + 1)}
+                      disabled={pickerYear >= now.getFullYear()}
+                      className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {monthNames.map((m, i) => {
+                      const isFuture = pickerYear === now.getFullYear() && i > now.getMonth();
+                      const isSelected = pickerYear === currentYear && i === currentMonth;
+                      return (
+                        <button
+                          key={m}
+                          disabled={isFuture}
+                          onClick={() => {
+                            setCurrentMonth(i);
+                            setCurrentYear(pickerYear);
+                            setShowMonthPicker(false);
+                          }}
+                          className={`py-2 rounded-lg text-xs font-medium capitalize transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isSelected
+                            ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                            }`}
+                        >
+                          {m.slice(0, 3)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -195,5 +330,17 @@ export default function BudgetsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function BudgetsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full">
+        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <BudgetsPageContent />
+    </Suspense>
   );
 }

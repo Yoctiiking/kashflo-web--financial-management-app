@@ -6,8 +6,8 @@ export type CsvField = "date" | "label" | "amount" | "category" | "debit" | "cre
 
 export const CSV_FIELD_KEYWORDS: Record<CsvField, string[]> = {
   date: ["date", "date operation", "date de transaction", "transaction date", "posted date"],
-  label: ["libelle", "description", "details", "memo", "label", "narration"],
-  amount: ["montant", "amount", "valeur", "value"],
+  label: ["libelle", "description", "details", "memo", "label", "narration", "nature"],
+  amount: ["montant", "amount", "valeur", "value", "cout", "cost"],
   debit: ["debit"],
   credit: ["credit"],
   category: ["categorie", "category", "type de depense"]
