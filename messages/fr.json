@@ -237,6 +237,9 @@
   },
   "dashboard": {
     "greeting": "Bonjour, {name} 👋",
+    "prevMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "seeMore": "Voir plus",
     "upcomingPayments": "{count, plural, one {# paiement à venir} other {# paiements à venir}}",
     "dayLabel": {
       "today": "Aujourd'hui",
@@ -261,7 +264,7 @@
     },
     "monthRecurrences": {
       "title": "Récurrences ce mois",
-      "empty": "Aucune récurrence prévue ce mois"
+      "empty": "Aucune récurrence ce mois-ci"
     },
     "expensesByCategory": {
       "title": "Dépenses par catégorie",
@@ -283,7 +286,8 @@
     "filters": {
       "all": "Tout",
       "expense": "Dépenses",
-      "income": "Revenus"
+      "income": "Revenus",
+      "recurring": "Récurrentes"
     },
     "empty": "Aucune transaction",
     "deleteConfirm": {
@@ -325,6 +329,8 @@
   "budgets": {
     "title": "Budgets",
     "activeCount": "{count, plural, one {# budget actif} other {# budgets actifs}}",
+    "prevMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
     "new": "+ Nouveau budget",
     "emptyTitle": "Aucun budget défini",
     "emptyDescription": "Crée un budget pour suivre tes dépenses par catégorie",
@@ -688,6 +694,8 @@
       "instructions": "Sélectionne un fichier CSV ou Excel exporté depuis ta banque.",
       "selectFile": "Choisir un fichier CSV ou Excel",
       "selectedFile": "Fichier sélectionné : {name}",
+      "chooseSheet": "Ce classeur contient plusieurs feuilles — choisis celle à importer.",
+      "chooseAnotherFile": "Choisir un autre fichier",
       "parsing": "Analyse du fichier...",
       "errors": {
         "invalidFile": "Ce fichier ne contient pas de données CSV valides.",
@@ -703,6 +711,9 @@
       "label": "Libellé / Description",
       "amount": "Montant",
       "category": "Catégorie",
+      "categoryOptional": "Catégorie (optionnel)",
+      "categoryPlaceholder": "-- Aucune (utilise \"Autre\") --",
+      "categoryOptionalHint": "Si aucune colonne n'est associée, la catégorie \"Autre\" sera utilisée pour toutes les lignes importées.",
       "typeModeLabel": "Type (dépense/revenu)",
       "typeModeColumn": "Colonne séparée",
       "typeModeSigned": "Montant signé (négatif = dépense)",
@@ -723,6 +734,7 @@
         "textMonth": "Mois en texte (31 déc 2025)"
       },
       "templateApplied": "Mapping retrouvé d'un import précédent avec les mêmes colonnes.",
+      "headerRowDetected": "En-têtes détectés à la ligne {row} (pas la première).",
       "example": "Exemple : {value}",
       "back": "Retour",
       "next": "Aperçu",
