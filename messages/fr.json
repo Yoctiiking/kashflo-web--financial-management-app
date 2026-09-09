@@ -251,6 +251,10 @@
       "income": "Revenus",
       "expenses": "Dépenses"
     },
+    "yearEvolution": {
+      "title": "Évolution du solde",
+      "subtitle": "Depuis le 1er janvier {year}"
+    },
     "recentTransactions": {
       "title": "Transactions récentes",
       "empty": "Aucune transaction pour l'instant"

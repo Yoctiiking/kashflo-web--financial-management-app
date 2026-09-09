@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/providers/AuthProvider";
-import { getUserProfile, getMonthTransactions, getBudgets, getRecurrences, updateOnboardingVersion } from "@/lib/firebase/firestore";
+import { getUserProfile, getMonthTransactions, getTransactionsInRange, getBudgets, getRecurrences, updateOnboardingVersion } from "@/lib/firebase/firestore";
 import { Transaction, Budget, Recurrence } from "@/types";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { useTranslations } from "next-intl";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, AreaChart, Area, XAxis, CartesianGrid } from "recharts";
 import { useCurrency } from "@/lib/hooks/useCurrency";
 import { useUserProfile } from "@/lib/providers/UserProfileProvider";
 import { useLanguage } from "@/lib/providers/LanguageProvider";
@@ -23,23 +24,37 @@ const PIE_COLORS = [
     "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"
 ];
 
-export default function DashboardPage() {
+function DashboardPageContent() {
     const { user } = useAuth();
     const { profile } = useUserProfile();
     const { language } = useLanguage();
     const dateLocale = language === "en" ? enUS : fr;
     const t = useTranslations("dashboard");
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const now0 = new Date();
+    // ?year=&month= — reflète le mois actuellement affiché (voir l'effet de sync plus bas)
+    // pour que le bouton retour du navigateur, après un "Voir plus" vers une autre page,
+    // ramène ici sur le bon mois plutôt que de retomber sur le mois réel actuel.
+    const yearParam = parseInt(searchParams.get("year") ?? "", 10);
+    const monthParam = parseInt(searchParams.get("month") ?? "", 10);
+    const initialYear = !isNaN(yearParam) ? yearParam : now0.getFullYear();
+    const initialMonth = !isNaN(monthParam) && monthParam >= 0 && monthParam <= 11 ? monthParam : now0.getMonth();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [yearTransactions, setYearTransactions] = useState<Transaction[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
     const [loading, setLoading] = useState(true);
     const [onboardingSlides, setOnboardingSlides] = useState<typeof ONBOARDING_SLIDES>([]);
-    const [currentYear, setCurrentYear] = useState(now0.getFullYear());
-    const [currentMonth, setCurrentMonth] = useState(now0.getMonth());
+    const [currentYear, setCurrentYear] = useState(initialYear);
+    const [currentMonth, setCurrentMonth] = useState(initialMonth);
     const [pickerYear, setPickerYear] = useState(currentYear);
     const [showMonthPicker, setShowMonthPicker] = useState(false);
     const monthNames = getMonthNames(language);
+
+    useEffect(() => {
+        router.replace(`/dashboard?year=${currentYear}&month=${currentMonth}`, { scroll: false });
+    }, [router, currentYear, currentMonth]);
 
     useEffect(() => {
         if (!user) return;
@@ -87,6 +102,26 @@ export default function DashboardPage() {
     useEffect(() => {
         loadTransactions();
     }, [loadTransactions]);
+
+    // Solde cumulé depuis le 1er janvier jusqu'à la fin du mois affiché — ou jusqu'à
+    // aujourd'hui si le mois affiché est le mois en cours, pour ne pas inclure de jours
+    // "futurs" dans un mois encore inachevé.
+    const loadYearTransactions = useCallback(async () => {
+        if (!user) return;
+        try {
+            const isCurrentMonthView = currentYear === now0.getFullYear() && currentMonth === now0.getMonth();
+            const yearStart = new Date(currentYear, 0, 1);
+            const yearEnd = isCurrentMonthView ? new Date() : new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+            const yearTx = await getTransactionsInRange(user.uid, yearStart, yearEnd);
+            setYearTransactions(yearTx);
+        } catch (error) {
+            console.error("Erreur chargement évolution annuelle:", error);
+        }
+    }, [user, currentYear, currentMonth]);
+
+    useEffect(() => {
+        loadYearTransactions();
+    }, [loadYearTransactions]);
 
     const openMonthPicker = () => {
         setPickerYear(currentYear);
@@ -166,6 +201,50 @@ export default function DashboardPage() {
     )
         .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
         .sort((a, b) => b.value - a.value);
+
+    // Un point par mois, de janvier au mois affiché : chaque point cumule le solde
+    // (revenus - dépenses) depuis le 1er janvier, et garde aussi le détail revenus/dépenses
+    // du mois pour le tooltip. yearTransactions est déjà borné côté requête (voir
+    // loadYearTransactions), donc chaque transaction reçue appartient au range.
+    const yearEvolutionData = Array.from({ length: currentMonth + 1 }, (_, i) => i).reduce<{ month: string; solde: number; income: number; expenses: number }[]>((acc, monthIndex) => {
+        const monthTx = yearTransactions.filter(t => t.date.getMonth() === monthIndex);
+        const income = monthTx.filter(t => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
+        const expenses = monthTx.filter(t => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
+        const previousSolde = acc.length > 0 ? acc[acc.length - 1].solde : 0;
+        acc.push({
+            // "MMM" plutôt qu'un slice(0, 3) du nom complet : en français, "juin" et
+            // "juillet" tronqués à 3 lettres donnent tous les deux "jui" et deviennent
+            // indistinguables sur le graphique (cf. retour utilisateur).
+            month: format(new Date(2000, monthIndex, 1), "MMM", { locale: dateLocale }),
+            solde: Math.round((previousSolde + income - expenses) * 100) / 100,
+            income: Math.round(income * 100) / 100,
+            expenses: Math.round(expenses * 100) / 100
+        });
+        return acc;
+    }, []);
+
+    const yearBalance = yearEvolutionData.length > 0 ? yearEvolutionData[yearEvolutionData.length - 1].solde : 0;
+    const yearIncome = yearEvolutionData.reduce((sum, d) => sum + d.income, 0);
+    const yearExpenses = yearEvolutionData.reduce((sum, d) => sum + d.expenses, 0);
+
+    const CustomLineTooltip = ({ active, payload, label }: any) => {
+        if (!active || !payload?.length) return null;
+        const point = payload[0].payload as { month: string; solde: number; income: number; expenses: number };
+        return (
+            <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl p-3 text-sm space-y-1">
+                <p className="text-gray-900 dark:text-white font-medium capitalize">{label}</p>
+                <p className={point.solde >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+                    {t("stats.balance")} : <CurrencyValue amount={point.solde} ready={ready} formatCurrency={formatCurrency} />
+                </p>
+                <p className="text-emerald-600 dark:text-emerald-400">
+                    {t("stats.income")} : <CurrencyValue amount={point.income} ready={ready} formatCurrency={formatCurrency} prefix="+" />
+                </p>
+                <p className="text-red-600 dark:text-red-400">
+                    {t("stats.expenses")} : <CurrencyValue amount={point.expenses} ready={ready} formatCurrency={formatCurrency} prefix="-" />
+                </p>
+            </div>
+        );
+    };
 
     const CustomPieTooltip = ({ active, payload }: any) => {
         if (!active || !payload?.length) return null;
@@ -332,6 +411,57 @@ export default function DashboardPage() {
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 min-w-0">
                     <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">{t("stats.expenses")}</p>
                     <CurrencyValue amount={totalExpenses} ready={ready} formatCurrency={formatCurrency} className="text-2xl font-bold text-red-600 dark:text-red-400 truncate" />
+                </div>
+            </div>
+
+            {/* Évolution du solde sur l'année */}
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-8">
+                <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
+                    <div>
+                        <h3 className="text-gray-900 dark:text-white font-semibold">{t("yearEvolution.title")}</h3>
+                        <p className="text-gray-500 text-xs mt-0.5">{t("yearEvolution.subtitle", { year: currentYear })}</p>
+                    </div>
+                    <div className="text-right">
+                        <CurrencyValue
+                            amount={yearBalance}
+                            ready={ready}
+                            formatCurrency={formatCurrency}
+                            className={`text-xl font-bold ${yearBalance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                        />
+                        <div className="flex items-center justify-end gap-3 mt-1 text-xs">
+                            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                <ArrowDownLeft className="w-3 h-3" strokeWidth={2} />
+                                <CurrencyValue amount={yearIncome} ready={ready} formatCurrency={formatCurrency} prefix="+" />
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400">
+                                <ArrowUpRight className="w-3 h-3" strokeWidth={2} />
+                                <CurrencyValue amount={yearExpenses} ready={ready} formatCurrency={formatCurrency} prefix="-" />
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div className="h-[220px]">
+                    <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 220 }}>
+                        <AreaChart data={yearEvolutionData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="soldeGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={yearBalance >= 0 ? "#10b981" : "#ef4444"} stopOpacity={0.35} />
+                                    <stop offset="95%" stopColor={yearBalance >= 0 ? "#10b981" : "#ef4444"} stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                            <XAxis dataKey="month" tick={{ fill: "#9ca3af", fontSize: 12 }} axisLine={false} tickLine={false} />
+                            <Tooltip content={<CustomLineTooltip />} />
+                            <Area
+                                type="monotone"
+                                dataKey="solde"
+                                stroke={yearBalance >= 0 ? "#10b981" : "#ef4444"}
+                                strokeWidth={2}
+                                fill="url(#soldeGradient)"
+                                isAnimationActive={false}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
 
@@ -525,5 +655,17 @@ export default function DashboardPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center h-full">
+                <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <DashboardPageContent />
+        </Suspense>
     );
 }

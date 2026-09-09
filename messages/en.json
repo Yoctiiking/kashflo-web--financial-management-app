@@ -251,6 +251,10 @@
       "income": "Income",
       "expenses": "Expenses"
     },
+    "yearEvolution": {
+      "title": "Balance evolution",
+      "subtitle": "Since January 1, {year}"
+    },
     "recentTransactions": {
       "title": "Recent transactions",
       "empty": "No transactions yet"
