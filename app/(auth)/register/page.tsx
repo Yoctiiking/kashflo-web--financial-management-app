@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { registerUser } from "@/lib/firebase/auth";
 import PasswordInput from "@/components/PasswordInput";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 import Link from "next/link";
 
 function RegisterForm() {
@@ -15,6 +16,7 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const t = useTranslations("auth.register");
+  const tCommon = useTranslations("auth.common");
 
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
@@ -43,6 +45,24 @@ function RegisterForm() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getGoogleErrorMessage = (code: string) => {
+    switch (code) {
+      case "auth/account-exists-with-different-credential":
+        return tCommon("errors.accountExistsDifferentCredential");
+      case "auth/popup-closed-by-user":
+      case "auth/cancelled-popup-request":
+        return tCommon("errors.popupClosed");
+      case "auth/popup-blocked":
+        return tCommon("errors.popupBlocked");
+      case "auth/unauthorized-domain":
+        return tCommon("errors.unauthorizedDomain");
+      case "auth/operation-not-allowed":
+        return tCommon("errors.operationNotAllowed");
+      default:
+        return tCommon("errors.generic");
     }
   };
 
@@ -97,6 +117,17 @@ function RegisterForm() {
           {loading ? t("submitting") : t("submit")}
         </button>
       </form>
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+        <span className="text-gray-500 text-xs">{tCommon("orDivider")}</span>
+        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+      </div>
+
+      <GoogleSignInButton
+        onSuccess={() => router.push(redirect)}
+        onError={(code) => setError(getGoogleErrorMessage(code))}
+      />
 
       <p className="text-center text-gray-500 text-sm mt-6">
         {t("haveAccount")}{" "}

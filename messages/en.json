@@ -27,6 +27,19 @@
     }
   },
   "auth": {
+    "common": {
+      "orDivider": "or",
+      "continueWithGoogle": "Continue with Google",
+      "connecting": "Signing in...",
+      "errors": {
+        "accountExistsDifferentCredential": "An account already exists with this email. Sign in with your password.",
+        "popupClosed": "Sign-in window closed before completion.",
+        "popupBlocked": "Your browser blocked the Google sign-in window. Allow popups for this site and try again.",
+        "unauthorizedDomain": "This domain isn't authorized for Google sign-in.",
+        "operationNotAllowed": "Google sign-in isn't enabled on this account.",
+        "generic": "Something went wrong with Google sign-in"
+      }
+    },
     "login": {
       "title": "Sign in",
       "emailLabel": "Email",
@@ -126,6 +139,7 @@
       "submit": "Change password",
       "submitting": "Updating...",
       "success": "Password updated",
+      "googleAccountNotice": "You're signed in with Google, there's no password to change here.",
       "errors": {
         "required": "All fields are required",
         "tooShort": "The new password must be at least 6 characters",
@@ -171,6 +185,7 @@
       "description": "Deleting your account is irreversible. All your data will be lost.",
       "deleteButton": "Delete my account",
       "confirmPrompt": "Enter your password to confirm deletion:",
+      "confirmPromptGoogle": "A Google window will open to confirm your identity before deletion.",
       "passwordPlaceholder": "Your password",
       "cancel": "Cancel",
       "confirm": "Confirm",
@@ -178,6 +193,7 @@
       "errors": {
         "passwordRequired": "Enter your password to confirm",
         "wrongPassword": "Incorrect password",
+        "popupClosed": "Confirmation window closed before completion.",
         "generic": "Error deleting account"
       }
     }

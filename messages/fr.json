@@ -27,6 +27,19 @@
     }
   },
   "auth": {
+    "common": {
+      "orDivider": "ou",
+      "continueWithGoogle": "Continuer avec Google",
+      "connecting": "Connexion...",
+      "errors": {
+        "accountExistsDifferentCredential": "Un compte existe déjà avec cet email. Connecte-toi avec ton mot de passe.",
+        "popupClosed": "Fenêtre de connexion fermée avant la fin.",
+        "popupBlocked": "Ton navigateur a bloqué la fenêtre de connexion Google. Autorise les popups pour ce site et réessaie.",
+        "unauthorizedDomain": "Ce domaine n'est pas autorisé pour la connexion Google.",
+        "operationNotAllowed": "La connexion avec Google n'est pas activée sur ce compte.",
+        "generic": "Une erreur est survenue avec la connexion Google"
+      }
+    },
     "login": {
       "title": "Connexion",
       "emailLabel": "Email",
@@ -126,6 +139,7 @@
       "submit": "Changer le mot de passe",
       "submitting": "Mise à jour...",
       "success": "Mot de passe mis à jour",
+      "googleAccountNotice": "Tu es connecté avec Google, il n'y a pas de mot de passe à changer ici.",
       "errors": {
         "required": "Tous les champs sont obligatoires",
         "tooShort": "Le nouveau mot de passe doit contenir au moins 6 caractères",
@@ -171,6 +185,7 @@
       "description": "La suppression de ton compte est irréversible. Toutes tes données seront perdues.",
       "deleteButton": "Supprimer mon compte",
       "confirmPrompt": "Entre ton mot de passe pour confirmer la suppression :",
+      "confirmPromptGoogle": "Une fenêtre Google va s'ouvrir pour confirmer ton identité avant la suppression.",
       "passwordPlaceholder": "Ton mot de passe",
       "cancel": "Annuler",
       "confirm": "Confirmer",
@@ -178,6 +193,7 @@
       "errors": {
         "passwordRequired": "Entre ton mot de passe pour confirmer",
         "wrongPassword": "Mot de passe incorrect",
+        "popupClosed": "Fenêtre de confirmation fermée avant la fin.",
         "generic": "Erreur lors de la suppression"
       }
     }
