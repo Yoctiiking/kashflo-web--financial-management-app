@@ -269,7 +269,13 @@
     },
     "yearEvolution": {
       "title": "Évolution du solde",
-      "subtitle": "Depuis le 1er janvier {year}"
+      "subtitle": "Depuis le 1er janvier {year}",
+      "balanceTotal": "Solde (cumul)",
+      "incomeTotal": "Revenus (cumul)",
+      "expensesTotal": "Dépenses (cumul)",
+      "tooltipBalance": "Solde (cumul)",
+      "tooltipIncome": "Revenus ({month})",
+      "tooltipExpenses": "Dépenses ({month})"
     },
     "recentTransactions": {
       "title": "Transactions récentes",

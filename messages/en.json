@@ -269,7 +269,13 @@
     },
     "yearEvolution": {
       "title": "Balance evolution",
-      "subtitle": "Since January 1, {year}"
+      "subtitle": "Since January 1, {year}",
+      "balanceTotal": "Balance (cumulative)",
+      "incomeTotal": "Income (total)",
+      "expensesTotal": "Expenses (total)",
+      "tooltipBalance": "Balance (cumulative)",
+      "tooltipIncome": "Income ({month})",
+      "tooltipExpenses": "Expenses ({month})"
     },
     "recentTransactions": {
       "title": "Recent transactions",
