@@ -206,7 +206,7 @@ function DashboardPageContent() {
     // (revenus - dépenses) depuis le 1er janvier, et garde aussi le détail revenus/dépenses
     // du mois pour le tooltip. yearTransactions est déjà borné côté requête (voir
     // loadYearTransactions), donc chaque transaction reçue appartient au range.
-    const yearEvolutionData = Array.from({ length: currentMonth + 1 }, (_, i) => i).reduce<{ month: string; solde: number; income: number; expenses: number }[]>((acc, monthIndex) => {
+    const yearEvolutionData = Array.from({ length: currentMonth + 1 }, (_, i) => i).reduce<{ month: string; monthName: string; solde: number; income: number; expenses: number }[]>((acc, monthIndex) => {
         const monthTx = yearTransactions.filter(t => t.date.getMonth() === monthIndex);
         const income = monthTx.filter(t => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
         const expenses = monthTx.filter(t => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
@@ -216,6 +216,7 @@ function DashboardPageContent() {
             // "juillet" tronqués à 3 lettres donnent tous les deux "jui" et deviennent
             // indistinguables sur le graphique (cf. retour utilisateur).
             month: format(new Date(2000, monthIndex, 1), "MMM", { locale: dateLocale }),
+            monthName: monthNames[monthIndex],
             solde: Math.round((previousSolde + income - expenses) * 100) / 100,
             income: Math.round(income * 100) / 100,
             expenses: Math.round(expenses * 100) / 100
@@ -229,18 +230,18 @@ function DashboardPageContent() {
 
     const CustomLineTooltip = ({ active, payload, label }: any) => {
         if (!active || !payload?.length) return null;
-        const point = payload[0].payload as { month: string; solde: number; income: number; expenses: number };
+        const point = payload[0].payload as { month: string; monthName: string; solde: number; income: number; expenses: number };
         return (
             <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl p-3 text-sm space-y-1">
                 <p className="text-gray-900 dark:text-white font-medium capitalize">{label}</p>
                 <p className={point.solde >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
-                    {t("stats.balance")} : <CurrencyValue amount={point.solde} ready={ready} formatCurrency={formatCurrency} />
+                    {t("yearEvolution.tooltipBalance")} : <CurrencyValue amount={point.solde} ready={ready} formatCurrency={formatCurrency} />
                 </p>
                 <p className="text-emerald-600 dark:text-emerald-400">
-                    {t("stats.income")} : <CurrencyValue amount={point.income} ready={ready} formatCurrency={formatCurrency} prefix="+" />
+                    {t("yearEvolution.tooltipIncome", { month: point.monthName })} : <CurrencyValue amount={point.income} ready={ready} formatCurrency={formatCurrency} prefix="+" />
                 </p>
                 <p className="text-red-600 dark:text-red-400">
-                    {t("stats.expenses")} : <CurrencyValue amount={point.expenses} ready={ready} formatCurrency={formatCurrency} prefix="-" />
+                    {t("yearEvolution.tooltipExpenses", { month: point.monthName })} : <CurrencyValue amount={point.expenses} ready={ready} formatCurrency={formatCurrency} prefix="-" />
                 </p>
             </div>
         );
@@ -422,19 +423,22 @@ function DashboardPageContent() {
                         <p className="text-gray-500 text-xs mt-0.5">{t("yearEvolution.subtitle", { year: currentYear })}</p>
                     </div>
                     <div className="text-right">
+                        <p className="text-gray-500 text-xs">{t("yearEvolution.balanceTotal")}</p>
                         <CurrencyValue
                             amount={yearBalance}
                             ready={ready}
                             formatCurrency={formatCurrency}
                             className={`text-xl font-bold ${yearBalance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                         />
-                        <div className="flex items-center justify-end gap-3 mt-1 text-xs">
+                        <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-0.5 mt-1 text-xs">
                             <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                                 <ArrowDownLeft className="w-3 h-3" strokeWidth={2} />
+                                {t("yearEvolution.incomeTotal")}
                                 <CurrencyValue amount={yearIncome} ready={ready} formatCurrency={formatCurrency} prefix="+" />
                             </span>
                             <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400">
                                 <ArrowUpRight className="w-3 h-3" strokeWidth={2} />
+                                {t("yearEvolution.expensesTotal")}
                                 <CurrencyValue amount={yearExpenses} ready={ready} formatCurrency={formatCurrency} prefix="-" />
                             </span>
                         </div>

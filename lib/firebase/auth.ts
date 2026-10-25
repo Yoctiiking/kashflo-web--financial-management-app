@@ -6,9 +6,12 @@ import {
   createUserWithEmailAndPassword,
   deleteUser,
   EmailAuthProvider,
+  GoogleAuthProvider,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
   sendEmailVerification,
   sendPasswordResetEmail,
+  signInWithPopup,
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
@@ -23,6 +26,13 @@ import { detectDeviceLanguage } from "@/lib/providers/LanguageProvider";
 const sendVerificationEmail = async (user: User) => {
   await sendEmailVerification(user, { url: `${APP_URL}/verify-email-complete`, handleCodeInApp: false });
 };
+
+// Un compte connecté uniquement via Google n'a pas de mot de passe : les flux qui
+// demandent le mot de passe actuel (changement de mot de passe, suppression de compte)
+// doivent se comporter différemment pour ces comptes-là.
+export const hasPasswordProvider = (user: User) =>
+  user.providerData.some(p => p.providerId === "password");
+
 
 export const registerUser = async (
   email: string,
@@ -75,6 +85,43 @@ export const loginUser = async (email: string, password: string) => {
   return userCredential.user;
 };
 
+export const loginWithGoogle = async () => {
+  const provider = new GoogleAuthProvider();
+
+  const userCredential = await signInWithPopup(auth, provider);
+  const user = userCredential.user;
+
+  // Vérifier si le profil existe déjà dans Firestore
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    // Nouvel utilisateur Google
+    const groupId = `group_${user.uid}`;
+
+    await setDoc(userRef, {
+      displayName: user.displayName ?? "",
+      email: user.email ?? "",
+      photoURL: user.photoURL ?? null,
+      groupId,
+      language: detectDeviceLanguage(),
+      expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
+      incomeCategories: DEFAULT_INCOME_CATEGORIES,
+      createdAt: serverTimestamp()
+    });
+
+    await setDoc(doc(db, "groups", groupId), {
+      name: "Mes finances",
+      members: [user.uid],
+      createdBy: user.uid,
+      currency: "CAD",
+      createdAt: serverTimestamp()
+    });
+  }
+
+  return user;
+};
+
 export const logoutUser = async () => {
   await signOut(auth);
 };
@@ -111,12 +158,20 @@ export const updateUserPassword = async (
   await updatePassword(user, newPassword);
 };
 
-export const deleteAccount = async (currentPassword: string) => {
+export const deleteAccount = async (currentPassword?: string) => {
   const user = auth.currentUser;
-  if (!user || !user.email) return;
+  if (!user) return;
 
-  const credential = EmailAuthProvider.credential(user.email, currentPassword);
-  await reauthenticateWithCredential(user, credential);
+  // Réauthentification adaptée au fournisseur du compte : mot de passe pour un compte
+  // email/mot de passe, popup Google pour un compte créé via loginWithGoogle (qui n'a
+  // pas de mot de passe à fournir).
+  if (hasPasswordProvider(user)) {
+    if (!user.email || !currentPassword) return;
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+  } else {
+    await reauthenticateWithPopup(user, new GoogleAuthProvider());
+  }
 
   const collections = ["transactions", "budgets", "recurrences", "savingsGoals"];
   for (const col of collections) {

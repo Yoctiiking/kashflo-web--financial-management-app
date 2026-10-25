@@ -30,18 +30,27 @@ export default function CategoriesModal({ onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Se resynchronise si le profil arrive après le montage (chargement initial)
+  // Se resynchronise si le profil arrive après le montage (chargement initial) ou change
+  // réellement depuis un autre appareil. La dépendance est le contenu sérialisé, pas la
+  // référence du tableau : le heartbeat de présence (AuthProvider) réécrit lastActiveAt
+  // toutes les minutes, ce qui produit un nouveau snapshot — donc de nouveaux tableaux avec
+  // le même contenu — et écraserait sinon les catégories ajoutées mais pas encore sauvegardées.
+  const expenseKey = JSON.stringify(profile?.expenseCategories ?? null);
+  const incomeKey = JSON.stringify(profile?.incomeCategories ?? null);
+
   useEffect(() => {
     if (profile?.expenseCategories) {
       setExpenseCategories(profile.expenseCategories.filter(c => c !== "Autre"));
     }
-  }, [profile?.expenseCategories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenseKey]);
 
   useEffect(() => {
     if (profile?.incomeCategories) {
       setIncomeCategories(profile.incomeCategories.filter(c => c !== "Autre"));
     }
-  }, [profile?.incomeCategories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incomeKey]);
 
   const categories = type === "expense" ? expenseCategories : incomeCategories;
   const setCategories = type === "expense" ? setExpenseCategories : setIncomeCategories;

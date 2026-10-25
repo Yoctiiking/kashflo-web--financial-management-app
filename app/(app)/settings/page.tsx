@@ -8,7 +8,8 @@ import {
     updateDisplayName,
     updateUserPassword,
     deleteAccount,
-    logoutUser
+    logoutUser,
+    hasPasswordProvider
 } from "@/lib/firebase/auth";
 import { getUserProfile, updateUserCurrency } from "@/lib/firebase/firestore";
 import { useEffect } from "react";
@@ -61,6 +62,8 @@ export default function SettingsPage() {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState("");
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    const canUsePassword = !!user && hasPasswordProvider(user);
 
     useEffect(() => {
         setPinActive(hasPinSet());
@@ -158,7 +161,7 @@ export default function SettingsPage() {
     };
 
     const handleDeleteAccount = async () => {
-        if (!deletePassword) {
+        if (canUsePassword && !deletePassword) {
             setDeleteError(t("dangerZone.errors.passwordRequired"));
             return;
         }
@@ -167,11 +170,13 @@ export default function SettingsPage() {
         setDeleteError("");
 
         try {
-            await deleteAccount(deletePassword);
+            await deleteAccount(canUsePassword ? deletePassword : undefined);
             router.push("/login");
         } catch (err: any) {
             if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
                 setDeleteError(t("dangerZone.errors.wrongPassword"));
+            } else if (err.code === "auth/popup-closed-by-user") {
+                setDeleteError(t("dangerZone.errors.popupClosed"));
             } else {
                 setDeleteError(t("dangerZone.errors.generic"));
             }
@@ -288,32 +293,36 @@ export default function SettingsPage() {
                 {/* Mot de passe */}
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
                     <h3 className="text-gray-900 dark:text-white font-semibold mb-4">{t("password.title")}</h3>
-                    <div className="space-y-3">
-                        <PasswordInput
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            placeholder={t("password.currentPlaceholder")}
-                        />
-                        <PasswordInput
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder={t("password.newPlaceholder")}
-                        />
-                        <PasswordInput
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder={t("password.confirmPlaceholder")}
-                        />
-                        {passwordError && <p className="text-red-600 dark:text-red-400 text-sm">{passwordError}</p>}
-                        {passwordSuccess && <p className="text-emerald-600 dark:text-emerald-400 text-sm">✅ {t("password.success")}</p>}
-                        <button
-                            onClick={handleUpdatePassword}
-                            disabled={passwordLoading}
-                            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
-                        >
-                            {passwordLoading ? t("password.submitting") : t("password.submit")}
-                        </button>
-                    </div>
+                    {canUsePassword ? (
+                        <div className="space-y-3">
+                            <PasswordInput
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                placeholder={t("password.currentPlaceholder")}
+                            />
+                            <PasswordInput
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder={t("password.newPlaceholder")}
+                            />
+                            <PasswordInput
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder={t("password.confirmPlaceholder")}
+                            />
+                            {passwordError && <p className="text-red-600 dark:text-red-400 text-sm">{passwordError}</p>}
+                            {passwordSuccess && <p className="text-emerald-600 dark:text-emerald-400 text-sm">✅ {t("password.success")}</p>}
+                            <button
+                                onClick={handleUpdatePassword}
+                                disabled={passwordLoading}
+                                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-gray-900 dark:text-white font-medium py-3 rounded-xl transition-colors"
+                            >
+                                {passwordLoading ? t("password.submitting") : t("password.submit")}
+                            </button>
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-sm">{t("password.googleAccountNotice")}</p>
+                    )}
                 </div>
 
                 {/* Devise */}
@@ -391,14 +400,16 @@ export default function SettingsPage() {
                     ) : (
                         <div className="max-w-md space-y-3">
                             <p className="text-gray-700 dark:text-gray-300 text-sm">
-                                {t("dangerZone.confirmPrompt")}
+                                {canUsePassword ? t("dangerZone.confirmPrompt") : t("dangerZone.confirmPromptGoogle")}
                             </p>
-                            <PasswordInput
-                                variant="danger"
-                                value={deletePassword}
-                                onChange={(e) => setDeletePassword(e.target.value)}
-                                placeholder={t("dangerZone.passwordPlaceholder")}
-                            />
+                            {canUsePassword && (
+                                <PasswordInput
+                                    variant="danger"
+                                    value={deletePassword}
+                                    onChange={(e) => setDeletePassword(e.target.value)}
+                                    placeholder={t("dangerZone.passwordPlaceholder")}
+                                />
+                            )}
                             {deleteError && <p className="text-red-600 dark:text-red-400 text-sm">{deleteError}</p>}
                             <div className="flex gap-2">
                                 <button
